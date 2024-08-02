@@ -129,70 +129,81 @@ jobs:
                     ./jccm/out/make/squirrel.windows/x64/*.msi
 
     release:
-        needs: [build-macos, build-windows]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v2
+      needs: [build-macos, build-windows]
+      runs-on: ubuntu-latest
+      steps:
+          - name: Check out repository
+            uses: actions/checkout@v2
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v2
-              with:
-                  node-version: '20.10.0'
+          - name: Set up Node.js
+            uses: actions/setup-node@v2
+            with:
+                node-version: '20.10.0'
 
-            - name: Read version from package.json
-              id: get_version
-              run: echo "VERSION=$(jq -r '.version' ./jccm/package.json)" >> $GITHUB_ENV
+          - name: Read version from package.json
+            id: get_version
+            run: echo "VERSION=$(jq -r '.version' ./jccm/package.json)" >> $GITHUB_ENV
 
-            - name: Download macOS artifacts
-              uses: actions/download-artifact@v2
-              with:
-                  name: macos-installers
-                  path: ./installers/macos
+          - name: Download macOS artifacts
+            uses: actions/download-artifact@v2
+            with:
+                name: macos-installers
+                path: ./installers/macos
 
-            - name: Download windows artifacts
-              uses: actions/download-artifact@v2
-              with:
-                  name: windows-installers
-                  path: ./installers/windows
+          - name: Download windows artifacts
+            uses: actions/download-artifact@v2
+            with:
+                name: windows-installers
+                path: ./installers/windows
 
-            - name: Create Release
-              id: create_release
-              uses: actions/create-release@v1
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                tag_name: ${{ env.VERSION }}
-                release_name: 'Release ${{ env.VERSION }}'
-                draft: false
-                prerelease: false
+          - name: Install GitHub CLI
+            run: sudo apt-get install gh
 
-            - name: Upload macOS x64 Release Asset
-              uses: actions/upload-release-asset@v1
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                upload_url: ${{ steps.create_release.outputs.upload_url }}
-                asset_path: ./installers/macos/jccm-darwin-x64.dmg
-                asset_name: jccm-darwin-x64.dmg
-                asset_content_type: application/octet-stream
+          - name: Check for existing release and delete if it exists
+            run: |
+              if gh release view ${{ env.VERSION }}; then
+                gh release delete ${{ env.VERSION }} --yes
+              fi
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Upload macOS arm64 Release Asset
-              uses: actions/upload-release-asset@v1
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                upload_url: ${{ steps.create_release.outputs.upload_url }}
-                asset_path: ./installers/macos/jccm-darwin-arm64.dmg
-                asset_name: jccm-darwin-arm64.dmg
-                asset_content_type: application/octet-stream
+          - name: Create Release
+            id: create_release
+            uses: actions/create-release@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              tag_name: ${{ env.VERSION }}
+              release_name: 'Release ${{ env.VERSION }}'
+              draft: false
+              prerelease: false
 
-            - name: Upload Windows Release Asset
-              uses: actions/upload-release-asset@v1
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                upload_url: ${{ steps.create_release.outputs.upload_url }}
-                asset_path: ./installers/windows/jccm-windows-x64-setup.exe
-                asset_name: jccm-windows-x64-setup.exe
-                asset_content_type: application/octet-stream
+          - name: Upload macOS x64 Release Asset
+            uses: actions/upload-release-asset@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./installers/macos/jccm-darwin-x64.dmg
+              asset_name: jccm-darwin-x64.dmg
+              asset_content_type: application/octet-stream
+
+          - name: Upload macOS arm64 Release Asset
+            uses: actions/upload-release-asset@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./installers/macos/jccm-darwin-arm64.dmg
+              asset_name: jccm-darwin-arm64.dmg
+              asset_content_type: application/octet-stream
+
+          - name: Upload Windows Release Asset
+            uses: actions/upload-release-asset@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./installers/windows/jccm-windows-x64-setup.exe
+              asset_name: jccm-windows-x64-setup.exe
+              asset_content_type: application/octet-stream
