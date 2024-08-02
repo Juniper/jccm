@@ -1,10 +1,3 @@
-**Attention:**
-
-Due to GitHub LFS storage quota limitations, the installer binary files have not been uploaded. We are actively working to resolve this issue and will upload the files as soon as the quota issue is addressed.
-
-Thank you for your understanding and patience.
-
-
 # Juniper Cloud Connection Manager (JCCM)
 
 Juniper Cloud Connection Manager (JCCM) is a standalone application designed to automate the adoption of multiple Juniper network devices to various Juniper cloud services such as JSI, MIST, and Routing Assurance. JCCM streamlines network management, ensuring seamless integration and efficient control of your devices.
@@ -33,9 +26,9 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
 ## Installation
 
 1. Download the appropriate installer for your system from the GitHub releases page:
-   - For Intel-based macOS: [Download jccm-darwin-x64.dmg](../../raw/main/installers/jccm-darwin-x64.dmg)
-   - For ARM-based macOS: [Download jccm-darwin-arm64.dmg](../../raw/main/installers/jccm-darwin-arm64.dmg)
-   - For Intel-based Windows: [Download jccm-windows-x64-setup.exe](../../raw/main/installers/jccm-windows-x64-setup.exe)
+   - For Intel-based macOS: [Download jccm-darwin-x64.dmg](https://github.com/Juniper/jccm/releases/latest/download/jccm-darwin-x64.dmg)
+   - For ARM-based macOS: [Download jccm-darwin-arm64.dmg](https://github.com/Juniper/jccm/releases/latest/download/jccm-darwin-arm64.dmg)
+   - For Intel-based Windows: [Download jccm-windows-x64-setup.exe](https://github.com/Juniper/jccm/releases/latest/download/jccm-windows-x64-setup.exe)
 
 2. Install the application:
    - Double-click the downloaded `.dmg` file.
