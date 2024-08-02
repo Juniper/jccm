@@ -1,3 +1,10 @@
+**Attention:**
+
+Due to GitHub LFS storage quota limitations, the installer binary files have not been uploaded. We are actively working to resolve this issue and will upload the files as soon as the quota issue is addressed.
+
+Thank you for your understanding and patience.
+
+
 # Juniper Cloud Connection Manager (JCCM)
 
 Juniper Cloud Connection Manager (JCCM) is a standalone application designed to automate the adoption of multiple Juniper network devices to various Juniper cloud services such as JSI, MIST, and Routing Assurance. JCCM streamlines network management, ensuring seamless integration and efficient control of your devices.
