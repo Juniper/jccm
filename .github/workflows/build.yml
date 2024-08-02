@@ -1,0 +1,178 @@
+name: Build Electron App
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+jobs:
+    build-macos:
+        runs-on: macos-latest
+        if: ${{ github.event.head_commit.message != 'Automated commit by GitHub Actions' }}
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v2
+              with:
+                  lfs: true # Ensure LFS is enabled
+                  persist-credentials: false
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '20.10.0'
+            - name: Install Python and set up venv
+              run: |
+                  brew install python@3.9
+                  python3.9 -m venv myenv
+                  source myenv/bin/activate
+                  python3.9 -m ensurepip
+                  python3.9 -m pip install --upgrade pip
+                  python3.9 -m pip install setuptools
+              working-directory: ./jccm
+            - name: Install dependencies
+              run: |
+                  source myenv/bin/activate
+                  npm install
+              working-directory: ./jccm
+            - name: Install appdmg
+              run: |
+                  source myenv/bin/activate
+                  npm install --save-dev appdmg
+              working-directory: ./jccm
+
+            - name: Build and package (x64)
+              run: |
+                  source myenv/bin/activate
+                  npm run make -- --platform=darwin --arch=x64
+              working-directory: ./jccm
+
+            - name: Build and package (arm64)
+              run: |
+                  source myenv/bin/activate
+                  npm run make -- --platform=darwin --arch=arm64
+              working-directory: ./jccm
+
+            - name: Decode signing certificate
+              run: |
+                echo "${{ vars.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
+              shell: bash
+        
+            - name: Install signing certificate
+              run: |
+                  KEYCHAIN_NAME=build.keychain
+                  KEYCHAIN_PASSWORD=$(openssl rand -base64 12)
+
+                  echo "Creating keychain..."
+                  security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+                  echo "Importing certificate..."
+                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ vars.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+
+                  echo "Listing keychains..."
+                  security list-keychains -s $KEYCHAIN_NAME
+
+                  echo "Setting default keychain..."
+                  security default-keychain -s $KEYCHAIN_NAME
+
+                  echo "Unlocking keychain..."
+                  security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+                  echo "Setting key partition list..."
+                  security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+            - name: Sign the application
+              run: |
+                  codesign --deep --force --verbose --sign "${{ vars.DEVELOPER_ID }}" "./out/make/jccm-darwin-x64.dmg"
+                  codesign --deep --force --verbose --sign "${{ vars.DEVELOPER_ID }}" "./out/make/jccm-darwin-arm64.dmg"
+                  codesign --verify "./out/make/jccm-darwin-x64.dmg"
+                  codesign --verify "./out/make/jccm-darwin-arm64.dmg"
+                  codesign -d "./out/make/jccm-darwin-arm64.dmg"                   
+              shell: bash
+              working-directory: ./jccm
+
+            - name: Copy installer files
+              run: |
+                  mkdir -p ../installers
+                  ls -al ../installers
+                  cp out/make/jccm-darwin-x64.dmg ../installers/
+                  cp out/make/jccm-darwin-arm64.dmg ../installers/
+                  ls -al ../installers
+              working-directory: ./jccm
+
+            - name: Configure Git pull behavior
+              run: git config --global pull.rebase false
+
+            - name: Commit and push installer files
+              run: |
+                  git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+                  git config --global user.name "${{ github.actor }}"
+                  git remote set-url origin https://${{ github.actor }}:${{ secrets.JUNIPER_TOKEN }}@github.com/${{ github.repository }}.git
+                  git pull origin refs/heads/main --force --allow-unrelated-histories
+
+                  git lfs install
+
+                  git lfs untrack "*.dmg"
+                  git lfs track "*.dmg"
+                  
+                  git add .gitattributes
+
+                  git lfs track
+
+                  git add ./installers
+                  git commit -m "Automated commit by GitHub Actions"
+                  git push origin HEAD:refs/heads/main
+
+
+    build-windows:
+        needs: build-macos
+        runs-on: windows-latest
+        if: ${{ github.event.head_commit.message != 'Automated commit by GitHub Actions' }}
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  lfs: true # Ensure LFS is enabled
+                  persist-credentials: false
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '20.10.0'
+
+            - name: Install dependencies
+              run: npm install
+              working-directory: ./jccm
+
+            - name: Build and package (x64)
+              run: npm run make -- --platform=win32 --arch=x64
+              working-directory: ./jccm
+              
+            - name: Copy installer files
+              run: |
+                  New-Item -ItemType Directory -Force -Path ../installers
+                  Get-ChildItem ../installers
+                  Copy-Item out/make/squirrel.windows/x64/*.exe ../installers/
+                  Copy-Item out/make/squirrel.windows/x64/*.msi ../installers/
+                  Get-Location
+                  Get-ChildItem ../
+                  Get-ChildItem ../installers
+              working-directory: ./jccm
+
+            - name: Configure Git pull behavior
+              run: git config --global pull.rebase false
+
+            - name: Commit and push installer files
+              run: |
+                  Write-Output "GITHUB_ACTOR=${{ github.actor }}"
+                  Write-Output "GITHUB_REPOSITORY=${{ github.repository }}"
+                  git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+                  git config --global user.name "${{ github.actor }}"
+                  git remote set-url origin https://${{ github.actor }}:${{ secrets.JUNIPER_TOKEN }}@github.com/${{ github.repository }}.git
+                  git pull origin refs/heads/main --force --allow-unrelated-histories
+
+                  git lfs install
+                  git lfs track "*.exe"
+                  git add .gitattributes
+
+                  git add ./installers
+                  git commit -m "Automated commit by GitHub Actions"
+                  git push origin HEAD:refs/heads/main
