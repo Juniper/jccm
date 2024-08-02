@@ -13,13 +13,12 @@ jobs:
         steps:
             - name: Check out repository
               uses: actions/checkout@v2
-              with:
-                  lfs: true # Ensure LFS is enabled
-                  persist-credentials: false
+
             - name: Set up Node.js
               uses: actions/setup-node@v2
               with:
                   node-version: '20.10.0'
+
             - name: Install Python and set up venv
               run: |
                   brew install python@3.9
@@ -29,11 +28,13 @@ jobs:
                   python3.9 -m pip install --upgrade pip
                   python3.9 -m pip install setuptools
               working-directory: ./jccm
+
             - name: Install dependencies
               run: |
                   source myenv/bin/activate
                   npm install
               working-directory: ./jccm
+
             - name: Install appdmg
               run: |
                   source myenv/bin/activate
@@ -54,9 +55,9 @@ jobs:
 
             - name: Decode signing certificate
               run: |
-                echo "${{ vars.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
+                echo "${{ secrets.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
               shell: bash
-        
+
             - name: Install signing certificate
               run: |
                   KEYCHAIN_NAME=build.keychain
@@ -66,7 +67,7 @@ jobs:
                   security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
                   echo "Importing certificate..."
-                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ vars.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
 
                   echo "Listing keychains..."
                   security list-keychains -s $KEYCHAIN_NAME
@@ -82,45 +83,21 @@ jobs:
 
             - name: Sign the application
               run: |
-                  codesign --deep --force --verbose --sign "${{ vars.DEVELOPER_ID }}" "./out/make/jccm-darwin-x64.dmg"
-                  codesign --deep --force --verbose --sign "${{ vars.DEVELOPER_ID }}" "./out/make/jccm-darwin-arm64.dmg"
+                  codesign --deep --force --verbose --sign "${{ secrets.DEVELOPER_ID }}" "./out/make/jccm-darwin-x64.dmg"
+                  codesign --deep --force --verbose --sign "${{ secrets.DEVELOPER_ID }}" "./out/make/jccm-darwin-arm64.dmg"
                   codesign --verify "./out/make/jccm-darwin-x64.dmg"
                   codesign --verify "./out/make/jccm-darwin-arm64.dmg"
                   codesign -d "./out/make/jccm-darwin-arm64.dmg"                   
               shell: bash
               working-directory: ./jccm
 
-            - name: Copy installer files
-              run: |
-                  mkdir -p ../installers
-                  ls -al ../installers
-                  cp out/make/jccm-darwin-x64.dmg ../installers/
-                  cp out/make/jccm-darwin-arm64.dmg ../installers/
-                  ls -al ../installers
-              working-directory: ./jccm
-
-            - name: Configure Git pull behavior
-              run: git config --global pull.rebase false
-
-            - name: Commit and push installer files
-              env:
-                GITHUB_TOKEN: ${{ secrets.JUNIPER_TOKEN }}
-              run: |
-                echo "GITHUB_ACTOR=${{ github.actor }}"
-                echo "GITHUB_REPOSITORY=${{ github.repository }}"
-                git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-                git config --global user.name "${{ github.actor }}"
-                git remote set-url origin https://${{ github.actor }}:${{ secrets.JUNIPER_TOKEN }}@github.com/${{ github.repository }}.git
-                git pull origin refs/heads/main --force --allow-unrelated-histories
-
-                git lfs install
-
-                git lfs track "*.dmg"
-                git add .gitattributes
-
-                git add ./installers
-                git commit -m "Automated commit by GitHub Actions"
-                git push origin HEAD:refs/heads/main
+            - name: Upload macOS artifacts
+              uses: actions/upload-artifact@v2
+              with:
+                  name: macos-installers
+                  path: |
+                    ./jccm/out/make/jccm-darwin-x64.dmg
+                    ./jccm/out/make/jccm-darwin-arm64.dmg
 
     build-windows:
         needs: build-macos
@@ -128,9 +105,6 @@ jobs:
         if: ${{ github.event.head_commit.message != 'Automated commit by GitHub Actions' }}
         steps:
             - uses: actions/checkout@v2
-              with:
-                  lfs: true # Ensure LFS is enabled
-                  persist-credentials: false
 
             - name: Set up Node.js
               uses: actions/setup-node@v2
@@ -144,36 +118,80 @@ jobs:
             - name: Build and package (x64)
               run: npm run make -- --platform=win32 --arch=x64
               working-directory: ./jccm
-              
-            - name: Copy installer files
-              run: |
-                New-Item -ItemType Directory -Force -Path ../installers
-                Get-ChildItem ../installers
-                Copy-Item out/make/squirrel.windows/x64/*.exe ../installers/
-                Copy-Item out/make/squirrel.windows/x64/*.msi ../installers/
-                Get-Location
-                Get-ChildItem ../
-                Get-ChildItem ../installers
-              working-directory: ./jccm
 
-            - name: Configure Git pull behavior
-              run: git config --global pull.rebase false
+            - name: Upload windows artifacts
+              uses: actions/upload-artifact@v2
+              with:
+                  name: windows-installers
+                  path: |
+                    ./jccm/out/make/squirrel.windows/x64/*.exe
+                    ./jccm/out/make/squirrel.windows/x64/*.msi
 
-            - name: Commit and push installer files
+    release:
+        needs: [build-macos, build-windows]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v2
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '20.10.0'
+
+            - name: Read version from package.json
+              id: get_version
+              run: echo "VERSION=$(jq -r '.version' ./jccm/package.json)" >> $GITHUB_ENV
+
+            - name: Download macOS artifacts
+              uses: actions/download-artifact@v2
+              with:
+                  name: macos-installers
+                  path: ./installers/macos
+
+            - name: Download windows artifacts
+              uses: actions/download-artifact@v2
+              with:
+                  name: windows-installers
+                  path: ./installers/windows
+
+            - name: Create Release
+              id: create_release
+              uses: actions/create-release@v1
               env:
-                GITHUB_TOKEN: ${{ secrets.JUNIPER_TOKEN }}
-              run: |
-                  Write-Output "GITHUB_ACTOR=${{ github.actor }}"
-                  Write-Output "GITHUB_REPOSITORY=${{ github.repository }}"
-                  git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-                  git config --global user.name "${{ github.actor }}"
-                  git remote set-url origin https://${{ github.actor }}:${{ secrets.JUNIPER_TOKEN }}@github.com/${{ github.repository }}.git
-                  git pull origin refs/heads/main --force --allow-unrelated-histories
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                tag_name: ${{ env.VERSION }}
+                release_name: 'Release ${{ env.VERSION }}'
+                draft: false
+                prerelease: false
 
-                  git lfs install
-                  git lfs track "*.exe"
-                  git add .gitattributes
+            - name: Upload macOS x64 Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                upload_url: ${{ steps.create_release.outputs.upload_url }}
+                asset_path: ./installers/macos/jccm-darwin-x64.dmg
+                asset_name: jccm-darwin-x64.dmg
+                asset_content_type: application/octet-stream
 
-                  git add ./installers
-                  git commit -m "Automated commit by GitHub Actions"
-                  git push origin HEAD:refs/heads/main
+            - name: Upload macOS arm64 Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                upload_url: ${{ steps.create_release.outputs.upload_url }}
+                asset_path: ./installers/macos/jccm-darwin-arm64.dmg
+                asset_name: jccm-darwin-arm64.dmg
+                asset_content_type: application/octet-stream
+
+            - name: Upload Windows Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                upload_url: ${{ steps.create_release.outputs.upload_url }}
+                asset_path: ./installers/windows/jccm-windows-x64-setup.exe
+                asset_name: jccm-windows-x64-setup.exe
+                asset_content_type: application/octet-stream
