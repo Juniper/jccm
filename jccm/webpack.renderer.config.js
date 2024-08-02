@@ -36,6 +36,10 @@ module.exports = {
     devServer: {
         contentBase: path.join(__dirname, 'dist'), // Output directory
         hot: true, // Enable HMR on the server
+        host: '127.0.0.1', // Bind to IPv4 address
+        allowedHosts: [
+            '127.0.0.1'
+        ],
     },
     // Set target to 'web' for HMR to work properly
     target: 'web',

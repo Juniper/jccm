@@ -725,7 +725,9 @@ const InventoryTreeMenuLocal = () => {
             }
         }
 
-        setIsAdopting(device._path, { status: false, retry: -1 });
+        // setIsAdopting(device._path, { status: false, retry: -1 });
+        resetIsAdopting(device.path, false);
+
         notify(
             <Toast>
                 <ToastTitle>Device Adoption Failure</ToastTitle>

@@ -382,9 +382,14 @@ export const setupApiHandlers = () => {
 
         const { organization, site, address, port, username, password, jsiTerm, ...others } = args;
 
+        console.log('>>>>>1', organization, site, address, port, username, password, jsiTerm);
+
+
         const cloudOrgs = await msGetCloudOrgs();
         const orgId = cloudOrgs[organization]?.id;
         const siteId = cloudOrgs[organization]?.sites?.[site]?.id || null;
+
+        console.log('>>>>>2', cloudOrgs, orgId, siteId);
 
         try {
             let endpoint = 'ocdevices';
@@ -392,11 +397,17 @@ export const setupApiHandlers = () => {
                 endpoint = 'jsi/devices';
             }
 
+            console.log('>>>>>3', endpoint);
+
+
             const api = `orgs/${orgId}/${endpoint}/outbound_ssh_cmd${siteId ? `?site_id=${siteId}` : ''}`;
+            console.log('api', api);
 
             const response = await acRequest(api, 'GET', null);
+            console.log('response', JSON.stringify(response, null, 2));
 
             const configCommand = `${response.cmd}\n`;
+            console.log(`config: ${configCommand}`)
 
             const reply = await commitJunosSetConfig(address, port, username, password, configCommand);
 

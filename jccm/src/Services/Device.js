@@ -107,6 +107,7 @@ export const commitJunosSetConfig = async (
     inactivityTimeout = 30000
 ) => {
     const command = `edit exclusive private\n${config}\ncommit | display xml\nexit\n\n\n`;
+    console.log(`command:\n${command}`);
 
     let inactivityTimer;
     const ssh = new NodeSSH();
@@ -121,7 +122,10 @@ export const commitJunosSetConfig = async (
             timeout: timeout,
         });
 
-        const shell = await ssh.requestShell();
+        const shell = await ssh.requestShell({
+            cols: 2000, // Number of columns
+            rows: 100, // Number of rows
+        });
         let data = '';
         let stderr = '';
 
@@ -138,15 +142,35 @@ export const commitJunosSetConfig = async (
 
         shell
             .on('data', (chunk) => {
+                // console.log(chunk.toString());
+
                 data += chunk.toString();
                 resetInactivityTimer();
             })
             .stderr.on('data', (chunk) => {
+                // console.log(chunk.toString());
+
                 stderr += chunk.toString();
                 resetInactivityTimer();
             });
 
-        shell.write(command);
+        // shell.write(command);
+
+        const sendCommandWithFlowControl = async (command) => {
+            const buffer = Buffer.from(command);
+            const chunkSize = 100;
+            for (let i = 0; i < buffer.length; i += chunkSize) {
+                const end = Math.min(i + chunkSize, buffer.length);
+                const chunk = buffer.subarray(i, end); // Use subarray instead of slice
+                shell.write(chunk);
+                console.log(chunk.toString() + ' | '); // Ensure proper string conversion for logging
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        };
+
+        await sendCommandWithFlowControl(command);
+
+
         resetInactivityTimer();
         shell.write('exit\n\n\n');
 
