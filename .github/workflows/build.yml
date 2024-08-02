@@ -103,24 +103,28 @@ jobs:
               run: git config --global pull.rebase false
 
             - name: Commit and push installer files
+              env:
+                GITHUB_TOKEN: ${{ secrets.JUNIPER_TOKEN }}
               run: |
-                  git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-                  git config --global user.name "${{ github.actor }}"
-                  git remote set-url origin https://${{ github.actor }}:${{ secrets.JUNIPER_TOKEN }}@github.com/${{ github.repository }}.git
-                  git pull origin refs/heads/main --force --allow-unrelated-histories
+                Write-Output "GITHUB_ACTOR=${{ github.actor }}"
+                Write-Output "GITHUB_REPOSITORY=${{ github.repository }}"
+                git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+                    git config --global user.name "${{ github.actor }}"
+                    git remote set-url origin https://${{ github.actor }}:${{ secrets.JUNIPER_TOKEN }}@github.com/${{ github.repository }}.git
+                    git pull origin refs/heads/main --force --allow-unrelated-histories
 
-                  git lfs install
+                    git lfs install
 
-                  git lfs untrack "*.dmg"
-                  git lfs track "*.dmg"
-                  
-                  git add .gitattributes
+                    git lfs untrack "*.dmg"
+                    git lfs track "*.dmg"
+                    
+                    git add .gitattributes
 
-                  git lfs track
+                    git lfs track
 
-                  git add ./installers
-                  git commit -m "Automated commit by GitHub Actions"
-                  git push origin HEAD:refs/heads/main
+                    git add ./installers
+                    git commit -m "Automated commit by GitHub Actions"
+                    git push origin HEAD:refs/heads/main
 
 
     build-windows:
@@ -148,21 +152,23 @@ jobs:
               
             - name: Copy installer files
               run: |
-                  New-Item -ItemType Directory -Force -Path ../installers
-                  Get-ChildItem ../installers
-                  Copy-Item out/make/squirrel.windows/x64/*.exe ../installers/
-                  Copy-Item out/make/squirrel.windows/x64/*.msi ../installers/
-                  Get-Location
-                  Get-ChildItem ../
-                  Get-ChildItem ../installers
+                New-Item -ItemType Directory -Force -Path ../installers
+                Get-ChildItem ../installers
+                Copy-Item out/make/squirrel.windows/x64/*.exe ../installers/
+                Copy-Item out/make/squirrel.windows/x64/*.msi ../installers/
+                Get-Location
+                Get-ChildItem ../
+                Get-ChildItem ../installers
               working-directory: ./jccm
 
             - name: Configure Git pull behavior
               run: git config --global pull.rebase false
 
             - name: Commit and push installer files
+              env:
+                GITHUB_TOKEN: ${{ secrets.JUNIPER_TOKEN }}
               run: |
-                  Write-Output "GITHUB_ACTOR=${{ github.actor }}"
+                Write-Output "GITHUB_ACTOR=${{ github.actor }}"
                   Write-Output "GITHUB_REPOSITORY=${{ github.repository }}"
                   git config --global user.email "${{ github.actor }}@users.noreply.github.com"
                   git config --global user.name "${{ github.actor }}"
