@@ -98,7 +98,6 @@ export const getDeviceFacts = async (address, port, username, password, timeout,
 
             return deviceFacts;
         } catch (err) {
-            console.log('getDeviceFacts: result: ', result);
             console.error('getDeviceFacts: Error parsing XML:', err);
             throw new Error('getDeviceFacts: Error parsing XML');
         }

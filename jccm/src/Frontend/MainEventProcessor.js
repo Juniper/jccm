@@ -123,9 +123,8 @@ export const MainEventProcessor = () => {
             try {
                 const data = await electronAPI.saWhoamiUser();
                 if (data.sessionValid) {
-                    console.log('user-session-check: data', data);
+                    // console.log('user-session-check: data', data);
                     if (!_.isEqual(userRef.current, data.user)) {
-                        console.log('>>>user:', data.user);
                         setUser(data.user);
                         setIsUserLoggedIn(true);
                     }
