@@ -21,15 +21,8 @@ const ErrorMessages = {
     INACTIVITY_TIMEOUT: 'Session closed due to inactivity',
 };
 
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const sendCommandWithFlowControl = async (shell, command) => {
-    const buffer = Buffer.from(command);
-    for (let i = 0; i < buffer.length; i++) {
-        const char = String.fromCharCode(buffer[i]); // Get a single character
-        shell.write(char);
-        char === '\n' ? await delay(100) : await delay(5);
-    }
-};
 
 export const executeJunosCommand = async (address, port, username, password, cmd, timeout = 5000) => {
     const command = `${cmd} | no-more`;
@@ -116,6 +109,9 @@ export const commitJunosSetConfig = async (
     timeout = 60000,
     inactivityTimeout = 30000
 ) => {
+    const command = `edit exclusive private\n${config}\ncommit | display xml\nexit\n\n\n`;
+    console.log(`command:\n${command}`);
+
     let inactivityTimer;
     const ssh = new NodeSSH();
 
@@ -149,21 +145,36 @@ export const commitJunosSetConfig = async (
 
         shell
             .on('data', (chunk) => {
+                // console.log(chunk.toString());
+
                 data += chunk.toString();
                 resetInactivityTimer();
             })
             .stderr.on('data', (chunk) => {
+                // console.log(chunk.toString());
+
                 stderr += chunk.toString();
                 resetInactivityTimer();
             });
 
-        await delay(3000);
+        // shell.write(command);
 
-        const command = `edit exclusive private\n${config}\ncommit | display xml\nexit\n\n\n`;
-        await sendCommandWithFlowControl(shell, command);
+        const sendCommandWithFlowControl = async (command) => {
+            const buffer = Buffer.from(command);
+            const chunkSize = 100;
+            for (let i = 0; i < buffer.length; i += chunkSize) {
+                const end = Math.min(i + chunkSize, buffer.length);
+                const chunk = buffer.subarray(i, end); // Use subarray instead of slice
+                shell.write(chunk);
+                console.log(chunk.toString() + ' | '); // Ensure proper string conversion for logging
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        };
+
+        await sendCommandWithFlowControl(command);
+
 
         resetInactivityTimer();
-
         shell.write('exit\n\n\n');
 
         await new Promise((resolve, reject) => {

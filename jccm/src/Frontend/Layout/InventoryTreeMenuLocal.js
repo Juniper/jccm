@@ -160,6 +160,8 @@ import {
     PentagonRegular,
     BoxToolboxFilled,
     BoxToolboxRegular,
+    EqualOffRegular,
+    EqualOffFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
 import _ from 'lodash';
@@ -170,7 +172,7 @@ import { useNotify } from '../Common/NotificationContext';
 import { useContextMenu } from '../Common/ContextMenuContext';
 import { copyToClipboard, capitalizeFirstChar } from '../Common/CommonVariables';
 import { adoptDevices, executeJunosCommand, getDeviceFacts, releaseDevices } from './Devices';
-import { RotatingIcon } from './RotatingIcon';
+import { RotatingIcon, CircleIcon } from './ChangeIcon';
 
 const MapIcon = bundleIcon(MapFilled, MapRegular);
 const Rename = bundleIcon(RenameFilled, RenameRegular);
@@ -385,11 +387,36 @@ const InventoryTreeMenuLocal = () => {
         const { tabs } = useStore();
         const isOpen = tabs.some((item) => item.path === path);
         const [isAdopted, setIsAdopted] = useState(false);
+        const [isOrgMatch, setIsOrgMatch] = useState(true);
+        const [isSiteMatch, setIsSiteMatch] = useState(true);
 
         useEffect(() => {
             // const isFact = !!device?.facts;
             const isFact = !!deviceFacts[device._path];
             const adopted = isFact ? !!cloudDevices[deviceFacts[device._path].serialNumber] : false;
+            if (adopted) {
+                const cloudDevice = cloudDevices[deviceFacts[device._path].serialNumber];
+                const cloudOrgName = cloudDevice.org_name;
+                const cloudSiteName = cloudDevice.site_name;
+                const deviceOrgName = device.orgName;
+                const deviceSiteName = device.siteName;
+
+                setIsOrgMatch(cloudOrgName === deviceOrgName);
+                setIsSiteMatch(cloudSiteName === deviceSiteName);
+
+                if (cloudOrgName !== deviceOrgName) {
+                    console.log('>>>device is not adopted to same org', cloudDevice, device);
+                }
+
+                if (cloudSiteName !== deviceSiteName) {
+                    console.log('>>>device is not adopted to same site', cloudDevice, device);
+                }
+
+                // console.log('device', device);
+                // console.log('cloudDevices', cloudDevices);
+                // console.log('adopted: cloudDevices: ', cloudDevices[deviceFacts[device._path].serialNumber])
+                // console.log('adopted: deviceFacts: ', deviceFacts[device._path])
+            }
             setIsAdopted(adopted);
         }, [cloudDevices, device]);
 
@@ -412,10 +439,19 @@ const InventoryTreeMenuLocal = () => {
                                 color={tokens.colorNeutralForeground2BrandHover}
                             />
                         ) : (
-                            <PlugConnectedCheckmarkRegular
-                                fontSize='16px'
-                                color={tokens.colorNeutralForeground3Hover}
-                            />
+                            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
+                                <PlugConnectedCheckmarkRegular
+                                    fontSize='16px'
+                                    color={tokens.colorNeutralForeground3Hover}
+                                />
+                                {/* {!isOrgMatch && (
+                                    <CircleIcon
+                                        Icon={EqualOffRegular}
+                                        size='12px'
+                                        color={tokens.colorPaletteRedForeground1}
+                                    />
+                                )} */}
+                            </div>
                         )}
                     </Tooltip>
                 );

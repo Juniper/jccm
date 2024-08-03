@@ -60,10 +60,19 @@ const useStore = create((set, get) => ({
     setIsUserLoggedIn: (isUserLoggedIn) => set(() => ({ isUserLoggedIn })),
 
     user: null,
+    orgs: {},
     setUser: (user) =>
         set((state) => {
             if (!_.isEqual(state.user, user)) {
-                return { user };
+                const orgs = {};
+                user?.privileges.forEach((item) => {
+                    if (item.scope === 'org') {
+                        const orgId = item.org_id
+                        const orgName = item.name;
+                        orgs[orgId] = orgName;                        
+                    }
+                });
+                return { user, orgs };
             }
             return {};
         }),

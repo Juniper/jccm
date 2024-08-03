@@ -22,7 +22,7 @@ import {
     TriangleLeftRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
-import { RotatingIcon } from '../RotatingIcon';
+import { RotatingIcon } from '../ChangeIcon';
 import { CustomProgressBar } from './CustomProgressBar';
 import { getHostListMultiple, getHostCountMultiple } from './InventorySearchUtils';
 import { useNotify } from '../../Common/NotificationContext';

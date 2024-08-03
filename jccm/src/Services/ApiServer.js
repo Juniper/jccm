@@ -87,6 +87,7 @@ const serverGetCloudInventory = async () => {
                             }
                         }
                     }
+                    device.org_name = item.name;
                 }
                 item.inventory = devices;
             }

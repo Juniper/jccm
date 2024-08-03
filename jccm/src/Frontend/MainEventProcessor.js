@@ -69,6 +69,7 @@ export const MainEventProcessor = () => {
 
             if (response.cloudInventory) {
                 if (!_.isEqual(cloudInventoryRef.current, response.inventory)) {
+                    console.log('>>>cloudInventory', response.inventory);
                     setCloudInventory(response.inventory);
                     setCloudInventoryFilterApplied(response.isFilterApplied);
                 }
@@ -122,8 +123,9 @@ export const MainEventProcessor = () => {
             try {
                 const data = await electronAPI.saWhoamiUser();
                 if (data.sessionValid) {
-                    console.log('user:', data.user);
+                    console.log('user-session-check: data', data);
                     if (!_.isEqual(userRef.current, data.user)) {
+                        console.log('>>>user:', data.user);
                         setUser(data.user);
                         setIsUserLoggedIn(true);
                     }

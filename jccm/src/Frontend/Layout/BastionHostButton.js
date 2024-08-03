@@ -3,7 +3,7 @@ import { Button, Tooltip, tokens } from '@fluentui/react-components';
 import { HexagonThreeFilled, HexagonThreeRegular } from '@fluentui/react-icons';
 
 import useStore from '../Common/StateStore';
-import { RotatingIcon } from './RotatingIcon';
+import { RotatingIcon } from './ChangeIcon';
 
 export const BastionHostButton = () => {
     const { settings, toggleBastionHostActive } = useStore();
