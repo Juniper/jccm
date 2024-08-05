@@ -51,6 +51,7 @@ const { electronAPI } = window;
 import * as Constants from '../Common/CommonVariables';
 import useStore from '../Common/StateStore';
 import { useNotify } from '../Common/NotificationContext';
+import eventBus from '../Common/eventBus';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const AddCircle = bundleIcon(AddCircleFilled, AddCircleRegular);
@@ -186,7 +187,8 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
     const onSave = async () => {
         setInventory(rowData);
         await electronAPI.saSetLocalInventory({ inventory: rowData });
-        setTimeout(() => {
+        setTimeout(async () => {
+            await eventBus.emit('device-facts-cleanup', { notification: false });
             onClose();
         }, 300);
     };

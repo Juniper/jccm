@@ -16,7 +16,7 @@ export const MainEventProcessor = () => {
     const { isUserLoggedIn, setIsUserLoggedIn, user, setUser } = useStore();
     const { inventory, setInventory } = useStore();
     const { cloudInventory, setCloudInventory } = useStore();
-    const { deviceFacts, setDeviceFactsAll, setDeviceFacts, deleteDeviceFacts, zeroDeviceFacts } = useStore();
+    const { deviceFacts, setDeviceFactsAll, cleanUpDeviceFacts, zeroDeviceFacts } = useStore();
     const { cloudInventoryFilterApplied, setCloudInventoryFilterApplied } = useStore();
     const { currentActiveThemeName, setCurrentActiveThemeName } = useStore();
 
@@ -137,11 +137,13 @@ export const MainEventProcessor = () => {
                     }
                 } else {
                     setUser(null);
+                    setCloudInventory([])
                     setIsUserLoggedIn(false);
                     setCurrentActiveThemeName(data.theme);
                 }
             } catch (error) {
                 setUser(null);
+                setCloudInventory([])
                 setIsUserLoggedIn(false);
                 console.error('Session check error:', error);
             }
@@ -158,11 +160,17 @@ export const MainEventProcessor = () => {
             }
         };
 
+        const handleDeviceFactsCleanup = async () => {
+            console.log('handleDeviceFactsCleanup');
+            cleanUpDeviceFacts();
+        };
+
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
         eventBus.on('reset-device-facts', handleResetDeviceFacts);
         eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('device-facts-refresh', handleDeviceFactsRefresh);
+        eventBus.on('device-facts-cleanup', handleDeviceFactsCleanup);
 
         return () => {
             eventBus.off('local-inventory-refresh', handleLocalInventoryRefresh);
@@ -170,6 +178,7 @@ export const MainEventProcessor = () => {
             eventBus.off('reset-device-facts', handleResetDeviceFacts);
             eventBus.off('user-session-check', handleUserSessionCheck);
             eventBus.off('device-facts-refresh', handleDeviceFactsRefresh);
+            eventBus.off('device-facts-cleanup', handleDeviceFactsCleanup);
         };
     }, []);
 

@@ -67,9 +67,9 @@ const useStore = create((set, get) => ({
                 const orgs = {};
                 user?.privileges.forEach((item) => {
                     if (item.scope === 'org') {
-                        const orgId = item.org_id
+                        const orgId = item.org_id;
                         const orgName = item.name;
-                        orgs[orgId] = orgName;                        
+                        orgs[orgId] = orgName;
                     }
                 });
                 return { user, orgs };
@@ -331,6 +331,24 @@ const useStore = create((set, get) => ({
                 deviceFacts: { ...state.deviceFacts, [path]: value },
             };
         }),
+
+    cleanUpDeviceFacts: async () => {
+        const state = get();
+        const inventoryPaths = new Set(state.inventory.map((item) => item._path));
+        const cleanedDeviceFacts = Object.fromEntries(
+            Object.entries(state.deviceFacts).filter(([key]) => inventoryPaths.has(key))
+        );
+
+        console.log('inventoryPaths', inventoryPaths);
+        console.log('state.deviceFacts', state.deviceFacts);
+        console.log('cleanedDeviceFacts', cleanedDeviceFacts);
+
+        await electronAPI.saSaveDeviceFacts({ facts: cleanedDeviceFacts });
+
+        set(() => ({
+            deviceFacts: cleanedDeviceFacts,
+        }));
+    },
 
     deleteDeviceFacts: (path) =>
         set((state) => {

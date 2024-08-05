@@ -381,7 +381,8 @@ export const setupApiHandlers = () => {
     ipcMain.handle('saAdoptDevice', async (event, args) => {
         console.log('main: saAdoptDevice');
 
-        const { organization, site, address, port, username, password, jsiTerm, ...others } = args;
+        const { organization, site, address, port, username, password, jsiTerm, deleteOutboundSSHTerm, ...others } =
+            args;
 
         const cloudOrgs = await msGetCloudOrgs();
         const orgId = cloudOrgs[organization]?.id;
@@ -393,10 +394,13 @@ export const setupApiHandlers = () => {
                 endpoint = 'jsi/devices';
             }
 
-
             const api = `orgs/${orgId}/${endpoint}/outbound_ssh_cmd${siteId ? `?site_id=${siteId}` : ''}`;
             const response = await acRequest(api, 'GET', null);
-            const configCommand = `${response.cmd}\n`;
+
+            const configCommand = deleteOutboundSSHTerm
+                ? `delete system services outbound-ssh\n${response.cmd}\n`
+                : `${response.cmd}\n`;
+
             const reply = await commitJunosSetConfig(address, port, username, password, configCommand);
 
             if (reply.status === 'success' && reply.data.includes('<commit-success/>')) {

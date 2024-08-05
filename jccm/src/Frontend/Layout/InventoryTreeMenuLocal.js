@@ -106,7 +106,6 @@ import {
     RenameFilled,
     DeleteDismissRegular,
     DeleteDismissFilled,
-    WarningRegular,
     CutRegular,
     CutFilled,
     ClipboardPasteRegular,
@@ -162,6 +161,13 @@ import {
     BoxToolboxRegular,
     EqualOffRegular,
     EqualOffFilled,
+    FlagOffFilled,
+    OrganizationFilled,
+    WarningFilled,
+    WarningRegular,
+    ErrorCircleRegular,
+    FlagFilled,
+    WeatherThunderstormRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
 import _ from 'lodash';
@@ -321,7 +327,7 @@ const convertToFlatTreeItems = (localInventory) => {
 const InventoryTreeMenuLocal = () => {
     const { showContextMenu } = useContextMenu();
     const { notify } = useNotify();
-    const { isUserLoggedIn, settings } = useStore();
+    const { isUserLoggedIn, orgs, settings } = useStore();
     const { tabs, addTab, setSelectedTabValue, adoptConfig, inventory, setInventory } = useStore();
     const { cloudInventory, setCloudInventory, setCloudInventoryFilterApplied, cloudDevices } = useStore();
 
@@ -391,11 +397,10 @@ const InventoryTreeMenuLocal = () => {
         const [isSiteMatch, setIsSiteMatch] = useState(true);
 
         useEffect(() => {
-            // const isFact = !!device?.facts;
             const isFact = !!deviceFacts[device._path];
-            const adopted = isFact ? !!cloudDevices[deviceFacts[device._path].serialNumber] : false;
+            const adopted = isFact ? !!cloudDevices[deviceFacts[device._path]?.serialNumber] : false;
             if (adopted) {
-                const cloudDevice = cloudDevices[deviceFacts[device._path].serialNumber];
+                const cloudDevice = cloudDevices[deviceFacts[device._path]?.serialNumber];
                 const cloudOrgName = cloudDevice.org_name;
                 const cloudSiteName = cloudDevice.site_name;
                 const deviceOrgName = device.orgName;
@@ -403,57 +408,130 @@ const InventoryTreeMenuLocal = () => {
 
                 setIsOrgMatch(cloudOrgName === deviceOrgName);
                 setIsSiteMatch(cloudSiteName === deviceSiteName);
-
-                if (cloudOrgName !== deviceOrgName) {
-                    console.log('>>>device is not adopted to same org', cloudDevice, device);
-                }
-
-                if (cloudSiteName !== deviceSiteName) {
-                    console.log('>>>device is not adopted to same site', cloudDevice, device);
-                }
-
-                // console.log('device', device);
-                // console.log('cloudDevices', cloudDevices);
-                // console.log('adopted: cloudDevices: ', cloudDevices[deviceFacts[device._path].serialNumber])
-                // console.log('adopted: deviceFacts: ', deviceFacts[device._path])
             }
             setIsAdopted(adopted);
         }, [cloudDevices, device]);
 
+        const IconWithTooltip = ({ content, relationship, Icon, size, color }) => (
+            <Tooltip
+                content={content}
+                relationship={relationship}
+                withArrow
+                positioning='above-end'
+            >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Icon style={{ fontSize: size, color: color }} />
+                </div>
+            </Tooltip>
+        );
+
+        const CircleIconWithTooltip = ({ content, relationship, Icon, color, size = '10px' }) => (
+            <Tooltip
+                content={content}
+                relationship={relationship}
+                withArrow
+                positioning='above-end'
+            >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <CircleIcon
+                        Icon={Icon}
+                        size={size}
+                        color={color}
+                    />
+                </div>
+            </Tooltip>
+        );
+
+        const orgMismatchContent = (
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <Text size={200}>
+                    The organization name (<i>{device.orgName}</i>) does not exist in your account:
+                </Text>
+                <Text
+                    size={100}
+                    font='monospace'
+                >
+                    {`"${device.orgName}" ≠ "${cloudDevices[deviceFacts[device._path]?.serialNumber]?.org_name}"`}
+                </Text>
+            </div>
+        );
+
+        const siteMismatchContent = (
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <Text size={200}>
+                    The site name (<i>{device.siteName}</i>) does not exist in your account:
+                </Text>
+                <Text
+                    size={100}
+                    font='monospace'
+                >
+                    {`"${device.siteName}" ≠ "${cloudDevices[deviceFacts[device._path]?.serialNumber]?.site_name}"`}
+                </Text>
+            </div>
+        );
+
         const getIcon = () => {
             if (isAdopted) {
                 return (
-                    <Tooltip
-                        content={
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                {renderObjectValue(cloudDevices[deviceFacts[device._path].serialNumber])}
-                            </div>
-                        }
-                        relationship='description'
-                        withArrow
-                        positioning='above-end'
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignContent: 'center',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            // gap: '5px',
+                        }}
                     >
-                        {isOpen ? (
-                            <PlugConnectedCheckmarkFilled
-                                fontSize='16px'
-                                color={tokens.colorNeutralForeground2BrandHover}
+                        {!isOrgMatch ? (
+                            <IconWithTooltip
+                                content={orgMismatchContent}
+                                relationship='label'
+                                Icon={WeatherThunderstormRegular}
+                                color={tokens.colorPaletteRedForeground1}
+                                size='16px'
                             />
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
+                        ) : !isSiteMatch ? (
+                            <IconWithTooltip
+                                content={siteMismatchContent}
+                                relationship='label'
+                                Icon={WeatherThunderstormRegular}
+                                color={tokens.colorPaletteRedForeground1}
+                                size='16px'
+                            />
+                        ) : null}
+
+                        <Tooltip
+                            content={
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {renderObjectValue(cloudDevices[deviceFacts[device._path]?.serialNumber])}
+                                </div>
+                            }
+                            relationship='description'
+                            withArrow
+                            positioning='above-end'
+                        >
+                            {isOpen ? (
+                                <PlugConnectedCheckmarkFilled
+                                    fontSize='16px'
+                                    color={
+                                        !isOrgMatch || !isSiteMatch
+                                            ? tokens.colorPaletteRedForeground1
+                                            : tokens.colorNeutralForeground2BrandHover
+                                    }
+                                />
+                            ) : (
                                 <PlugConnectedCheckmarkRegular
                                     fontSize='16px'
-                                    color={tokens.colorNeutralForeground3Hover}
+                                    color={
+                                        !isOrgMatch || !isSiteMatch
+                                            ? tokens.colorPaletteRedForeground1
+                                            : tokens.colorNeutralForeground3Hover
+                                    }
                                 />
-                                {/* {!isOrgMatch && (
-                                    <CircleIcon
-                                        Icon={EqualOffRegular}
-                                        size='12px'
-                                        color={tokens.colorPaletteRedForeground1}
-                                    />
-                                )} */}
-                            </div>
-                        )}
-                    </Tooltip>
+                            )}
+                        </Tooltip>
+                    </div>
                 );
             } else {
                 return isOpen ? (
@@ -728,14 +806,14 @@ const InventoryTreeMenuLocal = () => {
         await electronAPI.saSaveDeviceFacts({ facts: deviceFactsRef.current });
     };
 
-    const actionAdoptDevice = async (device, jsiTerm = false) => {
+    const actionAdoptDevice = async (device, jsiTerm = false, deleteOutboundSSHTerm = false) => {
         const maxRetries = 6;
         const retryInterval = 15 * 1000; // 15 seconds in milliseconds
 
         setIsAdopting(device._path, { status: true, retry: 0 });
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            const result = await adoptDevices(device, jsiTerm);
+            const result = await adoptDevices(device, jsiTerm, deleteOutboundSSHTerm);
             if (result.status) {
                 setTimeout(async () => {
                     const fetchAndUpdateCloudInventory = async () => {
@@ -784,9 +862,15 @@ const InventoryTreeMenuLocal = () => {
             };
         });
 
-        const targetDevices = inventoryWithPath.filter(
-            (device) => device.path.startsWith(node.value) && !!!cloudDevices[device?.facts?.serialNumber]
-        );
+        const targetDevices = inventoryWithPath.filter((device) => {
+            const orgName = device.organization;
+            const siteName = device.site;
+
+            const siteExists = doesSiteNameExist(orgName, siteName);
+            const serialNumber = deviceFacts[device.path]?.serialNumber;
+
+            return siteExists && device.path.startsWith(node.value) && !!!cloudDevices[serialNumber];
+        });
 
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const rateLimit = 1000 / rate; // Rate in calls per second
@@ -798,7 +882,7 @@ const InventoryTreeMenuLocal = () => {
 
             const executeCall = async (device) => {
                 const promise = new Promise(async (resolve) => {
-                    await actionAdoptDevice(device, jsiTerm);
+                    await actionAdoptDevice(device, jsiTerm, settings.deleteOutboundSSHTerm);
                     resolve();
                 }).then(() => {
                     runningCalls--;
@@ -828,9 +912,10 @@ const InventoryTreeMenuLocal = () => {
     const actionReleaseDevice = async (device) => {
         setIsReleasing(device.path, true);
 
-        const serialNumber = deviceFacts[device._path].serialNumber;
+        const serialNumber = deviceFacts[device.path]?.serialNumber;
+        const organization = cloudDevices[serialNumber]?.org_name;
 
-        const result = await releaseDevices(device, serialNumber);
+        const result = await releaseDevices({ organization, serialNumber });
         if (result.status) {
             setTimeout(async () => {
                 const fetchAndUpdateCloudInventory = async () => {
@@ -871,9 +956,10 @@ const InventoryTreeMenuLocal = () => {
             };
         });
 
-        const targetDevices = inventoryWithPath.filter(
-            (device) => device.path.startsWith(node.value) && !!cloudDevices[deviceFacts[device._path].serialNumber]
-        );
+        const targetDevices = inventoryWithPath.filter((device) => {
+            const serialNumber = deviceFacts[device.path]?.serialNumber;
+            return device.path.startsWith(node.value) && !!cloudDevices[serialNumber];
+        });
 
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const rateLimit = 1000 / rate; // Rate in calls per second
@@ -916,7 +1002,7 @@ const InventoryTreeMenuLocal = () => {
         const devices = inventory.filter(
             (device) => device._path.startsWith(node.value) && !!deviceFacts[device._path]
         );
-        const devicesAdopted = devices.filter((device) => !!cloudDevices[deviceFacts[device._path].serialNumber]);
+        const devicesAdopted = devices.filter((device) => !!cloudDevices[deviceFacts[device._path]?.serialNumber]);
 
         const isTargetDeviceAvailable = () => {
             return devices.length > 0;
@@ -924,6 +1010,26 @@ const InventoryTreeMenuLocal = () => {
 
         const isDeviceAdoptedAvailable = () => {
             return devicesAdopted.length > 0;
+        };
+
+        const isOrgSiteMatch = () => {
+            const splitParentValue = node.parentValue ? node.parentValue.split('/') : [];
+
+            switch (node.type) {
+                case 'root':
+                    return true;
+                case 'org':
+                    return doesOrgNameExist(node.content);
+                case 'site':
+                    return doesSiteNameExist(splitParentValue.pop(), node.content);
+                case 'device':
+                    return doesSiteNameExist(
+                        splitParentValue[splitParentValue.length - 2],
+                        splitParentValue[splitParentValue.length - 1]
+                    );
+                default:
+                    return false;
+            }
         };
 
         return (
@@ -952,7 +1058,7 @@ const InventoryTreeMenuLocal = () => {
                     )}
 
                     <MenuItem
-                        disabled={!isUserLoggedIn || !isTargetDeviceAvailable()}
+                        disabled={!isUserLoggedIn || !isTargetDeviceAvailable() || !isOrgSiteMatch()}
                         icon={<AdoptDeviceIcon style={{ fontSize: '14px' }} />}
                         onClick={async () => {
                             actionAdoptDevices(node);
@@ -968,7 +1074,7 @@ const InventoryTreeMenuLocal = () => {
 
                     {settings.jsiTerm && (
                         <MenuItem
-                            disabled={!isUserLoggedIn || !isTargetDeviceAvailable()}
+                            disabled={!isUserLoggedIn || !isTargetDeviceAvailable() || !isOrgSiteMatch()}
                             icon={<JsiAdoptDeviceIcon style={{ fontSize: '14px' }} />}
                             onClick={async () => {
                                 actionAdoptDevices(node, true);
@@ -1024,6 +1130,30 @@ const InventoryTreeMenuLocal = () => {
     });
     const treeProps = flatTree.getTreeProps();
 
+    const doesOrgNameExist = (orgName) => {
+        // Iterate over the values of the orgs object
+        for (const name of Object.values(orgs)) {
+            if (name === orgName) {
+                return true; // Return true if the orgName exists
+            }
+        }
+        return false; // Return false if the orgName does not exist
+    };
+
+    const doesSiteNameExist = (orgName, siteName) => {
+        const org = cloudInventory.find((item) => item.name === orgName);
+
+        // If the organization is not found, return false
+        if (!org) {
+            return false;
+        }
+
+        // Check if the site name exists within the organization's sites array
+        const siteExists = org.sites.some((site) => site.name === siteName);
+
+        return siteExists;
+    };
+
     return (
         <FlatTree
             {...treeProps}
@@ -1047,7 +1177,7 @@ const InventoryTreeMenuLocal = () => {
                             aside={<RenderCounterBadge counterValue={rowData.counter} />}
                             onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
-                            {rowData.content}
+                            <Text size={200}>{rowData.content}</Text>
                         </TreeItemLayout>
                     </TreeItem>
                 ) : rowData.type === 'org' ? (
@@ -1061,7 +1191,24 @@ const InventoryTreeMenuLocal = () => {
                             iconBefore={rowData.icon}
                             onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
-                            {rowData.content}
+                            {!isUserLoggedIn || doesOrgNameExist(rowData.content) ? (
+                                <Text size={100}>{rowData.content}</Text>
+                            ) : (
+                                <Tooltip
+                                    content='Organization name does not exist in the cloud.'
+                                    relationship='label'
+                                    withArrow
+                                    positioning='above-end'
+                                >
+                                    <Text
+                                        size={100}
+                                        strikethrough
+                                        style={{ color: tokens.colorStatusDangerForeground3 }}
+                                    >
+                                        {rowData.content}
+                                    </Text>
+                                </Tooltip>
+                            )}
                         </TreeItemLayout>
                     </TreeItem>
                 ) : rowData.type === 'site' ? (
@@ -1075,7 +1222,25 @@ const InventoryTreeMenuLocal = () => {
                             iconBefore={rowData.icon}
                             onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
-                            {rowData.content}
+                            {!isUserLoggedIn ||
+                            doesSiteNameExist(rowData.parentValue.split('/').pop(), rowData.content) ? (
+                                <Text size={100}>{rowData.content}</Text>
+                            ) : (
+                                <Tooltip
+                                    content='Site name does not exist in the cloud.'
+                                    relationship='label'
+                                    withArrow
+                                    positioning='above-end'
+                                >
+                                    <Text
+                                        size={100}
+                                        strikethrough
+                                        style={{ color: tokens.colorStatusDangerForeground3 }}
+                                    >
+                                        {rowData.content}
+                                    </Text>
+                                </Tooltip>
+                            )}
                         </TreeItemLayout>
                     </TreeItem>
                 ) : rowData.type === 'device' ? (

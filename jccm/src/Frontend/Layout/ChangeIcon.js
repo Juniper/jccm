@@ -37,7 +37,7 @@ export const CircleIcon = ({ Icon, color = tokens.colorPaletteGreenBorder2, size
                 width: `calc(${size} + 2px)`,
                 height: `calc(${size} + 2px)`,
                 borderRadius: '50%',
-                border: `2px solid ${color}`,
+                border: `0.5px solid ${color}`,
             }}
         >
             <Icon style={{ fontSize: size, color: color }} />
