@@ -6,9 +6,9 @@
   "main": ".webpack/main",
   "scripts": {
     "start": "pkill -9 node; nodemon --watch ./src --ext js,json --ignore ./src/Frontend/ --exec 'electron-forge start'",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
+    "package": "DEBUG=electron-osx-sign*,electron-notarize* electron-forge package",
+    "make": "DEBUG=electron-osx-sign*,electron-notarize* electron-forge make",
+    "publish": "DEBUG=electron-osx-sign*,electron-notarize* electron-forge publish",
     "lint": "echo \"No linting configured\""
   },
   "devDependencies": {
@@ -30,7 +30,8 @@
     "nodemon": "^3.1.0",
     "stream-browserify": "^3.0.0",
     "style-loader": "^3.0.0",
-    "svg-inline-loader": "^0.8.2"
+    "svg-inline-loader": "^0.8.2",
+    "uglify-js": "^3.19.1"
   },
   "keywords": [],
   "author": {

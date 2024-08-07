@@ -26,6 +26,9 @@ const createWindow = () => {
             preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
             nodeIntegration: false,
             contextIsolation: true, // Consider your security needs when setting this
+            // Disable the password saving feature
+            rememberPassword: false, // Not a real Electron API, illustrative only
+            autoFill: false, // Not a real Electron API, illustrative only
         },
     });
 
@@ -72,13 +75,12 @@ app.on('window-all-closed', () => {
 // process.on('uncaughtException', (error) => {
 //     console.error('An uncaught error occurred!');
 //     console.error(error.stack);
-  
+
 //     // dialog.showErrorBox('An error occurred', `Sorry, an unexpected error occurred: ${error.message}`);
-  
+
 //     // Optionally exit the application if needed
 //     // app.quit();
 //   });
-  
 
 process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);

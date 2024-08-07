@@ -1,11 +1,23 @@
 const path = require('path');
+
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
+console.log(`Current working directory: ${process.cwd()}`);
+
+const entitlements = '/Users/srho/electron-test/juniper-jccm-project/jccm/entitlements.plist';
 module.exports = {
     packagerConfig: {
         asar: true,
         icon: './assets/icons/AppIcon', // Path without the extension
+        osxSign: {
+            'hardened-runtime': true,
+        },
+        osxNotarize: {
+            appleId: process.env.APPLE_ID,
+            appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD,
+            teamId: process.env.APPLE_DEVELOPER_TEAM_ID,
+        },
     },
     rebuildConfig: {},
     makers: [

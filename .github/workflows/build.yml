@@ -42,36 +42,16 @@ jobs:
                   npm install --save-dev appdmg
               working-directory: ./jccm
 
-            - name: Build and package (x64)
-              run: |
-                  source myenv/bin/activate
-                  npm run make -- --platform=darwin --arch=x64
-              working-directory: ./jccm
-
-            - name: Build and package (arm64)
-              run: |
-                  source myenv/bin/activate
-                  npm run make -- --platform=darwin --arch=arm64
-              working-directory: ./jccm
-
-            - name: Decode signing certificate
-              run: |
-                echo "${{ secrets.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
-              shell: bash
-
             - name: Install signing certificate
               run: |
                   KEYCHAIN_NAME=build.keychain
                   KEYCHAIN_PASSWORD=$(openssl rand -base64 12)
 
+                  echo "Decode signing certificate..."
+                  echo "${{ secrets.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
+
                   echo "Creating keychain..."
                   security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-
-                  echo "Importing certificate..."
-                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-
-                  echo "Listing keychains..."
-                  security list-keychains -s $KEYCHAIN_NAME
 
                   echo "Setting default keychain..."
                   security default-keychain -s $KEYCHAIN_NAME
@@ -79,19 +59,25 @@ jobs:
                   echo "Unlocking keychain..."
                   security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
+                  echo "Importing certificate..."
+                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+
+                  echo "Listing keychains..."
+                  security list-keychains -s $KEYCHAIN_NAME
+
                   echo "Setting key partition list..."
                   security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
-            - name: Sign the application
+            - name: Build and package (arm64 and x64)
+              env:
+                APPLE_ID: ${{ secrets.APPLE_ID }}
+                APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+                APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
               run: |
-                  codesign --deep --force --verbose --sign "${{ secrets.DEVELOPER_ID }}" "./out/make/jccm-darwin-x64.dmg"
-                  codesign --deep --force --verbose --sign "${{ secrets.DEVELOPER_ID }}" "./out/make/jccm-darwin-arm64.dmg"
-                  codesign --verify "./out/make/jccm-darwin-x64.dmg"
-                  codesign --verify "./out/make/jccm-darwin-arm64.dmg"
-                  codesign -d "./out/make/jccm-darwin-arm64.dmg"                   
-              shell: bash
+                  source myenv/bin/activate
+                  npm run make
               working-directory: ./jccm
-
+    
             - name: Upload macOS artifacts
               uses: actions/upload-artifact@v2
               with:

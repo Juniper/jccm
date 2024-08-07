@@ -694,13 +694,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                 </Tooltip>
                             }
                         >
-                            <Text
-                                size={200}
-                                font='numeric'
-                                weight='normal'
-                            >
-                                {orgName}
-                            </Text>
+                            <Text size={100}>{orgName}</Text>
                         </TreeItemLayout>
                         {renderSiteTree(orgValue, `${pathPrefix}/${orgName}`)}
                     </TreeItem>
@@ -722,7 +716,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                             aside={<RenderCounterBadge counterValue={regionValue.__count} />}
                             iconBefore={<LocationRegular style={{ fontSize: '14px' }} />}
                         >
-                            {regionName}
+                            <Text size={100}>{regionName}</Text>
                         </TreeItemLayout>
                         {renderOrgTree(regionValue, `${pathPrefix}/${regionName}`)}
                     </TreeItem>
@@ -745,7 +739,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                 aside={<RenderCounterBadge counterValue={cloudValue.__count} />}
                                 iconBefore={<CloudCubeRegular style={{ fontSize: '14px' }} />}
                             >
-                                {cloudName}
+                                <Text size={100}>{cloudName}</Text>
                             </TreeItemLayout>
                             {renderRegionTree(cloudValue, `${pathPrefix}/${cloudName}`)}
                         </TreeItem>
@@ -780,7 +774,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                     )
                                 }
                             >
-                                {userEmail}
+                               <Text size={100}>{userEmail}</Text>
                             </TreeItemLayout>
                             {renderCloudTree(userValue, `${pathPrefix}/${userEmail}`)}
                         </TreeItem>
