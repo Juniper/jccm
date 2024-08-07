@@ -34,12 +34,13 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
    - Double-click the downloaded `.dmg` file.
    - Drag and drop the JCCM application to the `Applications` folder.
 
-3. Resolve macOS Gatekeeper issue:
-   - macOS Gatekeeper might prevent the application from running, showing an error that the app is "damaged and can’t be opened." This happens because the app is from an unidentified developer.
-   - To fix this, open the terminal and run the following command to remove the quarantine attribute:
-     ```bash
-     xattr -cr /Applications/Juniper\ Cloud\ Connection\ Manager.app
-     ```
+3. Resolve macOS Gatekeeper Issue:
+   - The Juniper Cloud Connection Manager (jccm) app is signed and notarized by Apple, so it should not typically face issues with macOS Gatekeeper, which are usually associated with apps from unidentified developers.
+
+   - ***However, if you encounter an issue*** where macOS Gatekeeper prevents the application from running, displaying an error that the app is "damaged and can’t be opened," you can resolve this by manually removing the quarantine attribute. Open the Terminal and run the following command:
+      ```bash
+      xattr -cr /Applications/Juniper\ Cloud\ Connection\ Manager.app
+      ```
 
 4. Run the JCCM application from the `Applications` folder.
 
