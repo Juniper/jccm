@@ -33,16 +33,17 @@ jobs:
                   python3.9 -m ensurepip
                   python3.9 -m pip install --upgrade pip
                   python3.9 -m pip install setuptools
-                  source myenv/bin/activate
               working-directory: ./jccm
 
             - name: Install dependencies
               run: |
+                  source myenv/bin/activate
                   npm install
               working-directory: ./jccm
 
             - name: Install appdmg
               run: |
+                  source myenv/bin/activate
                   npm install --save-dev appdmg
               working-directory: ./jccm
 
@@ -78,21 +79,25 @@ jobs:
 
             - name: Build DMG (arm64)
               run: |
+                  source myenv/bin/activate
                   npm run make:arm64-darwin-dmg
               working-directory: ./jccm
 
             - name: Build DMG (x64)
               run: |
+                  source myenv/bin/activate
                   npm run make:x64-darwin-dmg
               working-directory: ./jccm
 
             - name: Build PKG (arm64)
               run: |
+                  source myenv/bin/activate
                   npm run make:arm64-darwin-pkg
               working-directory: ./jccm
 
             - name: Build PKG (x64)
               run: |
+                  source myenv/bin/activate
                   npm run make:x64-darwin-pkg
               working-directory: ./jccm
 
