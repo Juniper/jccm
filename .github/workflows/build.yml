@@ -15,6 +15,7 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
           DEBUG: electron-osx-sign*,electron-notarize*  
+          
         steps:
             - name: Check out repository
               uses: actions/checkout@v2
@@ -32,18 +33,17 @@ jobs:
                   python3.9 -m ensurepip
                   python3.9 -m pip install --upgrade pip
                   python3.9 -m pip install setuptools
+                  source myenv/bin/activate
               working-directory: ./jccm
 
             - name: Install dependencies
               run: |
-                  source myenv/bin/activate
-                  npm ci
+                  npm install
               working-directory: ./jccm
 
             - name: Install appdmg
               run: |
-                  source myenv/bin/activate
-                  npm ci --save-dev appdmg
+                  npm install --save-dev appdmg
               working-directory: ./jccm
 
             - name: Install signing certificate
@@ -98,11 +98,6 @@ jobs:
 
             - name: Notarize, and Staple packages
               run: ./scripts/notarize-staple-pkg.sh
-              env:
-                  APPLE_ID: ${{ secrets.APPLE_ID }}
-                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-                  APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-                  DEBUG: electron-osx-sign*,electron-notarize*
               working-directory: ./jccm
 
             - name: Upload macOS artifacts
@@ -126,7 +121,7 @@ jobs:
                   node-version: '20.10.0'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm install
               working-directory: ./jccm
 
             - name: Build and package (x64)
