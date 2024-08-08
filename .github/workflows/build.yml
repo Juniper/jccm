@@ -45,15 +45,8 @@ jobs:
                   security import installing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.INSTALLING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
 
                   echo "Importing Apple Root and Developer ID Authority certificates..."
-                  cp "certificates/AppleRootCA.cer" .
-                  cp "certificates/DeveloperIDCertificationAuthority.cer" .
-                  cp "certificates/DeveloperIDCertificationAuthority.pem" .
-
-                  pwd
-                  ls -l
-                  security import AppleRootCA.cer -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
-                  security import DeveloperIDCertificationAuthority.cer -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
-
+                  security import "certificates/Apple Root CA.cer" -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
+                  security import "certificates/Developer ID Certification Authority.cer" -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
 
                   echo "Listing keychains..."
                   security list-keychains -s $KEYCHAIN_NAME
@@ -93,25 +86,50 @@ jobs:
               run: |
                   source myenv/bin/activate
                   npm run make:arm64-darwin-dmg
+                  ls -l ./out/make
               working-directory: ./jccm
 
             - name: Build DMG (x64)
               run: |
                   source myenv/bin/activate
                   npm run make:x64-darwin-dmg
+                  ls -l ./out/make
               working-directory: ./jccm
 
-            - name: Build PKG (arm64)
+            - name: Product build - PKG (arm64)
               run: |
-                  source myenv/bin/activate
-                  npm run make:arm64-darwin-pkg
+                  APP_NAME=$(jq -r .productName package.json)
+                  productbuild --component "./out/${APP_NAME}-darwin-arm64/${APP_NAME}.app" \
+                              /Applications \
+                              --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
+                              ./out/make/jccm2-darwin-arm64.pkg
+
               working-directory: ./jccm
 
-            - name: Build PKG (x64)
+            - name: Product build - PKG (x64)
               run: |
-                  source myenv/bin/activate
-                  npm run make:x64-darwin-pkg
+                  APP_NAME=$(jq -r .productName package.json)
+                  productbuild --component "./out/${APP_NAME}-darwin-x64/${APP_NAME}.app" \
+                              /Applications \
+                              --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
+                              ./out/make/jccm2-darwin-x64.pkg
+
               working-directory: ./jccm
+
+
+            # - name: Build PKG (arm64)
+            #   run: |
+            #       source myenv/bin/activate
+            #       npm run make:arm64-darwin-pkg
+            #       ls -l ./out/make
+            #   working-directory: ./jccm
+
+            # - name: Build PKG (x64)
+            #   run: |
+            #       source myenv/bin/activate
+            #       npm run make:x64-darwin-pkg
+            #       ls -l ./out/make
+            #   working-directory: ./jccm
 
             - name: Notarize, and Staple packages
               run: ./scripts/notarize-staple-pkg.sh
