@@ -20,33 +20,6 @@ jobs:
             - name: Check out repository
               uses: actions/checkout@v2
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v2
-              with:
-                  node-version: '20.10.0'
-
-            - name: Install Python and set up venv
-              run: |
-                  brew install python@3.9
-                  python3.9 -m venv myenv
-                  source myenv/bin/activate
-                  python3.9 -m ensurepip
-                  python3.9 -m pip install --upgrade pip
-                  python3.9 -m pip install setuptools
-              working-directory: ./jccm
-
-            - name: Install dependencies
-              run: |
-                  source myenv/bin/activate
-                  npm install
-              working-directory: ./jccm
-
-            - name: Install appdmg
-              run: |
-                  source myenv/bin/activate
-                  npm install --save-dev appdmg
-              working-directory: ./jccm
-
             - name: Install signing certificate
               run: |
                   KEYCHAIN_NAME=build.keychain
@@ -83,6 +56,33 @@ jobs:
 
                   echo "Setting key partition list..."
                   security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+              working-directory: ./jccm
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '20.10.0'
+
+            - name: Install Python and set up venv
+              run: |
+                  brew install python@3.9
+                  python3.9 -m venv myenv
+                  source myenv/bin/activate
+                  python3.9 -m ensurepip
+                  python3.9 -m pip install --upgrade pip
+                  python3.9 -m pip install setuptools
+              working-directory: ./jccm
+
+            - name: Install dependencies
+              run: |
+                  source myenv/bin/activate
+                  npm install
+              working-directory: ./jccm
+
+            - name: Install appdmg
+              run: |
+                  source myenv/bin/activate
+                  npm install --save-dev appdmg
               working-directory: ./jccm
 
             - name: Build DMG (arm64)
