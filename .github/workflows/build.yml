@@ -74,6 +74,7 @@ jobs:
             - name: Build and package (arm64 and x64)
               env:
                   APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_DEVELOPER_NAME: ${{ secrets.APPLE_DEVELOPER_NAME }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
                   APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
               run: |
