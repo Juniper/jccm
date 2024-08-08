@@ -70,6 +70,11 @@ jobs:
                   echo "Importing certificates..."
                   security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
                   security import installing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.INSTALLING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+
+                  echo "Importing Apple Root and Developer ID Authority certificates..."
+                  pwd
+                  ls -l 
+
                   security import "./certificates/Apple Root CA.cer" -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
                   security import "./certificates/Developer ID Certification Authority.cer" -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 
