@@ -8,12 +8,6 @@
     "start": "pkill -9 node; nodemon --watch ./src --ext js,json --ignore ./src/Frontend/ --exec 'electron-forge start'",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "make:dmg": "electron-forge make --platform=darwin --arch=arm64 --arch=x64 --targets=@electron-forge/maker-dmg",
-    "make:pkg": "electron-forge make --platform=darwin --arch=arm64 --arch=x64 --targets=@electron-forge/maker-pkg",  
-    "make:arm64-darwin-dmg": "electron-forge make --platform=darwin --arch=arm64 --targets=@electron-forge/maker-dmg",
-    "make:x64-darwin-dmg": "electron-forge make --platform=darwin --arch=x64 --targets=@electron-forge/maker-dmg",
-    "make:arm64-darwin-pkg": "electron-forge make --platform=darwin --arch=arm64 --targets=@electron-forge/maker-pkg",
-    "make:x64-darwin-pkg": "electron-forge make --platform=darwin --arch=x64 --targets=@electron-forge/maker-pkg",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
   },
@@ -21,7 +15,6 @@
     "@electron-forge/cli": "^7.4.0",
     "@electron-forge/maker-deb": "^7.4.0",
     "@electron-forge/maker-dmg": "^7.4.0",
-    "@electron-forge/maker-pkg": "^7.4.0",
     "@electron-forge/maker-rpm": "^7.4.0",
     "@electron-forge/maker-squirrel": "^7.4.0",
     "@electron-forge/maker-zip": "^7.4.0",
@@ -29,7 +22,6 @@
     "@electron-forge/plugin-fuses": "^7.4.0",
     "@electron-forge/plugin-webpack": "^7.4.0",
     "@electron/fuses": "^1.8.0",
-    "@electron/universal": "^2.0.1",
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
     "concurrently": "^8.2.2",
     "css-loader": "^6.0.0",
@@ -38,9 +30,7 @@
     "nodemon": "^3.1.0",
     "stream-browserify": "^3.0.0",
     "style-loader": "^3.0.0",
-    "svg-inline-loader": "^0.8.2",
-    "uglify-js": "^3.19.1",
-    "webpack-node-externals": "^3.0.0"
+    "svg-inline-loader": "^0.8.2"
   },
   "keywords": [],
   "author": {
