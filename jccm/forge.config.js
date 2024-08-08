@@ -6,12 +6,14 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 console.log(`Current working directory: ${process.cwd()}`);
 
 const entitlements = '/Users/srho/electron-test/juniper-jccm-project/jccm/entitlements.plist';
+
 module.exports = {
     packagerConfig: {
         asar: true,
         icon: './assets/icons/AppIcon', // Path without the extension
         osxSign: {
             'hardened-runtime': true,
+            identity: `Developer ID Application: ${process.env.APPLE_DEVELOPER_NAME} (${process.env.APPLE_DEVELOPER_TEAM_ID})`,
         },
         osxNotarize: {
             appleId: process.env.APPLE_ID,
@@ -35,28 +37,6 @@ module.exports = {
                 setupMsi: 'jccm-windows-x64-setup.msi', // Name for the MSI installer
             },
         },
-        // {
-        //   name: '@electron-forge/maker-zip',
-        //   platforms: ['darwin'],
-        //   config: {
-        //     arch: 'arm64', // Architecture for macOS arm64
-        //     icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Icon for macOS
-        //     overwrite: true,
-        //     out: path.join(__dirname, 'out/make/darwin-arm64'),
-        //     name: 'jccm-darwin-arm64',
-        //   },
-        // },
-        // {
-        //   name: '@electron-forge/maker-zip',
-        //   platforms: ['darwin'],
-        //   config: {
-        //     arch: 'x64', // Architecture for macOS x64
-        //     icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Icon for macOS
-        //     overwrite: true,
-        //     out: path.join(__dirname, 'out/make/darwin-x64'),
-        //     name: 'jccm-darwin-x64',
-        //   },
-        // },
         {
             name: '@electron-forge/maker-deb',
             config: {
@@ -99,6 +79,29 @@ module.exports = {
                 arch: 'x64',
             },
         },
+        {
+            name: '@electron-forge/maker-pkg',
+            config: {
+                identity: `Developer ID Installer: ${process.env.APPLE_DEVELOPER_NAME} (${process.env.APPLE_DEVELOPER_TEAM_ID})`,
+                overwrite: true,
+                out: path.join(__dirname, 'out/make/macos-pkg'),
+                name: 'jccm-darwin-arm64',
+                icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
+                arch: 'arm64',
+            }
+        },
+        {
+            name: '@electron-forge/maker-pkg',
+            config: {
+                identity: `Developer ID Installer: ${process.env.APPLE_DEVELOPER_NAME} (${process.env.APPLE_DEVELOPER_TEAM_ID})`,
+                overwrite: true,
+                out: path.join(__dirname, 'out/make/macos-pkg'),
+                name: 'jccm-darwin-x64',
+                icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
+                arch: 'x64',
+            }
+        }
+
     ],
     plugins: [
         {

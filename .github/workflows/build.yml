@@ -50,6 +50,9 @@ jobs:
                   echo "Decode signing certificate..."
                   echo "${{ secrets.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
 
+                  echo "Decode installing certificate..."
+                  echo "${{ secrets.INSTALLING_CERTIFICATE }}" | base64 --decode > installing_certificate.p12
+
                   echo "Creating keychain..."
                   security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
@@ -59,8 +62,9 @@ jobs:
                   echo "Unlocking keychain..."
                   security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
-                  echo "Importing certificate..."
+                  echo "Importing certificates..."
                   security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+                  security import installing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
 
                   echo "Listing keychains..."
                   security list-keychains -s $KEYCHAIN_NAME
@@ -78,13 +82,46 @@ jobs:
                   npm run make
               working-directory: ./jccm
     
+            - name: Notarize, and Staple packages
+              env:
+                APPLE_ID: ${{ secrets.APPLE_ID }}
+                APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+                APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+              run: |
+                  notarize_and_verify() {
+                      architecture=$1
+                      pkg_path="./out/make/jccm-darwin-$architecture.pkg"
+
+                      echo "Submitting $pkg_path for Notarization..."
+                      xcrun notarytool submit $pkg_path --keychain-profile jccm --wait
+
+                      echo "Stapling the Notarization Ticket to $pkg_path..."
+                      xcrun stapler staple $pkg_path
+
+                      echo "Verifying the Notarization of $pkg_path..."
+                      spctl -a -t install -vv $pkg_path
+                  }
+
+                  # Log in to Notarytool
+                  echo "Storing notary credentials..."
+                  xcrun notarytool store-credentials jccm --apple-id ${APPLE_ID} --team-id ${APPLE_DEVELOPER_TEAM_ID} --password ${APPLE_APP_SPECIFIC_PASSWORD}
+
+                  # Notarize and verify for both architectures
+                  notarize_and_verify "arm64"
+                  notarize_and_verify "x64"
+              
+              working-directory: ./jccm
+      
+      
             - name: Upload macOS artifacts
               uses: actions/upload-artifact@v2
               with:
                   name: macos-installers
                   path: |
                     ./jccm/out/make/jccm-darwin-x64.dmg
+                    ./jccm/out/make/jccm-darwin-x64.pkg
                     ./jccm/out/make/jccm-darwin-arm64.dmg
+                    ./jccm/out/make/jccm-darwin-arm64.pkg
 
     build-windows:
         needs: build-macos
