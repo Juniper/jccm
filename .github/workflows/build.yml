@@ -51,9 +51,8 @@ jobs:
 
                   pwd
                   ls -l
-
-                  security add-trusted-cert -d -r trustAsRoot -k "$KEYCHAIN_PATH" DeveloperIDCertificationAuthority.cer
-                  security add-trusted-cert -d -r trustAsRoot -k "$KEYCHAIN_PATH" AppleRootCA.cer
+                  security import AppleRootCA.cer -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
+                  security import DeveloperIDCertificationAuthority.cer -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
 
 
                   echo "Listing keychains..."
