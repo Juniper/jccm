@@ -46,10 +46,11 @@ jobs:
 
                   echo "Importing Apple Root and Developer ID Authority certificates..."
                   pwd
-                  ls -l 
+                  cp "certificates/AppleRootCA.cer" .
+                  cp "certificates/DeveloperID CertificationAuthority.cer" .
 
-                  security import "certificates/Apple Root CA.cer" -k "$KEYCHAIN_PATH"
-                  security import "certificates/Developer ID Certification Authority.cer" -k "$KEYCHAIN_PATH"
+                  security import AppleRootCA.cer -k "$KEYCHAIN_PATH"
+                  security import DeveloperIDCertificationAuthority.cer -k "$KEYCHAIN_PATH"
 
                   echo "Listing keychains..."
                   security list-keychains -s $KEYCHAIN_NAME
