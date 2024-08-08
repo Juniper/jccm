@@ -25,24 +25,60 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
 
 ## Installation
 
-1. Download the appropriate installer for your system from the GitHub releases page:
-   - For Intel-based macOS: [Download jccm-darwin-x64.dmg](https://github.com/Juniper/jccm/releases/latest/download/jccm-darwin-x64.dmg)
-   - For ARM-based macOS: [Download jccm-darwin-arm64.dmg](https://github.com/Juniper/jccm/releases/latest/download/jccm-darwin-arm64.dmg)
-   - For Intel-based Windows: [Download jccm-windows-x64-setup.exe](https://github.com/Juniper/jccm/releases/latest/download/jccm-windows-x64-setup.exe)
+### Download
 
-2. Install the application:
+Choose the appropriate installer for your system from the options below. macOS users are recommended to use PKG installers for a more streamlined installation experience.
+
+#### macOS
+
+**PKG Installers** (Recommended)
+- [Download for Intel-based Macs (x64)](../../releases/latest/download/jccm-darwin-x64.pkg)
+- [Download for ARM-based Macs (arm64)](../../releases/latest/download/jccm-darwin-arm64.pkg)
+
+**DMG Installers**
+- [Download for Intel-based Macs (x64)](../../releases/latest/download/jccm-darwin-x64.dmg)
+- [Download for ARM-based Macs (arm64)](../../releases/latest/download/jccm-darwin-arm64.dmg)
+
+**Why PKG over DMG?**
+
+- **Seamless Integration**: PKGs allow system-level configurations during installation, ensuring optimal setup without manual tweaks.
+
+- **Script Execution**: They support pre and post-installation scripts, enabling automatic configuration and cleanups, crucial for streamlined updates.
+
+- **Automatic Updates**: PKG files can leverage macOS's native update mechanisms, facilitating automatic software updates without user intervention.
+
+- **Enterprise Friendly**: Ideal for managed environments where software needs remote deployment and specific configurations.
+
+- **Customizable Installation**: Offers users choices during installation, like selecting components and setting installation locations, enhancing flexibility.
+
+#### Windows
+
+- [Download for Intel-based PCs (x64)](../../releases/latest/download/jccm-windows-x64-setup.exe)
+
+### Install
+
+#### macOS
+
+1. **For PKG Files:**
+   - Double-click the downloaded `.pkg` file and follow the on-screen instructions.
+
+2. **For DMG Files:**
    - Double-click the downloaded `.dmg` file.
-   - Drag and drop the JCCM application to the `Applications` folder.
+   - Drag and drop the JCCM application into the `Applications` folder.
 
-3. Resolve macOS Gatekeeper Issue:
-   - The Juniper Cloud Connection Manager (jccm) app is signed and notarized by Apple, so it should not typically face issues with macOS Gatekeeper, which are usually associated with apps from unidentified developers.
+#### Windows
 
-   - ***However, if you encounter an issue*** where macOS Gatekeeper prevents the application from running, displaying an error that the app is "damaged and can’t be opened," you can resolve this by manually removing the quarantine attribute. Open the Terminal and run the following command:
-      ```bash
-      xattr -cr /Applications/Juniper\ Cloud\ Connection\ Manager.app
-      ```
+1. Double-click the downloaded `.exe` file and follow the installation wizard instructions.
 
-4. Run the JCCM application from the `Applications` folder.
+### Post-Installation
+
+#### macOS Gatekeeper
+
+- The Juniper Cloud Connection Manager (jccm) app is signed and notarized by Apple, so it should not typically face issues with macOS Gatekeeper, which are usually associated with apps from unidentified developers.
+
+- **If an issue arises**, where macOS Gatekeeper prevents the application from running, displaying an error that the app is "damaged and can’t be opened," you can resolve this by manually removing the quarantine attribute. Open the Terminal and run the following command:
+  ```bash
+  xattr -cr /Applications/Juniper\ Cloud\ Connection\ Manager.app
 
 ## Inventory Excel File Format
 
