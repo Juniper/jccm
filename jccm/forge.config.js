@@ -22,6 +22,28 @@ module.exports = {
     rebuildConfig: {},
     makers: [
         {
+            name: '@electron-forge/maker-pkg',
+            config: {
+                identity: 'Developer ID Installer: Simon Rho (9B54K458K9)',
+                overwrite: true,
+                out: path.join(__dirname, 'out/make/darwin-arm64'),
+                name: 'jccm-darwin-arm64',
+                icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
+                arch: 'arm64'
+            }
+        },
+        {
+            name: '@electron-forge/maker-pkg',
+            config: {
+                identity: 'Developer ID Installer: Simon Rho (9B54K458K9)',
+                overwrite: true,
+                out: path.join(__dirname, 'out/make/darwin-x64'),
+                name: 'jccm-darwin-x64',
+                icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
+                arch: 'x64'
+            }
+        },        
+        {
             name: '@electron-forge/maker-squirrel',
             config: {
                 iconUrl: `file://${path.resolve(__dirname, 'assets/icons/AppIcon.ico')}`, // Local file URL for Windows
@@ -77,17 +99,6 @@ module.exports = {
                 arch: 'x64',
             },
         },
-        // {
-        //     name: '@electron-forge/maker-pkg',
-        //     config: {
-        //         identity: `Developer ID Installer: ${process.env.APPLE_DEVELOPER_NAME} (${process.env.APPLE_DEVELOPER_TEAM_ID})`,
-        //         overwrite: true,
-        //         out: path.join(__dirname, 'out/make/macos-pkg'),
-        //         name: 'jccm-macos-pkg',
-        //         icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
-        //         arch: ['x64', 'arm64'] // Support both architectures
-        //     }
-        // }
     ],
     plugins: [
         {
