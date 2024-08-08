@@ -50,8 +50,8 @@ jobs:
                   pwd
                   ls -l
 
-                  security import AppleRootCA.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
                   security import DeveloperIDCertificationAuthority.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+                  security import AppleRootCA.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 
                   echo "Listing keychains..."
                   security list-keychains -s $KEYCHAIN_NAME
