@@ -45,12 +45,13 @@ jobs:
                   security import installing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.INSTALLING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
 
                   echo "Importing Apple Root and Developer ID Authority certificates..."
-                  pwd
                   cp "certificates/AppleRootCA.cer" .
                   cp "certificates/DeveloperIDCertificationAuthority.cer" .
+                  pwd
+                  ls -l
 
-                  security import AppleRootCA.cer -k "$KEYCHAIN_PATH"
-                  security import DeveloperIDCertificationAuthority.cer -k "$KEYCHAIN_PATH"
+                  security import AppleRootCA.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+                  security import DeveloperIDCertificationAuthority.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 
                   echo "Listing keychains..."
                   security list-keychains -s $KEYCHAIN_NAME
