@@ -53,6 +53,9 @@ jobs:
 
                   echo "Setting key partition list..."
                   security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+                  echo "Find identity..."
+                  security find-identity -p codesigning -v                  
               working-directory: ./jccm
 
             - name: Set up Node.js
@@ -91,15 +94,15 @@ jobs:
                   ls -l ./out ./out/make
               working-directory: ./jccm
 
-            - name: Build PKG (x64)
-              run: |
-                  APP_NAME=$(jq -r .productName package.json)
-                  productbuild --component "./out/${APP_NAME}-darwin-x64/${APP_NAME}.app" \
-                              /Applications \
-                              --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
-                              ./out/make/jccm2-darwin-x64.pkg
-                  ls -l ./out ./out/make
-              working-directory: ./jccm
+            # - name: Build PKG (x64)
+            #   run: |
+            #       APP_NAME=$(jq -r .productName package.json)
+            #       productbuild --component "./out/${APP_NAME}-darwin-x64/${APP_NAME}.app" \
+            #                   /Applications \
+            #                   --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
+            #                   ./out/make/jccm-darwin-x64.pkg
+            #       ls -l ./out ./out/make
+            #   working-directory: ./jccm
 
 
 
@@ -113,15 +116,15 @@ jobs:
               working-directory: ./jccm
 
 
-            - name: Build PKG (arm64)
-              run: |
-                  APP_NAME=$(jq -r .productName package.json)
-                  productbuild --component "./out/${APP_NAME}-darwin-arm64/${APP_NAME}.app" \
-                              /Applications \
-                              --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
-                              ./out/make/jccm2-darwin-arm64.pkg
-                  ls -l ./out ./out/make
-              working-directory: ./jccm
+            # - name: Build PKG (arm64)
+            #   run: |
+            #       APP_NAME=$(jq -r .productName package.json)
+            #       productbuild --component "./out/${APP_NAME}-darwin-arm64/${APP_NAME}.app" \
+            #                   /Applications \
+            #                   --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
+            #                   ./out/make/jccm-darwin-arm64.pkg
+            #       ls -l ./out ./out/make
+            #   working-directory: ./jccm
 
 
             # - name: Build PKG (arm64)
