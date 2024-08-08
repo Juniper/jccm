@@ -42,6 +42,7 @@
     "@babel/core": "^7.24.4",
     "@babel/preset-env": "^7.24.4",
     "@babel/preset-react": "^7.24.1",
+    "@electron-forge/maker-pkg": "^7.4.0",
     "@fluentui/react-components": "^9.49.2",
     "@fluentui/react-icons": "^2.0.239",
     "@xterm/addon-fit": "^0.10.0",
