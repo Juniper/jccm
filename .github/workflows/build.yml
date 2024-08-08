@@ -52,8 +52,8 @@ jobs:
                   pwd
                   ls -l
 
-                  security add-trusted-cert -d -r trustAsRoot -k -k "$KEYCHAIN_PATH" DeveloperIDCertificationAuthority.cer
-                  security add-trusted-cert -d -r trustAsRoot -k -k "$KEYCHAIN_PATH" AppleRootCA.cer
+                  security add-trusted-cert -d -r trustAsRoot -k "$KEYCHAIN_PATH" DeveloperIDCertificationAuthority.cer
+                  security add-trusted-cert -d -r trustAsRoot -k "$KEYCHAIN_PATH" AppleRootCA.cer
 
 
                   echo "Listing keychains..."
