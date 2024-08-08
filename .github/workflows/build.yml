@@ -47,9 +47,12 @@ jobs:
                   echo "Importing Apple Root and Developer ID Authority certificates..."
                   cp "certificates/AppleRootCA.cer" .
                   cp "certificates/DeveloperIDCertificationAuthority.cer" .
+                  cp "certificates/DeveloperIDCertificationAuthority.pem" .
+
                   pwd
                   ls -l
 
+                  security import DeveloperIDCertificationAuthority.pem -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
                   security import DeveloperIDCertificationAuthority.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
                   security import AppleRootCA.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 
