@@ -9,13 +9,13 @@ on:
 jobs:
     build-macos:
         runs-on: macos-13
-        env:  # Define environment variables for all steps in this job
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_DEVELOPER_NAME: ${{ secrets.APPLE_DEVELOPER_NAME }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-          DEBUG: electron-osx-sign*,electron-notarize*  
-          
+        env: # Define environment variables for all steps in this job
+            APPLE_ID: ${{ secrets.APPLE_ID }}
+            APPLE_DEVELOPER_NAME: ${{ secrets.APPLE_DEVELOPER_NAME }}
+            APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+            APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+            DEBUG: electron-osx-sign*,electron-notarize*,electron-builder*
+
         steps:
             - name: Check out repository
               uses: actions/checkout@v2
@@ -70,12 +70,15 @@ jobs:
                   echo "Importing certificates..."
                   security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
                   security import installing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.INSTALLING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+                  security import "./certificates/Apple Root CA.cer" -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+                  security import "./certificates/Developer ID Certification Authority.cer" -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 
                   echo "Listing keychains..."
                   security list-keychains -s $KEYCHAIN_NAME
 
                   echo "Setting key partition list..."
                   security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+              working-directory: ./jccm
 
             - name: Build DMG (arm64)
               run: |
