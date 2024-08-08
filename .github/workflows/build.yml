@@ -8,8 +8,13 @@ on:
 
 jobs:
     build-macos:
-        runs-on: macos-latest
-        if: ${{ github.event.head_commit.message != 'Automated commit by GitHub Actions' }}
+        runs-on: macos-13
+        env:  # Define environment variables for all steps in this job
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_DEVELOPER_NAME: ${{ secrets.APPLE_DEVELOPER_NAME }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+          DEBUG: electron-osx-sign*,electron-notarize*  
         steps:
             - name: Check out repository
               uses: actions/checkout@v2
@@ -71,16 +76,24 @@ jobs:
                   echo "Setting key partition list..."
                   security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
-            - name: Build and package (arm64 and x64)
-              env:
-                  APPLE_ID: ${{ secrets.APPLE_ID }}
-                  APPLE_DEVELOPER_NAME: ${{ secrets.APPLE_DEVELOPER_NAME }}
-                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-                  APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-                  DEBUG: electron-osx-sign*,electron-notarize*
+            - name: Build DMG (arm64)
               run: |
-                  source myenv/bin/activate
-                  npm run make
+                  npm run make:arm64-darwin-dmg
+              working-directory: ./jccm
+
+            - name: Build DMG (x64)
+              run: |
+                  npm run make:x64-darwin-dmg
+              working-directory: ./jccm
+
+            - name: Build PKG (arm64)
+              run: |
+                  npm run make:arm64-darwin-pkg
+              working-directory: ./jccm
+
+            - name: Build PKG (x64)
+              run: |
+                  npm run make:x64-darwin-pkg
               working-directory: ./jccm
 
             - name: Notarize, and Staple packages
@@ -97,10 +110,8 @@ jobs:
               with:
                   name: macos-installers
                   path: |
-                      ./jccm/out/make/jccm-darwin-x64.dmg
-                      ./jccm/out/make/jccm-darwin-x64.pkg
-                      ./jccm/out/make/jccm-darwin-arm64.dmg
-                      ./jccm/out/make/jccm-darwin-arm64.pkg
+                      ./jccm/out/make/*.dmg
+                      ./jccm/out/make/*.pkg
 
     build-windows:
         needs: build-macos

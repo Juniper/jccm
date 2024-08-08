@@ -8,6 +8,12 @@
     "start": "pkill -9 node; nodemon --watch ./src --ext js,json --ignore ./src/Frontend/ --exec 'electron-forge start'",
     "package": "electron-forge package",
     "make": "electron-forge make",
+    "make:dmg": "electron-forge make --targets=@electron-forge/maker-dmg",
+    "make:pkg": "electron-forge make --targets=@electron-forge/maker-pkg",  
+    "make:arm64-darwin-dmg": "electron-forge make --platform=darwin --arch=arm64 --targets=@electron-forge/maker-dmg",
+    "make:x64-darwin-dmg": "electron-forge make --platform=darwin --arch=x64 --targets=@electron-forge/maker-dmg",
+    "make:arm64-darwin-pkg": "electron-forge make --platform=darwin --arch=arm64 --targets=@electron-forge/maker-pkg",
+    "make:x64-darwin-pkg": "electron-forge make --platform=darwin --arch=x64 --targets=@electron-forge/maker-pkg",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
   },

@@ -66,6 +66,7 @@ module.exports = {
                 out: path.join(__dirname, 'out/make/darwin-arm64'),
                 name: 'jccm-darwin-arm64',
                 arch: 'arm64',
+                platforms: ['darwin'],
             },
         },
         {
@@ -77,6 +78,7 @@ module.exports = {
                 out: path.join(__dirname, 'out/make/darwin-x64'),
                 name: 'jccm-darwin-x64',
                 arch: 'x64',
+                platforms: ['darwin'],
             },
         },
         {
@@ -88,6 +90,7 @@ module.exports = {
                 name: 'jccm-darwin-arm64',
                 icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
                 arch: 'arm64',
+                platforms: ['darwin'],
             }
         },
         {
@@ -99,6 +102,7 @@ module.exports = {
                 name: 'jccm-darwin-x64',
                 icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
                 arch: 'x64',
+                platforms: ['darwin'],
             }
         }
 
