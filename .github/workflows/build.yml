@@ -77,6 +77,7 @@ jobs:
                   APPLE_DEVELOPER_NAME: ${{ secrets.APPLE_DEVELOPER_NAME }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
                   APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+                  DEBUG: electron-osx-sign*,electron-notarize*
               run: |
                   source myenv/bin/activate
                   npm run make
@@ -88,6 +89,7 @@ jobs:
                   APPLE_ID: ${{ secrets.APPLE_ID }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
                   APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+                  DEBUG: electron-osx-sign*,electron-notarize*
               working-directory: ./jccm
 
             - name: Upload macOS artifacts
