@@ -9,54 +9,10 @@ on:
 jobs:
     build-macos:
         runs-on: macos-latest
-        env: # Define environment variables for all steps in this job
-            APPLE_ID: ${{ secrets.APPLE_ID }}
-            APPLE_DEVELOPER_NAME: ${{ secrets.APPLE_DEVELOPER_NAME }}
-            APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-            APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-            DEBUG: electron-osx-sign*,electron-notarize*,electron-builder*
-
+        if: ${{ github.event.head_commit.message != 'Automated commit by GitHub Actions' }}
         steps:
             - name: Check out repository
               uses: actions/checkout@v2
-
-            - name: Install signing certificate
-              run: |
-                  KEYCHAIN_NAME=build.keychain
-                  KEYCHAIN_PASSWORD=$(openssl rand -base64 12)
-
-                  echo "Decode signing certificate..."
-                  echo "${{ secrets.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
-
-                  echo "Decode installing certificate..."
-                  echo "${{ secrets.INSTALLING_CERTIFICATE }}" | base64 --decode > installing_certificate.p12
-
-                  echo "Creating keychain..."
-                  security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-
-                  echo "Setting default keychain..."
-                  security default-keychain -s $KEYCHAIN_NAME
-
-                  echo "Unlocking keychain..."
-                  security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-
-                  echo "Importing certificates..."
-                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-                  security import installing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.INSTALLING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-
-                  echo "Importing Apple Root and Developer ID Authority certificates..."
-                  security import "certificates/Apple Root CA.cer" -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
-                  security import "certificates/Developer ID Certification Authority.cer" -k "$KEYCHAIN_NAME" -T /usr/bin/codesign
-
-                  echo "Listing keychains..."
-                  security list-keychains -s $KEYCHAIN_NAME
-
-                  echo "Setting key partition list..."
-                  security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-
-                  echo "Find identity..."
-                  security find-identity -p codesigning -v                  
-              working-directory: ./jccm
 
             - name: Set up Node.js
               uses: actions/setup-node@v2
@@ -85,74 +41,41 @@ jobs:
                   npm install --save-dev appdmg
               working-directory: ./jccm
 
-
-
-            - name: Build DMG (x64)
+            - name: Install signing certificate
+              run: |
+                  KEYCHAIN_NAME=build.keychain
+                  KEYCHAIN_PASSWORD=$(openssl rand -base64 12)
+                  echo "Decode signing certificate..."
+                  echo "${{ secrets.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
+                  echo "Creating keychain..."
+                  security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                  echo "Setting default keychain..."
+                  security default-keychain -s $KEYCHAIN_NAME
+                  echo "Unlocking keychain..."
+                  security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                  echo "Importing certificate..."
+                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+                  echo "Listing keychains..."
+                  security list-keychains -s $KEYCHAIN_NAME
+                  echo "Setting key partition list..."
+                  security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+            - name: Build and package (arm64 and x64)
+              env:
+                  APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+                  APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
               run: |
                   source myenv/bin/activate
-                  npm run make:x64-darwin-dmg
-                  ls -l ./out ./out/make
+                  npm run make
               working-directory: ./jccm
-
-            # - name: Build PKG (x64)
-            #   run: |
-            #       APP_NAME=$(jq -r .productName package.json)
-            #       productbuild --component "./out/${APP_NAME}-darwin-x64/${APP_NAME}.app" \
-            #                   /Applications \
-            #                   --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
-            #                   ./out/make/jccm-darwin-x64.pkg
-            #       ls -l ./out ./out/make
-            #   working-directory: ./jccm
-
-
-
-
-
-            - name: Build DMG (arm64)
-              run: |
-                  source myenv/bin/activate
-                  npm run make:arm64-darwin-dmg
-                  ls -l ./out ./out/make
-              working-directory: ./jccm
-
-
-            # - name: Build PKG (arm64)
-            #   run: |
-            #       APP_NAME=$(jq -r .productName package.json)
-            #       productbuild --component "./out/${APP_NAME}-darwin-arm64/${APP_NAME}.app" \
-            #                   /Applications \
-            #                   --sign "Developer ID Installer: ${APPLE_DEVELOPER_NAME} (${APPLE_DEVELOPER_TEAM_ID})" \
-            #                   ./out/make/jccm-darwin-arm64.pkg
-            #       ls -l ./out ./out/make
-            #   working-directory: ./jccm
-
-
-            # - name: Build PKG (arm64)
-            #   run: |
-            #       source myenv/bin/activate
-            #       npm run make:arm64-darwin-pkg
-            #       ls -l ./out/make
-            #   working-directory: ./jccm
-
-            # - name: Build PKG (x64)
-            #   run: |
-            #       source myenv/bin/activate
-            #       npm run make:x64-darwin-pkg
-            #       ls -l ./out/make
-            #   working-directory: ./jccm
-
-            # - name: Notarize, and Staple packages
-            #   run: ./scripts/notarize-staple-pkg.sh
-            #   working-directory: ./jccm
 
             - name: Upload macOS artifacts
               uses: actions/upload-artifact@v2
               with:
                   name: macos-installers
                   path: |
-                      ./jccm/out/make/*.dmg
-                      ./jccm/out/make/*.pkg
-
+                      ./jccm/out/make/jccm-darwin-x64.dmg
+                      ./jccm/out/make/jccm-darwin-arm64.dmg
     build-windows:
         needs: build-macos
         runs-on: windows-latest
@@ -180,7 +103,6 @@ jobs:
                   path: |
                       ./jccm/out/make/squirrel.windows/x64/*.exe
                       ./jccm/out/make/squirrel.windows/x64/*.msi
-
     release:
         needs: [build-macos, build-windows]
         runs-on: ubuntu-latest
