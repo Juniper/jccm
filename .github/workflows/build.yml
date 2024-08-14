@@ -1,0 +1,193 @@
+name: Build Electron App
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+jobs:
+    build-macos:
+        runs-on: macos-latest
+        env:
+            APPLE_ID: ${{ secrets.APPLE_ID }}
+            APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+            APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+            DEBUG: electron-osx-sign*,electron-notarize*
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v2
+
+            - name: Install signing certificate
+              run: |
+                  KEYCHAIN_NAME=build.keychain
+                  KEYCHAIN_PASSWORD=$(openssl rand -base64 12)
+
+                  echo "Decode signing certificate..."
+                  echo "${{ secrets.SIGNING_CERTIFICATE }}" | base64 --decode > signing_certificate.p12
+                  echo "${{ secrets.INSTALLING_CERTIFICATE }}" | base64 --decode > installing_certificate.p12
+
+                  echo "Creating keychain..."
+                  security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+                  echo "Setting default keychain..."
+                  security default-keychain -s $KEYCHAIN_NAME
+
+                  echo "Unlocking keychain..."
+                  security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+                  echo "Importing certificate..."
+                  security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+                  security import installing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.INSTALLING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign -T /usr/bin/productbuild
+
+                  echo "Listing keychains..."
+                  security list-keychains -s $KEYCHAIN_NAME
+
+                  echo "Setting key partition list..."
+                  security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+              working-directory: ./jccm
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '20.10.0'
+
+            - name: Install Python and set up venv
+              run: |
+                  brew install python@3.9
+                  python3.9 -m venv myenv
+                  source myenv/bin/activate
+                  python3.9 -m ensurepip
+                  python3.9 -m pip install --upgrade pip
+                  python3.9 -m pip install setuptools
+
+              working-directory: ./jccm
+
+            - name: Install dependencies
+              run: |
+                  source myenv/bin/activate
+                  npm install
+
+              working-directory: ./jccm
+
+            - name: Install appdmg
+              run: |
+                  source myenv/bin/activate
+                  npm install --save-dev appdmg
+
+              working-directory: ./jccm
+
+            - name: Build and package (arm64 and x64)
+              run: |
+                  source myenv/bin/activate
+                  npm run make
+              working-directory: ./jccm
+
+            - name: Notarize and Staple Packages
+              run: |
+                  set -ex  # Exit on error and print commands
+
+                  function notarize_and_verify() {
+                      architecture=$1
+                      pkg_path="./out/make/jccm-darwin-$architecture.pkg"
+
+                      echo "Submitting $pkg_path for Notarization..."
+                      xcrun notarytool submit $pkg_path --keychain-profile jccm --wait
+
+                      echo "Stapling the Notarization Ticket to $pkg_path..."
+                      xcrun stapler staple $pkg_path
+
+                      echo "Verifying the Notarization of $pkg_path..."
+                      spctl -a -t install -vv $pkg_path
+                  }
+
+                  # Log in to Notarytool
+                  echo "Storing notary credentials..."
+                  xcrun notarytool store-credentials jccm --apple-id $APPLE_ID --team-id ${APPLE_DEVELOPER_TEAM_ID} --password ${APPLE_APP_SPECIFIC_PASSWORD}
+
+                  # Notarize and verify for both architectures
+                  notarize_and_verify "arm64"
+                  notarize_and_verify "x64"
+
+                  set +x  # Stop printing commands
+              working-directory: ./jccm
+
+            - name: Upload macOS artifacts
+              uses: actions/upload-artifact@v2
+              with:
+                  name: macos-installers
+                  path: |
+                      ./jccm/out/make/*.dmg
+                      ./jccm/out/make/*.pkg
+
+    build-windows:
+        needs: build-macos
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '20.10.0'
+
+            - name: Install dependencies
+              run: npm install
+              working-directory: ./jccm
+
+            - name: Build and package (x64)
+              run: npm run make -- --platform=win32 --arch=x64
+              working-directory: ./jccm
+
+            - name: Upload windows artifacts
+              uses: actions/upload-artifact@v2
+              with:
+                  name: windows-installers
+                  path: |
+                      ./jccm/out/make/squirrel.windows/x64/*.exe
+                      ./jccm/out/make/squirrel.windows/x64/*.msi
+
+    release:
+        needs: [build-macos, build-windows]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v2
+
+            - name: Read version from package.json
+              run: echo "VERSION=$(jq -r '.version' ./jccm/package.json)" >> $GITHUB_ENV
+
+            - name: Download Artifacts
+              uses: actions/download-artifact@v2
+              with:
+                  path: ./installers
+
+            - name: Install GitHub CLI
+              run: sudo apt-get install gh
+
+            - name: Check for existing release and delete if it exists
+              run: |
+                  if gh release view ${{ env.VERSION }}; then
+                    gh release delete ${{ env.VERSION }} --yes
+                  fi
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Create Release
+              id: create_release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ env.VERSION }}
+                  release_name: 'Release ${{ env.VERSION }}'
+                  draft: false
+                  prerelease: false
+
+            - name: Upload Release Assets
+              run: |
+                  find ./installers -type f -exec echo "Uploading {}..." \; -exec gh release upload ${{ env.VERSION }} "{}" --clobber \;
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
