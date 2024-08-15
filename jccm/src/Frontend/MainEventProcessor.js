@@ -13,7 +13,7 @@ export const MainEventProcessor = () => {
 
     const { importSettings, settings } = useStore();
 
-    const { isUserLoggedIn, setIsUserLoggedIn, user, setUser } = useStore();
+    const { isUserLoggedIn, setIsUserLoggedIn, user, setUser, setIsInventoryLoading } = useStore();
     const { inventory, setInventory } = useStore();
     const { cloudInventory, setCloudInventory } = useStore();
     const { deviceFacts, setDeviceFactsAll, cleanUpDeviceFacts, zeroDeviceFacts } = useStore();
@@ -62,14 +62,22 @@ export const MainEventProcessor = () => {
             }
         };
 
-        const handleCloudInventoryRefresh = async ({ notification = false } = {}) => {
+        const handleCloudInventoryRefresh = async ({ targetOrgs = null, notification = false } = {}) => {
             console.log('Event: "cloud-inventory-refresh"');
 
-            const response = await electronAPI.saGetCloudInventory();
+            // Initialize a timeout for setting the loading state
+            const loadingTimeout = setTimeout(() => {
+                setIsInventoryLoading(true);
+            }, 3000);
+
+            const response = await electronAPI.saGetCloudInventory({targetOrgs});
+
+            clearTimeout(loadingTimeout);
+            setIsInventoryLoading(false);
 
             if (response.cloudInventory) {
                 if (!_.isEqual(cloudInventoryRef.current, response.inventory)) {
-                    console.log('>>>cloudInventory', response.inventory);
+                    // console.log('>>>cloudInventory', response.inventory);
                     setCloudInventory(response.inventory);
                     setCloudInventoryFilterApplied(response.isFilterApplied);
                 }
@@ -119,11 +127,10 @@ export const MainEventProcessor = () => {
         };
 
         const handleUserSessionCheck = async ({ message = '' } = {}) => {
-            console.log(`Event: "user-session-check" ${message}`);
+            console.log(`Event: "user-session-check" ${message.length > 0  ? `-> "${message}"` : ''}`);
             try {
                 const data = await electronAPI.saWhoamiUser();
                 if (data.sessionValid) {
-                    // console.log('user-session-check: data', data);
                     if (!_.isEqual(userRef.current, data.user)) {
                         setUser(data.user);
                         setIsUserLoggedIn(true);
@@ -131,26 +138,24 @@ export const MainEventProcessor = () => {
                     if (currentActiveThemeNameRef.current !== data?.user?.theme) {
                         setCurrentActiveThemeName(data.user.theme);
                     }
-                    if (!_.isEqual(cloudInventoryRef.current, data?.inventory)) {
-                        setCloudInventory(data.inventory);
-                        setCloudInventoryFilterApplied(data.isFilterApplied);
-                    }
+
+                    await handleCloudInventoryRefresh();
                 } else {
                     setUser(null);
-                    setCloudInventory([])
+                    setCloudInventory([]);
                     setIsUserLoggedIn(false);
                     setCurrentActiveThemeName(data.theme);
                 }
             } catch (error) {
                 setUser(null);
-                setCloudInventory([])
+                setCloudInventory([]);
                 setIsUserLoggedIn(false);
                 console.error('Session check error:', error);
             }
         };
 
         const handleDeviceFactsRefresh = async () => {
-            console.log('handleDeviceFactsRefresh');
+            console.log('Event: "device-facts-refresh"');
             const data = await electronAPI.saLoadDeviceFacts();
 
             if (data.deviceFacts) {
@@ -161,7 +166,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleDeviceFactsCleanup = async () => {
-            console.log('handleDeviceFactsCleanup');
+            console.log('Event: "device-facts-cleanup"');
             cleanUpDeviceFacts();
         };
 

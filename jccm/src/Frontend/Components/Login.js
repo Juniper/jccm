@@ -205,10 +205,14 @@ export const Login = ({ isOpen, onClose }) => {
                     return { status: 'two_factor' };
                 } else {
                     console.log('Login successful!');
+                    await eventBus.emit('cloud-inventory-refresh');
+
                     return { status: 'success', message: 'Login successful!', data: data };
                 }
             } else {
                 console.log('Login failed!');
+                await eventBus.emit('cloud-inventory-refresh');
+
                 return { status: 'error', message: 'Login failed!' };
             }
         } catch (error) {
@@ -234,8 +238,6 @@ export const Login = ({ isOpen, onClose }) => {
 
             setIsUserLoggedIn(true);
             setCurrentActiveThemeName(Constants.getActiveThemeName(data?.user?.theme));
-            setCloudInventory(data.inventory);
-            setCloudInventoryFilterApplied(data.isFilterApplied);
 
             onClose();
         } else if (response.status === 'two_factor') {
@@ -315,8 +317,6 @@ export const Login = ({ isOpen, onClose }) => {
 
             setIsUserLoggedIn(true);
             setCurrentActiveThemeName(Constants.getActiveThemeName(data?.user?.theme));
-            setCloudInventory(data.inventory);
-            setCloudInventoryFilterApplied(data.isFilterApplied);
 
             onClose();
         } else {

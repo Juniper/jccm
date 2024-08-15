@@ -51,6 +51,7 @@ import InventoryTreeMenuCloud from './InventoryTreeMenuCloud';
 import OrgFilterMenu from './OrgFilterMenu';
 import InventoryTreeMenuLocal from './InventoryTreeMenuLocal';
 import eventBus from '../Common/eventBus';
+import { RotatingIcon } from './ChangeIcon';
 
 const StackIcon = bundleIcon(StackFilled, StackRegular);
 const CloudIcon = bundleIcon(CloudFilled, CloudRegular);
@@ -75,6 +76,7 @@ const LeftSide = () => {
         cloudInventoryFilterApplied,
         setCloudInventoryFilterApplied,
         currentActiveThemeName,
+        isInventoryLoading,
     } = useStore();
 
     const [selectedTree, setSelectedTree] = useState('local');
@@ -142,13 +144,40 @@ const LeftSide = () => {
                                 Local
                             </Tab>
                             {isUserLoggedIn ? (
-                                <Tab
-                                    id='cloud'
-                                    value='cloud'
-                                    icon={<CloudIcon fontSize='15px' />}
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                    }}
                                 >
-                                    Cloud
-                                </Tab>
+                                    <Tab
+                                        id='cloud'
+                                        value='cloud'
+                                        icon={<CloudIcon fontSize='15px' />}
+                                    >
+                                        Cloud
+                                    </Tab>
+                                    {isInventoryLoading && (
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'row',
+                                                gap: '5px',
+                                                alignItems: 'center',
+                                                leftMargin: '10px',
+                                            }}
+                                        >
+                                            <RotatingIcon
+                                                Icon={ArrowSyncCircleRegular}
+                                                size={12}
+                                                rotationDuration='1000ms'
+                                                color={tokens.colorNeutralForeground2BrandHover}
+                                            />
+                                            <Text size={100}>Loading large cloud inventory...</Text>
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <Tooltip
                                     content='Please login to a cloud service for the cloud inventory display'

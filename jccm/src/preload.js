@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     saWhoamiUser: () => ipcRenderer.invoke('saWhoamiUser'),
     saSetThemeUser: (args) => ipcRenderer.invoke('saSetThemeUser', args),
-    saGetCloudInventory: () => ipcRenderer.invoke('saGetCloudInventory'),
+    saGetCloudInventory: (args) => ipcRenderer.invoke('saGetCloudInventory', args),
     saProxyCall: (args) => ipcRenderer.invoke('saProxyCall', args),
     saOrgFilter: (args) => ipcRenderer.invoke('saOrgFilter', args),
     saGetLocalInventory: () => ipcRenderer.invoke('saGetLocalInventory'),

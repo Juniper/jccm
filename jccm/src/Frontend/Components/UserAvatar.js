@@ -22,7 +22,7 @@ const UserAvatar = () => {
 
     useEffect(() => {
         const intervalId = setInterval(async () => {
-            await eventBus.emit('user-session-check', { message: ':Periodic user session aliveness check' });
+            await eventBus.emit('user-session-check', { message: 'Periodic user session aliveness check' });
         }, 30000);
         return () => clearInterval(intervalId);
     }, []);

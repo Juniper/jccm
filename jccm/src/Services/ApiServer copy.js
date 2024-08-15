@@ -56,7 +56,6 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
         return { inventory: [], isFilterApplied: false };
     }
 
-    const currentInventory = await msGetCloudInventory();
     const inventory = [];
     const orgs = {};
 
@@ -66,16 +65,6 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
             const orgName = v.name;
 
             if (!!orgFilters[orgId]) continue;
-
-            if (targetOrgs !== null && !targetOrgs.includes(orgName)) {
-                // Find the organization in the current inventory with the same orgId
-                const existingOrg = currentInventory.find((org) => org.id === orgId);
-                if (existingOrg) {
-                    // console.log('>>>> Reuse existing org:', JSON.stringify(existingOrg, null, 2));
-                    inventory.push(existingOrg);
-                }
-                continue; // Skip further processing for this organization
-            }
 
             const item = { name: orgName, id: orgId };
 
@@ -89,12 +78,11 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
                 Object.entries(sitesData.data).map(([key, value]) => [value.name, { id: value.id }])
             );
 
-            orgs[orgName] = { id: orgId, sites };
+            orgs[orgName] = { id: v.org_id, sites };
 
             if (sitesData.status === 'success') {
                 item.sites = sitesData.data;
             }
-
             const inventoryData = await acGetCloudInventory(orgId);
 
             if (inventoryData.status === 'success') {
@@ -148,7 +136,6 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
 
                 item.inventory = devices;
             }
-
             inventory.push(item);
         }
     }

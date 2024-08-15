@@ -909,6 +909,12 @@ const InventoryTreeMenuLocal = () => {
             return siteExists && device.path.startsWith(node.value) && !!!cloudDevices[serialNumber];
         });
 
+        const targetOrgs = new Set();
+
+        targetDevices.forEach((device) => {
+            targetOrgs.add(device.organization);
+        });
+
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const rateLimit = 1000 / rate; // Rate in calls per second
         const maxConcurrentCalls = 100; // Maximum number of concurrent async calls
@@ -946,7 +952,7 @@ const InventoryTreeMenuLocal = () => {
         await adoptDeviceFactsWithRateLimit();
 
         setTimeout(async () => {
-            await eventBus.emit('cloud-inventory-refresh', { notification: false });
+            await eventBus.emit('cloud-inventory-refresh', { targetOrgs: Array.from(targetOrgs), notification: false });
         }, 3000);
     };
 
@@ -1006,6 +1012,12 @@ const InventoryTreeMenuLocal = () => {
             return device.path.startsWith(node.value) && !!cloudDevices[serialNumber];
         });
 
+        const targetOrgs = new Set();
+
+        targetDevices.forEach((device) => {
+            targetOrgs.add(device.organization);
+        });
+
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const rateLimit = 1000 / rate; // Rate in calls per second
         const maxConcurrentCalls = 100; // Maximum number of concurrent async calls
@@ -1042,7 +1054,7 @@ const InventoryTreeMenuLocal = () => {
 
         await releaseDeviceFactsWithRateLimit();
         setTimeout(async () => {
-            await eventBus.emit('cloud-inventory-refresh', { notification: false });
+            await eventBus.emit('cloud-inventory-refresh', { targetOrgs: Array.from(targetOrgs), notification: false });
         }, 3000);
     };
 

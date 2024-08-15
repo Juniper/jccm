@@ -59,6 +59,9 @@ const useStore = create((set, get) => ({
     isUserLoggedIn: false,
     setIsUserLoggedIn: (isUserLoggedIn) => set(() => ({ isUserLoggedIn })),
 
+    isInventoryLoading: false,
+    setIsInventoryLoading: (isInventoryLoading) => set(() => ({ isInventoryLoading })),
+
     user: null,
     orgs: {},
     setUser: (user) =>
