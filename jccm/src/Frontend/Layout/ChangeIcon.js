@@ -44,3 +44,25 @@ export const CircleIcon = ({ Icon, color = tokens.colorPaletteGreenBorder2, size
         </div>
     );
 };
+
+export const OverlappingIcons = ({ Icon, color = tokens.colorPaletteGreenBorder2, size = '12px' }) => {
+    const boxStyle = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+    };
+
+    const containerStyle = {
+        position: 'relative',
+        width: `calc(${size} + 2px)`,
+        height: `calc(${size} + 2px)`,
+    };
+
+    return (
+        <div style={containerStyle}>
+            <Icon style={{ ...boxStyle, fontSize: size, color: color, transform: 'translate(0px, 0px)' }} />
+            <Icon style={{ ...boxStyle, fontSize: size, color: color, transform: 'translate(2px, 2px)' }} />
+            <Icon style={{ ...boxStyle, fontSize: size, color: color, transform: 'translate(4px, 4px)' }} />
+        </div>
+    );
+};

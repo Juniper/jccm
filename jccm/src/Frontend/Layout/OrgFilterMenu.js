@@ -83,7 +83,6 @@ export const OrgFilterMenu = ({ isOpen, onClose }) => {
                         .map((org, index) => (!filters[org.id] ? index : -1))
                         .filter((index) => index !== -1);
 
-                    console.log('selectedIndices: ', selectedIndices);
                     setSelectedRows(new Set(selectedIndices));
                 }
             } catch (error) {
@@ -139,8 +138,6 @@ export const OrgFilterMenu = ({ isOpen, onClose }) => {
         const unselectedOrgs = {};
         const unselectedRowIndexes = [];
 
-        console.log('selectedRows:', selectedRows);
-
         orgList.forEach((org, index) => {
             if (!selectedRows.has(index)) {
                 unselectedRowIndexes.push(index);
@@ -151,8 +148,6 @@ export const OrgFilterMenu = ({ isOpen, onClose }) => {
             const org = orgList[unselectedIndex];
             unselectedOrgs[org.id] = org; // Changed from filters to unselectedOrgs for clarity
         });
-
-        console.log('Unselected index and orgs:', unselectedRowIndexes, unselectedOrgs);
 
         try {
             const data = await electronAPI.saOrgFilter({ method: 'SET', body: { filters: unselectedOrgs } });

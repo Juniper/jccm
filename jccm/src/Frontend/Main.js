@@ -57,7 +57,7 @@ export const Main = () => {
     const [centerWidth, setCenterWidth] = useState(`calc(100% - ${LeftSideSpaceWidth}px)`);
 
     const leftMinWidth = 250;
-    const leftMaxWidth = 700;
+    const leftMaxWidth = 900;
     const resizeKnobWidthInOpen = 4;
     const resizeKnobWidthInClose = 50;
 

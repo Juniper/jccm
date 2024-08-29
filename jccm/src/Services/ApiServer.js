@@ -112,6 +112,7 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
                         }
                         device.org_name = item.name;
                         if (device?.mac.toUpperCase() === device.serial.toUpperCase() && device.type === 'switch') {
+                            // console.log(`mac === serial: device: ${JSON.stringify(device, null, 2)}`);
                             siteIdHavingVMAC.add(device.site_id);
                         }
                     }
@@ -127,8 +128,10 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
 
                         if (response.status === 'success') {
                             const cloudDeviceStates = response.data;
+                            // console.log(`Get device stats: ${JSON.stringify(cloudDeviceStates, null, 2)}`);
+
                             for (const cloudDevice of cloudDeviceStates) {
-                                SN2VSN[cloudDevice.serial] = cloudDevice?.module_stat[0];
+                                SN2VSN[cloudDevice.serial] = cloudDevice.module_stat.find(item => item && item.serial);
                             }
                         }
                     }
@@ -432,7 +435,19 @@ export const setupApiHandlers = () => {
         }
     });
 
-    // IPC main handler to adopt the device
+    ipcMain.handle('saGetDeviceFacts', async (event, args) => {
+        console.log('main: saGetDeviceFacts');
+
+        try {
+            const { address, port, username, password, timeout, upperSerialNumber } = args;
+            const reply = await getDeviceFacts(address, port, username, password, timeout, upperSerialNumber);
+
+            return { facts: true, reply };
+        } catch (error) {
+            return { facts: false, reply: error };
+        }
+    });
+
     ipcMain.handle('saAdoptDevice', async (event, args) => {
         console.log('main: saAdoptDevice');
 
@@ -552,20 +567,6 @@ export const setupApiHandlers = () => {
         console.log('main: saSaveSettings:', settings);
 
         return { status: true };
-    });
-
-    ipcMain.handle('saGetDeviceFacts', async (event, args) => {
-        console.log('main: saGetDeviceFacts');
-
-        try {
-            const { address, port, username, password, timeout, upperSerialNumber } = args;
-            const reply = await getDeviceFacts(address, port, username, password, timeout, upperSerialNumber);
-
-            return { facts: true, reply };
-        } catch (error) {
-            // console.error('saGetDeviceFacts: Junos command execution failed!', args, error);
-            return { facts: false, reply: error };
-        }
     });
 
     ipcMain.handle('saGetGoogleSSOAuthCode', async (event, args) => {

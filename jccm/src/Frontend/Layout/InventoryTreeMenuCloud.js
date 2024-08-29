@@ -121,6 +121,8 @@ import {
     CursorClickFilled,
     CursorClickRegular,
     SquareMultipleRegular,
+    LayerRegular,
+    LayerDiagonalRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
 import _ from 'lodash';
@@ -129,8 +131,9 @@ const { electronAPI } = window;
 import useStore from '../Common/StateStore';
 import { useNotify } from '../Common/NotificationContext';
 import { useContextMenu } from '../Common/ContextMenuContext';
-import { copyToClipboard } from '../Common/CommonVariables';
+import { copyToClipboard, capitalizeFirstChar } from '../Common/CommonVariables';
 import eventBus from '../Common/eventBus';
+import { OverlappingIcons } from './ChangeIcon';
 
 const Map = bundleIcon(MapFilled, MapRegular);
 const Rename = bundleIcon(RenameFilled, RenameRegular);
@@ -162,7 +165,28 @@ const transformData = (cloudUserInventory) => {
         regionEntry[org.name] = { __type: 'org', __id: org.id, __name: org.name };
         const orgEntry = regionEntry[org.name];
 
+        const inventory = [];
+        const vc_node = {};
         org.inventory?.forEach((device) => {
+            if (device.vc_mac) {
+                if (device.vc_mac === device.mac) {
+                    inventory.push(device);
+                } else {
+                    vc_node[device.vc_mac] = vc_node[device.vc_mac] ? [...vc_node[device.vc_mac], device] : [device];
+                }
+            } else {
+                inventory.push(device);
+            }
+        });
+        const vc_nodes = inventory.filter((node) => !!node.vc_mac);
+        vc_nodes.forEach((device) => {
+            const deviceWithoutVcNode = { ...device };
+            delete deviceWithoutVcNode.vc_node;
+
+            device.vc_node = [deviceWithoutVcNode, ...(vc_node[device.vc_mac] || [])];
+        });
+
+        inventory?.forEach((device) => {
             const siteName = device.site_name || 'Unassigned';
 
             if (!orgEntry[siteName]) {
@@ -172,7 +196,13 @@ const transformData = (cloudUserInventory) => {
             const siteEntry = orgEntry[siteName];
 
             const roleTypeInCloud = device.type.charAt(0).toUpperCase() + device.type.slice(1);
-            const productModel = device.model.includes('-') ? device.model.split('-')[0] : device.model;
+            // const productModel = !!device.vc_mac
+            //     ? 'Virtual Chassis'
+            //     : device.model.includes('-')
+            //     ? device.model.split('-')[0]
+            //     : device.model;
+
+            const productModel = !!device.vc_mac ? 'Virtual Chassis' : device.model;
 
             if (!siteEntry[roleTypeInCloud]) {
                 siteEntry[roleTypeInCloud] = { __type: 'deviceRole' };
@@ -237,7 +267,7 @@ const getObjectPaths = (obj, prefix = '') => {
             obj[key] !== null &&
             typeof obj[key] === 'object' &&
             !Array.isArray(obj[key]) &&
-            obj[key].__type !== 'device'
+            obj[key].__type !== 'model'
         ) {
             paths = paths.concat(getObjectPaths(obj[key], currentPath));
         }
@@ -321,6 +351,8 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
     const onReleaseConfirmButton = async (orgId, mac) => {
         setIsOpenReleaseDialog(false);
 
+        console.log('>>>> mac address:', mac);
+
         const data = await electronAPI.saProxyCall({
             api: `orgs/${orgId}/inventory`,
             method: 'PUT',
@@ -344,158 +376,87 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
         else if (node.__type === 'device') device = node;
 
         return (
-            <MenuList>
-                <MenuGroup>
-                    <MenuGroupHeader>Organizations</MenuGroupHeader>
-                    <MenuItem
-                        disabled={!isUserLoggedIn || node.__type !== 'org'}
-                        icon={<CopyIcon style={{ fontSize: '14px' }} />}
-                        onClick={() => {
-                            onAdoptionConfigCopy(event, org);
-                        }}
-                    >
-                        <Text
-                            size={200}
-                            font='numeric'
+            <>
+                <MenuList>
+                    <MenuGroup>
+                        <MenuGroupHeader>Organizations</MenuGroupHeader>
+                        <MenuItem
+                            disabled={!isUserLoggedIn || node.__type !== 'org'}
+                            icon={<CopyIcon style={{ fontSize: '14px' }} />}
+                            onClick={() => {
+                                onAdoptionConfigCopy(event, org);
+                            }}
                         >
-                            Copy Adoption Configuration
-                        </Text>
-                    </MenuItem>
-                </MenuGroup>
-
-                <MenuDivider />
-                <MenuGroup>
-                    <MenuGroupHeader>Devices</MenuGroupHeader>
-                    <Menu>
-                        <MenuTrigger disableButtonEnhancement>
-                            <MenuItem
-                                disabled={!isUserLoggedIn || node.__type !== 'device'}
-                                icon={<LinkIcon style={{ fontSize: '14px' }} />}
+                            <Text
+                                size={200}
+                                font='numeric'
                             >
-                                <Text
-                                    size={200}
-                                    font='numeric'
-                                >
-                                    Allocate to Site
-                                </Text>
-                            </MenuItem>
-                        </MenuTrigger>
-                        <MenuPopover>
-                            <MenuList>
-                                <MenuGroup>
-                                    <MenuGroupHeader>Select Allocation Site</MenuGroupHeader>
-                                    {node.__type === 'device' &&
-                                        node.sites
-                                            .filter((site) => device.site_name !== site.name) // Filter out the site with matching name
-                                            .map((site) => (
-                                                <MenuItem
-                                                    onClick={() => onAssignToSite(device.org_id, site.id, device.mac)}
-                                                    key={site.id}
-                                                >
-                                                    <Text
-                                                        size={200}
-                                                        font='numeric'
-                                                    >
-                                                        {site.name}
-                                                    </Text>
-                                                </MenuItem> // Assuming each site has a unique 'id'
-                                            ))}
-                                </MenuGroup>
-                            </MenuList>
-                        </MenuPopover>
-                    </Menu>
+                                Copy Adoption Configuration
+                            </Text>
+                        </MenuItem>
+                    </MenuGroup>
 
                     <MenuDivider />
-                    <MenuItem
-                        disabled={node.__type !== 'device'}
-                        icon={<RecycleIcon style={{ fontSize: '14px' }} />}
-                        onClick={async () => {
-                            setIsOpenReleaseDialog(true);
-                        }}
-                    >
-                        <Text
-                            size={200}
-                            font='numeric'
-                        >
-                            Disconnect and Remove Device
-                        </Text>
-                    </MenuItem>
-                </MenuGroup>
-            </MenuList>
-        );
-    };
+                    <MenuGroup>
+                        <MenuGroupHeader>Devices</MenuGroupHeader>
+                        <Menu>
+                            <MenuTrigger disableButtonEnhancement>
+                                <MenuItem
+                                    disabled={!isUserLoggedIn || node.__type !== 'device'}
+                                    icon={<LinkIcon style={{ fontSize: '14px' }} />}
+                                >
+                                    <Text
+                                        size={200}
+                                        font='numeric'
+                                    >
+                                        Allocate to Site
+                                    </Text>
+                                </MenuItem>
+                            </MenuTrigger>
+                            <MenuPopover>
+                                <MenuList>
+                                    <MenuGroup>
+                                        <MenuGroupHeader>Select Allocation Site</MenuGroupHeader>
+                                        {node.__type === 'device' &&
+                                            node.sites
+                                                .filter((site) => device.site_name !== site.name) // Filter out the site with matching name
+                                                .map((site) => (
+                                                    <MenuItem
+                                                        onClick={() =>
+                                                            onAssignToSite(device.org_id, site.id, device.mac)
+                                                        }
+                                                        key={site.id}
+                                                    >
+                                                        <Text
+                                                            size={200}
+                                                            font='numeric'
+                                                        >
+                                                            {site.name}
+                                                        </Text>
+                                                    </MenuItem> // Assuming each site has a unique 'id'
+                                                ))}
+                                    </MenuGroup>
+                                </MenuList>
+                            </MenuPopover>
+                        </Menu>
 
-    const onNodeRightClick = (event, node) => {
-        event.preventDefault(); // Prevent the default context menu
-        showContextMenu(event.clientX, event.clientY, contextMenuContent(event, node));
-    };
-
-    const RenderDevice = ({ device }) => {
-        useEffect(() => {
-            if (!newName) setNewName(device.name);
-        }, [device]);
-
-        return (
-            <div
-                onContextMenu={(event) => onNodeRightClick(event, { ...device, sites: cloudSites[device.org_id] })}
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    columnGap: '10px',
-                }}
-            >
-                <Avatar
-                    icon={
-                        <BoxRegular
-                            style={{
-                                color: device.connected
-                                    ? tokens.colorPaletteGreenBorderActive
-                                    : tokens.colorNeutralForegroundDisabled,
-                                fontSize: '14px',
+                        <MenuDivider />
+                        <MenuItem
+                            disabled={node.__type !== 'device'}
+                            icon={<RecycleIcon style={{ fontSize: '14px' }} />}
+                            onClick={async () => {
+                                setIsOpenReleaseDialog(true);
                             }}
-                        />
-                    }
-                    shape='square'
-                    badge={{
-                        status: device.connected ? 'available' : 'do-not-disturb',
-                        outOfOffice: !device.connected,
-                    }}
-                    active={{
-                        status: device.connected ? 'active' : 'inactive',
-                    }}
-                    color={{ status: device.connected ? 'dark-green' : 'platinum' }}
-                    size={24}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', rowGap: 0 }}>
-                    <Text
-                        onClick={(e) => {
-                            e.stopPropagation();
-                        }}
-                        style={{ fontSize: '11px', lineHeight: '1', cursor: 'pointer' }}
-                    >
-                        <Text
-                            size={100}
-                            font='numeric'
-                            weight={device.name === 'Unnamed' ? 'normal' : 'semibold'}
                         >
-                            {device.name}
-                        </Text>
-                    </Text>
-
-                    <Text style={{ fontSize: '10px', lineHeight: '1' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', columnGap: '3px' }}>
                             <Text
-                                size={100}
-                                font='monospace'
+                                size={200}
+                                font='numeric'
                             >
-                                {device.serial} {formatMacAddress(device.mac)}
-                                {device.jsi ? ' JSI' : ''}
+                                Disconnect and Remove Device
                             </Text>
-                        </div>
-                    </Text>
-                </div>
+                        </MenuItem>
+                    </MenuGroup>
+                </MenuList>
                 <Dialog
                     modalType='alert'
                     open={isOpenReleaseDialog}
@@ -551,7 +512,188 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                         </DialogBody>
                     </DialogSurface>
                 </Dialog>
-            </div>
+            </>
+        );
+    };
+
+    const onNodeRightClick = (event, node) => {
+        event.preventDefault(); // Prevent the default context menu
+        showContextMenu(event.clientX, event.clientY, contextMenuContent(event, node));
+    };
+
+    const RenderDevice = ({ device, vc = false }) => {
+        useEffect(() => {
+            if (!newName) setNewName(device.name);
+        }, [device]);
+
+        return (
+            <TreeItemLayout
+                iconAfter={
+                    <Tooltip
+                        content='Right Click to show Menu'
+                        relationship='description'
+                    >
+                        <CursorClickFilled style={{ fontSize: '14px', color: tokens.colorBrandForegroundInverted }} />
+                    </Tooltip>
+                }
+            >
+                <div
+                    onContextMenu={(event) => onNodeRightClick(event, { ...device, sites: cloudSites[device.org_id] })}
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        columnGap: '10px',
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}>
+                        <Avatar
+                            icon={
+                                !vc ? (
+                                    <BoxRegular
+                                        style={{
+                                            color: device.connected
+                                                ? tokens.colorPaletteGreenBorderActive
+                                                : tokens.colorNeutralForegroundDisabled,
+                                            fontSize: '14px',
+                                        }}
+                                    />
+                                ) : (
+                                    <LayerRegular
+                                        style={{
+                                            color: device.connected
+                                                ? tokens.colorPaletteGreenBorderActive
+                                                : tokens.colorNeutralForegroundDisabled,
+                                            fontSize: '18px',
+                                        }}
+                                    />
+                                )
+                            }
+                            shape='square'
+                            badge={{
+                                status: device.connected ? 'available' : 'do-not-disturb',
+                                outOfOffice: !device.connected,
+                            }}
+                            active={{
+                                status: device.connected ? 'active' : 'inactive',
+                            }}
+                            color={{ status: device.connected ? 'dark-green' : 'platinum' }}
+                            size={24}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', rowGap: 0 }}>
+                            <Text
+                                size={100}
+                                font='numeric'
+                                weight={device.name === 'Unnamed' ? 'normal' : 'semibold'}
+                            >
+                                {device.name}
+                            </Text>
+
+                            {!vc && (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        columnGap: '5px',
+                                        marginLeft: '0px',
+                                    }}
+                                >
+                                    <Text
+                                        size={100}
+                                        font='monospace'
+                                    >
+                                        {device.serial}
+                                    </Text>
+
+                                    <Text
+                                        size={100}
+                                        font='numeric'
+                                    >
+                                        {formatMacAddress(device.mac)}
+                                    </Text>
+
+                                    <Text
+                                        size={100}
+                                        font='monospace'
+                                    >
+                                        {device.jsi ? ' JSI' : ''}
+                                    </Text>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </TreeItemLayout>
+        );
+    };
+
+    const RenderVC = ({ device, pathPrefix }) => {
+        useEffect(() => {
+            if (!newName) setNewName(device.name);
+        }, [device]);
+
+        const nodes = device.vc ? device.vc.members : device.vc_node;
+
+        return (
+            <>
+                <RenderDevice
+                    device={device}
+                    vc={true}
+                />
+
+                <Tree>
+                    {nodes.map((node, index) => (
+                        <TreeItem
+                            itemType='leaf'
+                            key={`${pathPrefix}/${node.serial}`}
+                            value={`${pathPrefix}/${node.serial}`}
+                        >
+                            <TreeItemLayout>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        columnGap: '5px',
+                                        marginLeft: '10px',
+                                    }}
+                                >
+                                    <Text
+                                        size={100}
+                                        font='numeric'
+                                        weight='normal'
+                                    >
+                                        {node.model}
+                                    </Text>
+
+                                    <Text
+                                        size={100}
+                                        font='monospace'
+                                    >
+                                        {node.serial}
+                                    </Text>
+                                    <Text
+                                        size={100}
+                                        font='numeric'
+                                    >
+                                        {formatMacAddress(node.mac)}
+                                    </Text>
+
+                                    {device.vc && (
+                                        <Text
+                                            size={100}
+                                            font='numeric'
+                                        >
+                                            {node.vc_role}
+                                        </Text>
+                                    )}
+                                </div>
+                            </TreeItemLayout>
+                        </TreeItem>
+                    ))}
+                </Tree>
+            </>
         );
     };
 
@@ -560,31 +702,32 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
             <Tree>
                 {Object.entries(models)
                     .filter(([key]) => !key.startsWith('__'))
-                    .map(([deviceName, device]) => (
-                        <TreeItem
-                            itemType='leaf'
-                            key={`${pathPrefix}/${deviceName}`}
-                            value={`${pathPrefix}/${deviceName}`}
-                        >
-                            <TreeItemLayout
-                                iconAfter={
-                                    <Tooltip
-                                        content='Right Click to show Menu'
-                                        relationship='description'
-                                    >
-                                        <CursorClickFilled
-                                            style={{ fontSize: '14px', color: tokens.colorBrandForegroundInverted }}
-                                        />
-                                    </Tooltip>
-                                }
+                    .map(([deviceName, device]) =>
+                        !device.vc_mac ? (
+                            <TreeItem
+                                itemType='leaf'
+                                key={`${pathPrefix}/${deviceName}`}
+                                value={`${pathPrefix}/${deviceName}`}
                             >
                                 <RenderDevice device={device} />
-                            </TreeItemLayout>
-                        </TreeItem>
-                    ))}
+                            </TreeItem>
+                        ) : (
+                            <TreeItem
+                                itemType='branch'
+                                key={`${pathPrefix}/${deviceName}`}
+                                value={`${pathPrefix}/${deviceName}`}
+                            >
+                                <RenderVC
+                                    device={device}
+                                    pathPrefix={`${pathPrefix}/${deviceName}`}
+                                />
+                            </TreeItem>
+                        )
+                    )}
             </Tree>
         );
     };
+
     const renderModelTree = (roles, pathPrefix) => (
         <Tree>
             {Object.entries(roles)
@@ -774,7 +917,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                     )
                                 }
                             >
-                               <Text size={100}>{userEmail}</Text>
+                                <Text size={100}>{userEmail}</Text>
                             </TreeItemLayout>
                             {renderCloudTree(userValue, `${pathPrefix}/${userEmail}`)}
                         </TreeItem>
@@ -822,7 +965,7 @@ const InventoryTreeMenuCloud = () => {
         userStatus: 'available',
         cloudDescription: user?.cloudDescription,
         cloudRegionName: user?.regionName,
-        cloudInventory: cloudInventory,
+        cloudInventory: JSON.parse(JSON.stringify(cloudInventory)), // Duplicated the cloudInventory array to prevent unnecessary changes
     };
 
     const newInventory = transformData(cloudUserInventory);
@@ -842,8 +985,27 @@ const InventoryTreeMenuCloud = () => {
     };
 
     useEffect(() => {
-        async function loadAndSetData() {
-            setOpenItems(new Set(defaultOpenItems));
+        function loadAndSetData() {
+            setOpenItems((prevOpenItems) => {
+                // Filter out orphan items (items not in defaultOpenItems)
+                const validOpenItems = new Set(
+                    Array.from(prevOpenItems).filter((item) => {
+                        const parts = item.split('/');
+                        const rebuiltItem = parts.slice(0, -1).join('/');
+
+                        return item.toLowerCase().includes('virtual chassis')
+                            ? defaultOpenItems.includes(rebuiltItem)
+                            : defaultOpenItems.includes(item);
+                    })
+                );
+
+                // Add any new items from defaultOpenItems to validOpenItems
+                defaultOpenItems.forEach((item) => {
+                    validOpenItems.add(item);
+                });
+
+                return validOpenItems;
+            });
         }
         loadAndSetData();
     }, [cloudInventory]);

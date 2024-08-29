@@ -308,7 +308,7 @@ const LeftSide = () => {
                         {cloudInventory.length > 0 && <InventoryTreeMenuCloud />}
                     </div>
                     <div style={{ display: selectedTree === 'cloud' ? 'flex' : 'none', flexDirection: 'column' }}>
-                        {cloudInventory.length > 0 && isOpenOrgFilterMenu && (
+                        {isOpenOrgFilterMenu && (
                             <OrgFilterMenu
                                 isOpen={isOpenOrgFilterMenu}
                                 onClose={() => {

@@ -80,7 +80,30 @@ const RenderRow = ({ index, style, data, columns, onDeleteSubnet, disabled }) =>
                                 size={200}
                                 font='numeric'
                             >
-                                {row.item[col.name]}
+                                {row.item[col.name] !== null &&
+                                typeof row.item[col.name] === 'object' &&
+                                !Array.isArray(row.item[col.name]) ? (
+                                    <Tooltip
+                                        content={
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'flex-start',
+                                                    flexDirection: 'column',
+                                                }}
+                                            >
+                                                {row.item[col.name].values.map((item, index) => (
+                                                    <Text key={index} size={100}>{item}</Text>
+                                                ))}
+                                            </div>
+                                        }
+                                        positioning='below'
+                                    >
+                                        <Text size={100}>{row.item[col.name].label}</Text>
+                                    </Tooltip>
+                                ) : (
+                                    row.item[col.name]
+                                )}
                             </Text>
                         )}
                     </TableCell>

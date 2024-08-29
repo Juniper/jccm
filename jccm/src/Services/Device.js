@@ -1,248 +1,363 @@
-import { NodeSSH } from 'node-ssh';
+const { Client } = require('ssh2');
 import xml2js from 'xml2js';
 
-const StatusMessages = {
-    SUCCESS: 'success',
-    AUTHENTICATION_FAILED: 'authentication failed',
-    UNREACHABLE: 'unreachable',
-    TIMEOUT: 'timeout',
-    COMMIT_FAILED: 'commit_failed',
-    NO_RPC_REPLY: 'no_rpc_reply',
-    INACTIVITY_TIMEOUT: 'inactivity_timeout',
+const StatusErrorMessages = {
+    SUCCESS: {
+        status: 'success',
+        message: 'Commands executed successfully',
+    },
+    AUTHENTICATION_FAILED: {
+        status: 'Authentication failed',
+        message: 'Authentication failed. Check your username and password.',
+    },
+    UNREACHABLE: {
+        status: 'Unreachable',
+        message: 'Unable to connect to host',
+    },
+    TIMEOUT: {
+        status: 'Timeout',
+        message: 'Connection timed out',
+    },
+    COMMIT_FAILED: {
+        status: 'Commit failed',
+        message: 'Commit error',
+    },
+    NO_RPC_REPLY: {
+        status: 'No facts reply',
+        message: 'No RPC reply found in the response',
+    },
+    INACTIVITY_TIMEOUT: {
+        status: 'Inactivity timeout',
+        message: 'Session closed due to inactivity',
+    },
 };
 
-const ErrorMessages = {
-    AUTHENTICATION_FAILED: 'Authentication failed. Check your username and password.',
-    TIMEOUT: 'Connection timed out',
-    UNREACHABLE: 'Unable to connect to host',
-    COMMIT_ERROR: 'Commit error',
-    COMMIT_NO_SUCCESS: 'Commit did not return success',
-    NO_RPC_REPLY: 'No RPC reply found in the response',
-    INACTIVITY_TIMEOUT: 'Session closed due to inactivity',
-};
+/**
+ * Processes a list of commands on a remote SSH server and captures their outputs and errors.
+ * @param {string[]} commands - Array of commands to be sent.
+ * @param {object} sshConfig - SSH connection configuration.
+ * @param {number} commandInactivityTimeout - Timeout in milliseconds for inactivity on regular commands.
+ * @param {number} commitInactivityTimeout - Timeout in milliseconds for inactivity on commit commands.
+ * @returns {Promise<object>} - A promise that resolves to an object with results.
+ */
+function processCommands(commands, sshConfig, commandInactivityTimeout = 3000, commitInactivityTimeout = 60000) {
+    return new Promise((resolve, reject) => {
+        const conn = new Client();
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const sendCommandWithFlowControl = async (shell, command) => {
-    const buffer = Buffer.from(command);
-    for (let i = 0; i < buffer.length; i++) {
-        const char = String.fromCharCode(buffer[i]); // Get a single character
-        shell.write(char);
-        char === '\n' ? await delay(100) : await delay(5);
-    }
-};
+        let currentCommand = null;
+        let eachCommandOutput = '';
+        let allCommandsOutput = '';
+        let timeoutHandle;
+        let stream;
 
-export const executeJunosCommand = async (address, port, username, password, cmd, timeout = 5000) => {
-    const command = `${cmd} | no-more`;
-    const ssh = new NodeSSH();
-
-    try {
-        await ssh.connect({
-            host: address,
-            port: port,
-            username: username,
-            password: password,
-            readyTimeout: timeout,
-        });
-
-        const result = await ssh.execCommand(command);
-
-        if (result.stderr) {
-            throw new Error(`executeJunosCommand Error: ${result.stderr}`);
-        }
-
-        return {
-            status: StatusMessages.SUCCESS,
-            message: 'Command executed successfully',
-            data: result.stdout,
+        const results = [];
+        const promptPattern = /\n[\s\S]*?[@#>%$]\s$/;
+        const resetTimeout = (timeout) => {
+            clearTimeout(timeoutHandle);
+            timeoutHandle = setTimeout(() => {
+                stream.end();
+                conn.end();
+                reject({
+                    ...StatusErrorMessages.INACTIVITY_TIMEOUT,
+                    error: `CLI Inactivity timeout of ${timeout / 1000} seconds exceeded.`,
+                });
+            }, timeout);
         };
-    } catch (error) {
-        let message = ErrorMessages.UNREACHABLE;
-        let status = StatusMessages.UNREACHABLE;
 
-        if (error.message.includes('All configured authentication methods failed')) {
-            message = ErrorMessages.AUTHENTICATION_FAILED;
-            status = StatusMessages.AUTHENTICATION_FAILED;
-        } else if (error.message.includes('Timed out while waiting for handshake')) {
-            message = ErrorMessages.TIMEOUT;
-            status = StatusMessages.TIMEOUT;
-        }
+        const getCommand = () => {
+            if (commands.length > 0) {
+                const cmd = commands.shift();
+                return cmd;
+            } else {
+                // console.log('>>>>>>>>> no more command....');
+                stream.end();
+                stream.close();
+            }
+        };
 
-        // console.error('executeJunosCommand: error:', error);
-        throw { status, message, data: error.message };
-    } finally {
-        ssh.dispose();
+        const onDataReceived = (data) => {
+            const output = data.toString();
+            // process.stdout.write(output);
+
+            eachCommandOutput += output;
+            allCommandsOutput += output;
+
+            resetTimeout(
+                currentCommand && currentCommand.startsWith('commit')
+                    ? commitInactivityTimeout
+                    : commandInactivityTimeout
+            );
+
+            if (promptPattern.test(eachCommandOutput)) {
+                eachCommandOutput = '';
+
+                while (true) {
+                    const cmd = getCommand();
+                    if (cmd) {
+                        if (cmd.startsWith('jcli-inactivity-timeout')) {
+                            const parts = cmd.split(/\s+/);
+                            const number = parseInt(parts[1], 10);
+                            commandInactivityTimeout = number * 1000; // to ms
+                            // console.log(`commandInactivityTimeout: ${commandInactivityTimeout} ms`);
+                            continue;
+                        } else if (cmd.startsWith('jedit-inactivity-timeout')) {
+                            const parts = cmd.split(/\s+/);
+                            const number = parseInt(parts[1], 10);
+                            commitInactivityTimeout = number * 1000; // to ms
+                            // console.log(`commitInactivityTimeout: ${commitInactivityTimeout} ms`);
+                            continue;
+                        } else {
+                            if (cmd.startsWith('show') || cmd.startsWith('commit')) {
+                                currentCommand = `${cmd} | display xml | no-more\n`;
+                            } else {
+                                currentCommand = `${cmd}\n`;
+                            }
+                            stream.write(currentCommand);
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+        };
+
+        conn.on('ready', () => {
+            const shellOptions = {
+                cols: 2000, // Number of columns for the terminal
+                rows: 80, // Number of rows for the terminal
+            };
+
+            conn.shell(shellOptions, (err, _stream) => {
+                if (err) {
+                    conn.end();
+                    reject({
+                        ...StatusErrorMessages.UNREACHABLE,
+                        error: err.message,
+                    });
+                    return;
+                }
+
+                stream = _stream;
+
+                resetTimeout(commandInactivityTimeout);
+
+                stream.on('data', (data) => onDataReceived(data));
+                stream.stderr.on('data', (data) => onDataReceived(data, true));
+                stream.on('close', () => {
+                    const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
+                    let match;
+                    while ((match = regex.exec(allCommandsOutput)) !== null) {
+                        results.push(match[0]);
+                    }
+                    resolve({
+                        ...StatusErrorMessages.SUCCESS,
+                        data: results,
+                    });
+                    conn.end();
+                    clearTimeout(timeoutHandle);
+                });
+            });
+        });
+        conn.on('error', (err) => {
+            conn.end();
+            if (err.level === 'client-authentication') {
+                reject({
+                    ...StatusErrorMessages.AUTHENTICATION_FAILED,
+                    error: err.message,
+                });
+            } else if (err.level === 'client-timeout') {
+                reject({
+                    ...StatusErrorMessages.TIMEOUT,
+                    error: err.message,
+                });
+            } else {
+                reject({
+                    ...StatusErrorMessages.UNREACHABLE,
+                    error: err.message,
+                });
+            }
+        }).connect(sshConfig);
+    });
+}
+
+const getRpcReply = (rpcName, result) => {
+    // Escape any special characters in rpcName to safely include it in the regex
+    const escapedRpcName = rpcName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Construct the regex pattern dynamically using the escaped rpcName variable
+    const regex = new RegExp(`<${escapedRpcName}[\\s\\S]*?<\\/${escapedRpcName}>`, 'gi');
+
+    const match = regex.exec(result);
+    if (match !== null) {
+        return match[0];
     }
+    return null;
 };
 
 export const getDeviceFacts = async (address, port, username, password, timeout, upperSerialNumber = false) => {
-    const command = 'show system information | display xml';
+    const commands = [
+        'show system information',
+        'show virtual-chassis',
+        'exit',
+    ];
 
-    const result = await executeJunosCommand(address, port, username, password, command, timeout);
+    if (username === 'root') commands.unshift('cli');
 
-    if (result.status === 'success') {
-        try {
-            const parser = new xml2js.Parser();
-            const parsedResult = await parser.parseStringPromise(result.data);
-            const systemInformation = parsedResult['rpc-reply']['system-information'][0];
-
-            const deviceFacts = {
-                hardwareModel: systemInformation['hardware-model'][0],
-                osName: systemInformation['os-name'][0],
-                osVersion: systemInformation['os-version'][0],
-                serialNumber: upperSerialNumber
-                    ? systemInformation['serial-number'][0].toUpperCase()
-                    : systemInformation['serial-number'][0],
-                hostName: systemInformation['host-name'][0],
-                status: 'success',
-            };
-
-            return deviceFacts;
-        } catch (err) {
-            console.error('getDeviceFacts: Error parsing XML:', err);
-            throw new Error('getDeviceFacts: Error parsing XML');
-        }
-    } else {
-        throw result;
-    }
-};
-
-export const commitJunosSetConfig = async (
-    address,
-    port,
-    username,
-    password,
-    config,
-    timeout = 60000,
-    inactivityTimeout = 30000
-) => {
-    let inactivityTimer;
-    const ssh = new NodeSSH();
+    const sshConfig = {
+        host: address,
+        port,
+        username,
+        password,
+        readyTimeout: timeout,
+    };
 
     try {
-        await ssh.connect({
-            host: address,
-            port: port,
-            username: username,
-            password: password,
-            readyTimeout: timeout,
-            timeout: timeout,
-        });
+        const results = await processCommands(commands, sshConfig);
 
-        const shell = await ssh.requestShell({
-            cols: 2000, // Number of columns
-            rows: 100, // Number of rows
-        });
-        let data = '';
-        let stderr = '';
+        if (results.status === 'success') {
+            console.log('Command executed successfully');
 
-        const resetInactivityTimer = () => {
-            if (inactivityTimer) {
-                clearTimeout(inactivityTimer);
-            }
-            inactivityTimer = setTimeout(() => {
-                shell.end();
-                ssh.dispose();
-                throw new Error(ErrorMessages.INACTIVITY_TIMEOUT);
-            }, inactivityTimeout);
-        };
+            const parser = new xml2js.Parser({ explicitArray: false }); // Consider setting explicitArray to false to simplify the structure
+            const facts = {};
+            let rpcReply;
 
-        shell
-            .on('data', (chunk) => {
-                data += chunk.toString();
-                resetInactivityTimer();
-            })
-            .stderr.on('data', (chunk) => {
-                stderr += chunk.toString();
-                resetInactivityTimer();
-            });
+            for (const result of results.data) {
+                // console.log(`result: ${JSON.stringify(result, null, 2)}\n\n`);
 
-        await delay(3000);
+                rpcReply = getRpcReply('system-information', result);
 
-        const command = `edit exclusive private\n${config}\ncommit | display xml\nexit\n\n\n`;
-        await sendCommandWithFlowControl(shell, command);
+                if (rpcReply !== null) {
+                    // console.log(`rpc system-information reply: ${JSON.stringify(rpcReply, null, 2)}`);
 
-        resetInactivityTimer();
+                    const parsedData = await parser.parseStringPromise(rpcReply);
+                    const info = parsedData['system-information'];
 
-        shell.write('exit\n\n\n');
+                    // console.log(`system-information: ${JSON.stringify(info, null, 2)}`);
 
-        await new Promise((resolve, reject) => {
-            shell.on('close', (code, signal) => {
-                clearTimeout(inactivityTimer);
-                if (stderr) {
-                    reject(new Error(stderr));
-                } else {
-                    resolve();
-                }
-            });
-
-            shell.on('end', () => {
-                resolve();
-            });
-        });
-
-        const rpcReply = data.match(/<rpc-reply[\s\S]*?<\/rpc-reply>/);
-
-        if (rpcReply) {
-            const parser = new xml2js.Parser();
-            const result = await parser.parseStringPromise(rpcReply[0]);
-
-            const commitResults = result['rpc-reply']['commit-results'];
-            if (commitResults) {
-                const error = commitResults[0]['xnm:error'];
-                if (error) {
-                    const errorMessage = error[0].message[0].trim();
-                    throw {
-                        status: StatusMessages.COMMIT_FAILED,
-                        message: ErrorMessages.COMMIT_ERROR,
-                        data: errorMessage,
+                    facts.systemInformation = {
+                        hardwareModel: info['hardware-model'],
+                        osName: info['os-name'],
+                        osVersion: info['os-version'],
+                        serialNumber: upperSerialNumber ? info['serial-number'].toUpperCase() : info['serial-number'],
+                        hostName: info['host-name'],
                     };
                 }
+
+                rpcReply = getRpcReply('chassis-mac-addresses', result);
+                if (rpcReply !== null) {
+                    // console.log(`rpc chassis-mac-addresses reply: ${JSON.stringify(rpcReply, null, 2)}`);
+
+                    const parsedData = await parser.parseStringPromise(rpcReply);
+                    const info = parsedData['chassis-mac-addresses'];
+
+                    // console.log(`chassis-mac-addresses: ${JSON.stringify(info, null, 2)}`);
+
+                    facts.chassisMacAddresses = info['mac-address-information'];
+                }
+
+                rpcReply = getRpcReply('chassis-inventory', result);
+                if (rpcReply !== null) {
+                    // console.log(`rpc chassis-inventory reply: ${JSON.stringify(rpcReply, null, 2)}`);
+
+                    const parsedData = await parser.parseStringPromise(rpcReply);
+                    const info = parsedData['chassis-inventory'];
+
+                    facts.chassisInventory = info;
+                }
+
+                rpcReply = getRpcReply('virtual-chassis-information', result);
+                if (rpcReply !== null) {
+                    // console.log(`rpc virtual-chassis-information reply: ${JSON.stringify(rpcReply, null, 2)}`);
+
+                    const v = await parser.parseStringPromise(rpcReply);
+                    const vcMembers = v['virtual-chassis-information']['member-list']['member'].map((member) => ({
+                          model: member['member-model'],
+                          serial: member['member-serial-number'],
+                          slot: member['member-id'],
+                          role: member['member-role'],
+                      }))
+        
+                    facts.vc = vcMembers;
+                }
             }
 
-            if (rpcReply[0].includes('<commit-success/>')) {
-                return {
-                    status: StatusMessages.SUCCESS,
-                    message: 'Configuration committed successfully',
-                    data: rpcReply[0],
-                };
-            } else {
-                throw {
-                    status: StatusMessages.COMMIT_FAILED,
-                    message: ErrorMessages.COMMIT_NO_SUCCESS,
-                    data: rpcReply[0],
-                };
+            // console.log(`>>>facts: ${JSON.stringify(facts, null, 2)}`);
+
+            // Validate gathered facts
+            const missingInfo = ['systemInformation'].filter(
+                (info) => !facts[info]
+            );
+
+            if (missingInfo.length) {
+                console.error(`Missing data: ${missingInfo.join(', ')}`);
+                throw StatusErrorMessages.NO_RPC_REPLY;
             }
+
+            facts.status = 'success';
+
+            console.log('facts:', JSON.stringify(facts, null, 2));
+
+            return facts;
         } else {
-            throw {
-                status: StatusMessages.NO_RPC_REPLY,
-                message: ErrorMessages.NO_RPC_REPLY,
-                data: data,
-            };
+            console.error(`getDeviceFacts Error type 1: status: ${results.status} message: ${results.message}`);
+            throw results;
         }
     } catch (error) {
-        let message = ErrorMessages.UNREACHABLE;
-        let status = StatusMessages.UNREACHABLE;
-
-        if (error.message.includes('All configured authentication methods failed')) {
-            message = ErrorMessages.AUTHENTICATION_FAILED;
-            status = StatusMessages.AUTHENTICATION_FAILED;
-        } else if (error.message.includes('Timed out while waiting for handshake')) {
-            message = ErrorMessages.TIMEOUT;
-            status = StatusMessages.TIMEOUT;
-        } else if (error.message === ErrorMessages.INACTIVITY_TIMEOUT) {
-            status = StatusMessages.INACTIVITY_TIMEOUT;
-            message = ErrorMessages.INACTIVITY_TIMEOUT;
-        } else if (error.status) {
-            throw error; // Re-throw custom errors
-        }
-
-        console.error('commitJunosSetConfig: error:', error);
-        throw { status, message };
-    } finally {
-        if (inactivityTimer) {
-            clearTimeout(inactivityTimer);
-        }
-        ssh.dispose();
+        console.error(`getDeviceFacts Error message: "${error.message}"`);
+        throw error; // Rethrow the error after logging it
     }
 };
 
+export const commitJunosSetConfig = async (address, port, username, password, config, readyTimeout = 10000) => {
+    const configs = config
+        .trim()
+        .split(/\n/)
+        .map((line) => line.trim());
+
+    const commands = ['edit exclusive private', ...configs, 'commit', 'exit'];
+    if (username === 'root') commands.unshift('cli');
+
+    const sshConfig = {
+        host: address,
+        port,
+        username,
+        password,
+        readyTimeout,
+    };
+
+    try {
+        const results = await processCommands(commands, sshConfig);
+
+        if (results.status === 'success') {
+            let commitReply = null;
+            let rpcReply;
+
+            for (const result of results.data) {
+                rpcReply = getRpcReply('commit-results', result);
+
+                if (rpcReply !== null) {
+                    // console.log(`rpc commit-results reply: ${rpcReply}`);
+                    commitReply = rpcReply;
+                }
+            }
+
+            if (commitReply && commitReply.includes('<commit-success/>')) {
+                // console.log('>>>>>commit success');
+                return {
+                    status: 'success',
+                    message: 'Configuration committed successfully',
+                    data: commitReply,
+                };
+            }
+
+            throw StatusErrorMessages.COMMIT_ERROR;
+        } else {
+            console.error(`getDeviceFacts Error type 1: status: ${results.status} message: ${results.message}`);
+            throw results;
+        }
+    } catch (error) {
+        console.error(`getDeviceFacts Error message: "${error.message}"`);
+        throw error; // Rethrow the error after logging it
+    }
+};

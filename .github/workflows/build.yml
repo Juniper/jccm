@@ -79,11 +79,18 @@ jobs:
 
               working-directory: ./jccm
 
-            - name: Build and package (arm64 and x64)
+            - name: Build and package (arm64)
               run: |
                   source myenv/bin/activate
-                  npm run make
+                  npm run make -- --arch=arm64
               working-directory: ./jccm
+
+            - name: Build and package (x64)
+              run: |
+                  source myenv/bin/activate
+                  npm run make -- --arch=x64
+              working-directory: ./jccm
+
 
             - name: Notarize and Staple Packages
               run: |

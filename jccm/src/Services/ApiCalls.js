@@ -162,7 +162,6 @@ export const acUserLogin = async (cloudId, regionName, email, password) => {
     await msSetActiveRegionName(regionName);
     try {
         await acRequest('login', 'POST', { email, password });
-
         const regions = await msGetRegions();
 
         const activeRegion = regions[regionName];
@@ -253,11 +252,32 @@ export const acGetCloudInventory = async (orgId) => {
     if (!isLoggedIn) return { status: 'error', error: 'User is not logged in.' };
 
     try {
-        const data1 = await acRequest(`orgs/${orgId}/inventory?type=switch`, 'GET');
-        const data2 = await acRequest(`orgs/${orgId}/inventory?type=gateway`, 'GET');
-        const data3 = await acRequest(`orgs/${orgId}/inventory?type=router`, 'GET');
+        const data1 = await acRequest(`orgs/${orgId}/inventory?vc=true&type=switch`, 'GET');
+        const _data2 = await acRequest(`orgs/${orgId}/inventory?vc=true&type=gateway`, 'GET');
+        const data2 = _data2.filter(device => !device.model.includes('SSR'))
+        const data3 = await acRequest(`orgs/${orgId}/inventory?vc=true&type=router`, 'GET');
 
         const data = [...data1, ...data2, ...data3];
+
+        // Commented out because of API throttling issues...
+        // Filter devices where vc_map equals map (ensure this condition is correct)
+        // const vc_nodes = data.filter((device) => device.vc_mac === device.mac);
+
+        // Fetch VC details for filtered devices concurrently
+        // await Promise.all(
+        //     vc_nodes.map(async (device) => {
+        //         try {
+        //             const vc = await acRequest(`sites/${device.site_id}/devices/${device.id}/vc`, 'GET');
+        //             device.vc = vc;
+        //         } catch (error) {
+        //             console.error(
+        //                 `Failed to fetch VC details for device ${device.id} in the site ${device.site_id}:`,
+        //                 error
+        //             );
+        //         }
+        //     })
+        // );
+
         return { status: 'success', data };
     } catch (error) {
         return { status: 'error', error };

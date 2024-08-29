@@ -10,6 +10,13 @@ import {
     ProgressBar,
     Toast,
     ToastTitle,
+    Accordion,
+    AccordionHeader,
+    AccordionItem,
+    AccordionPanel,
+    Popover,
+    PopoverSurface,
+    PopoverTrigger,
     tokens,
 } from '@fluentui/react-components';
 
@@ -80,19 +87,48 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                 updateHostStatusCount(response.result.status);
 
                 const { address, port, username, password } = device;
-                const { hardwareModel, osName, osVersion, serialNumber, hostName } = response.result;
 
-                await onAddFact({
-                    address,
-                    port,
-                    username,
-                    password,
-                    hardwareModel,
-                    osName,
-                    osVersion,
-                    serialNumber,
-                    hostName,
-                });
+                if (!!response.result.vc) {
+                    const { osName, osVersion, hostName } = response.result.systemInformation;
+
+                    const memberHardwareModel = [];
+                    const memberSerialNumber = [];
+
+                    response.result.vc.forEach((member, index) => {
+                        memberHardwareModel.push(member.model);
+                        memberSerialNumber.push(member.serial);
+                    });
+
+                    await onAddFact({
+                        address,
+                        port,
+                        username,
+                        password,
+                        hardwareModel: { label: 'Virtual Chassis', values: memberHardwareModel },
+                        serialNumber: {
+                            label: `${memberSerialNumber.length} item${memberSerialNumber.length > 1 ? 's' : ''}`,
+                            values: memberSerialNumber,
+                        },
+                        osName,
+                        osVersion,
+                        hostName,
+                    });
+                } else {
+                    const { hardwareModel, osName, osVersion, serialNumber, hostName } =
+                        response.result.systemInformation;
+
+                    await onAddFact({
+                        address,
+                        port,
+                        username,
+                        password,
+                        hardwareModel,
+                        osName,
+                        osVersion,
+                        serialNumber,
+                        hostName,
+                    });
+                }
 
                 return response;
             } else {
@@ -263,9 +299,13 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
 
                 <Tooltip
                     content={
-                        <Text align='start' wrap size={100}>
-                            Select search rate ({minRate}-{maxRate} per second). 
-                            Please ensure there are no security issues when searching at a high rate.
+                        <Text
+                            align='start'
+                            wrap
+                            size={100}
+                        >
+                            Select search rate ({minRate}-{maxRate} per second). Please ensure there are no security
+                            issues when searching at a high rate.
                         </Text>
                     }
                     positioning='below'

@@ -127,7 +127,6 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
             return data.every((row) => requiredFields.every((field) => row[field] !== '' && row[field] !== null));
         };
 
-        console.log('rowData', rowData);
         const allFieldsValid = validateRowData(rowData);
         setIsDataModified(allFieldsValid);
     };

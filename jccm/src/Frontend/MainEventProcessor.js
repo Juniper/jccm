@@ -77,7 +77,6 @@ export const MainEventProcessor = () => {
 
             if (response.cloudInventory) {
                 if (!_.isEqual(cloudInventoryRef.current, response.inventory)) {
-                    // console.log('>>>cloudInventory', response.inventory);
                     setCloudInventory(response.inventory);
                     setCloudInventoryFilterApplied(response.isFilterApplied);
                 }

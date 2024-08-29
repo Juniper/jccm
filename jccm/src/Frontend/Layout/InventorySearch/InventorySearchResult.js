@@ -35,7 +35,13 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled }) =
 
     const aggregateByHardwareModel = (items) => {
         return items.reduce((acc, item) => {
-            const model = item.hardwareModel;
+            const model =
+                item.hardwareModel !== null &&
+                typeof item.hardwareModel === 'object' &&
+                !Array.isArray(item.hardwareModel)
+                    ? item.hardwareModel.label
+                    : item.hardwareModel;
+
             if (acc[model]) {
                 acc[model] += 1;
             } else {
@@ -71,9 +77,13 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled }) =
             columnOrder.forEach((key) => {
                 const keys = key.split('.');
                 let value = item;
+
                 keys.forEach((k) => {
-                    // value = value && value[k] ? value[k] : '';
                     value = value && value[k] ? value[k] : `Your ${k}`;
+                    value =
+                        value !== null && typeof value === 'object' && !Array.isArray(value)
+                            ? value.values.join(', ')
+                            : value;
                 });
                 orderedRow[columnMapping[key]] = value;
             });

@@ -162,7 +162,6 @@ export default () => {
     };
 
     const onTabSelect = (event, data) => {
-        console.log('onTabSelect: ', data.value);
         setSelectedTab(data.value);
     };
 

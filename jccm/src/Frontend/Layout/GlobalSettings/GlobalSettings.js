@@ -51,7 +51,6 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
 
 
     const onTabSelect = (event, data) => {
-        console.log('onTabSelect: ', data.value);
         setSelectedTab(data.value);
     };
 

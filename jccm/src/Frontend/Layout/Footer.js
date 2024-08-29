@@ -11,8 +11,18 @@ export default () => {
     const [countOfOrgOrSiteUnmatched, setCountOfOrgOrSiteUnmatched] = useState(0);
 
     const countOfDeviceFacts = Object.keys(deviceFacts).length;
+
     const countOfAdoptedDevices = Object.values(deviceFacts).filter(
-        (facts) => cloudDevices[facts?.serialNumber]
+        (fact) => {
+            if (fact.vc) {
+                for (const member of fact.vc) {
+                    const device = cloudDevices[member.serial];
+                    if (device) return device;
+                }
+            }
+    
+            return cloudDevices[fact.systemInformation?.serialNumber];
+        }
     ).length;
 
     const doesSiteNameExist = (orgName, siteName) => {
