@@ -46,7 +46,6 @@ module.exports = {
         {
             name: '@electron-forge/maker-pkg',
             config: {
-                identity: 'Developer ID Installer: Simon Rho (9B54K458K9)',
                 overwrite: true,
                 out: path.join(__dirname, 'out/make/darwin-arm64'),
                 name: 'jccm-darwin-arm64',
@@ -57,7 +56,6 @@ module.exports = {
         {
             name: '@electron-forge/maker-pkg',
             config: {
-                identity: 'Developer ID Installer: Simon Rho (9B54K458K9)',
                 overwrite: true,
                 out: path.join(__dirname, 'out/make/darwin-x64'),
                 name: 'jccm-darwin-x64',
