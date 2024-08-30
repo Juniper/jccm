@@ -167,6 +167,7 @@ Below is a visual example of how the inventory file should look:
 Currently supported platforms:
 - macOS (Intel x86_64 and ARM64)
 - Windows (Intel x86_64)
+- Linux (Intel x86_64)
 
 ## License
 
