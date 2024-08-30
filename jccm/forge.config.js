@@ -5,7 +5,6 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 console.log(`Current working directory: ${process.cwd()}`);
 
-const entitlements = '/Users/srho/electron-test/juniper-jccm-project/jccm/entitlements.plist';
 module.exports = {
     packagerConfig: {
         asar: true,
