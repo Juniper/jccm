@@ -1,10 +1,23 @@
 import { app, BrowserWindow, screen, dialog } from 'electron';
 import { initializeDatabase } from './Services/mainStore';
 import { setupApiHandlers } from './Services/ApiServer'; // Import the API handlers
+import path from 'path';
+import os from 'os';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
     app.quit();
+}
+
+// Determine the platform
+const platform = os.platform();
+
+console.log('platform: ' + platform);
+
+if (platform === 'linux') {
+    // Set userData path to the home directory for Linux
+    const userHome = process.env.HOME || process.env.USERPROFILE; // Cross-platform way to get home directory
+    app.setPath('userData', path.join(userHome, '.jccm'));
 }
 
 // Initialize mainWindow as undefined
@@ -13,22 +26,14 @@ export let mainWindow;
 const createWindow = () => {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     mainWindow = new BrowserWindow({
-        width: Math.floor(width * 0.95), // 80% of the screen width
-        height: Math.floor(height * 0.85), // 70% of the screen height
-        // frame: false,
-        // titleBarStyle: 'hidden',
-        // titleBarOverlay: {
-        //   // color: '#2f3241',
-        //   // symbolColor: '#74b1be',
-        //   height: 30
-        // },
+        width: Math.floor(width * 0.95),
+        height: Math.floor(height * 0.85),
         webPreferences: {
             preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
             nodeIntegration: false,
-            contextIsolation: true, // Consider your security needs when setting this
-            // Disable the password saving feature
-            rememberPassword: false, // Not a real Electron API, illustrative only
-            autoFill: false, // Not a real Electron API, illustrative only
+            contextIsolation: true,
+            rememberPassword: false, // Disable the password saving feature
+            autoFill: false,
         },
     });
 

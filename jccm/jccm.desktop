@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=jccm
+Comment=Juniper Cloud Connection Manager
+GenericName=Juniper Cloud Connection Manager
+Exec="/usr/bin/jccm/Juniper Cloud Connection Manager" --no-sandbox %U
+Icon=jccm
+Type=Application
+StartupNotify=true
+Categories=GNOME;GTK;Utility;

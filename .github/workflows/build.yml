@@ -91,7 +91,6 @@ jobs:
                   npm run make -- --arch=x64
               working-directory: ./jccm
 
-
             - name: Notarize and Staple Packages
               run: |
                   set -ex  # Exit on error and print commands
@@ -130,7 +129,6 @@ jobs:
                       ./jccm/out/make/*.pkg
 
     build-windows:
-        needs: build-macos
         runs-on: windows-latest
         steps:
             - uses: actions/checkout@v2
@@ -156,8 +154,84 @@ jobs:
                       ./jccm/out/make/squirrel.windows/x64/*.exe
                       ./jccm/out/make/squirrel.windows/x64/*.msi
 
+    build-deb:
+        runs-on: ubuntu-latest
+        env:
+            DEBUG: electron-installer*
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Install deb tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y dpkg fakeroot
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '20.10.0'
+
+            - name: Install dependencies
+              working-directory: ./jccm
+              run: npm install
+
+            - name: Package Electron app (.deb)
+              working-directory: ./jccm
+              run: |
+                  npm run make-deb
+                  ls -al out
+                  ls -al out/make
+                  mv out/make/deb/x64/*.deb out/make/deb/x64/jccm-linux-amd64.deb
+                  ls -al out/make
+
+            - name: Archive .deb artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: deb-package
+                  path: ./jccm/out/make/deb/x64/*.deb
+
+    build-rpm:
+        runs-on: ubuntu-latest
+        env:
+            DEBUG: electron-installer*
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Install rpm tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y rpm fakeroot alien
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '20.10.0'
+
+            - name: Install dependencies
+              working-directory: ./jccm
+              run: npm install
+
+            - name: Package Electron app (.rpm)
+              working-directory: ./jccm
+              run: |
+                  npm run make-rpm
+                  ls -al out
+                  ls -al out/make
+                  mv out/make/rpm/x64/*.rpm out/make/rpm/x64/jccm-linux-x64.rpm
+                  ls -al out/make
+
+            - name: Archive .rpm artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: rpm-package
+                  path: ./jccm/out/make/rpm/x64/*.rpm
+
     release:
-        needs: [build-macos, build-windows]
+        needs: [build-macos, build-windows, build-deb, build-rpm]
         runs-on: ubuntu-latest
         steps:
             - name: Check out repository

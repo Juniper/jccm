@@ -55,6 +55,14 @@ Choose the appropriate installer for your system from the options below. macOS u
 
 - [Download for Intel-based PCs (x64)](../../releases/latest/download/jccm-windows-x64-setup.exe)
 
+#### Ubuntu
+
+- [Download for Intel-based deb (x64)](../../releases/latest/download/jccm-linux-amd64.deb)
+
+#### Centos, Rocky, Redhat
+
+- [Download for Intel-based rpm (x64)](../../releases/latest/download/jccm-linux-amd64.rpm)
+
 ### Install
 
 #### macOS
@@ -69,6 +77,19 @@ Choose the appropriate installer for your system from the options below. macOS u
 #### Windows
 
 1. Double-click the downloaded `.exe` file and follow the installation wizard instructions.
+
+#### Ubuntu
+
+1. Run the following command. Replace ~/Downloads with the appropriate path if your file is saved in a different directory.
+```bash
+dpkg -i ~/Dowloads/jccm-linux-amd64.deb
+```
+
+#### Centos, Rocky, Redhat
+1. Run the following command. Replace ~/Downloads with the appropriate path if your file is saved in a different directory.
+```bash
+yum -y install ~/Dowloads/jccm-linux-amd64.rpm
+```
 
 ### Post-Installation
 
