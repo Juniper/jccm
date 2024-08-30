@@ -8,6 +8,8 @@
     "start": "pkill -9 node; nodemon --watch ./src --ext js,json --ignore ./src/Frontend/ --exec 'electron-forge start'",
     "package": "electron-forge package",
     "make": "electron-forge make",
+    "make-deb": "electron-forge make --platform=linux --arch=x64 --targets=@electron-forge/maker-deb",
+    "make-rpm": "electron-forge make --platform=linux --arch=x64 --targets=@electron-forge/maker-rpm",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
   },
