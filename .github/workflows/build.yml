@@ -183,7 +183,7 @@ jobs:
                   npm run make-deb
                   ls -al out
                   ls -al out/make
-                  mv out/make/deb/x64/*.deb out/make/deb/x64/jccm-linux-amd64.deb
+                  mv out/make/deb/x64/*.deb out/make/deb/x64/jccm-linux-x64.deb
                   ls -al out/make
 
             - name: Archive .deb artifact

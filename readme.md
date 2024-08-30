@@ -57,11 +57,11 @@ Choose the appropriate installer for your system from the options below. macOS u
 
 #### Ubuntu
 
-- [Download for Intel-based deb (x64)](../../releases/latest/download/jccm-linux-amd64.deb)
+- [Download for Intel-based deb (x64)](../../releases/latest/download/jccm-linux-x64.deb)
 
 #### Centos, Rocky, Redhat
 
-- [Download for Intel-based rpm (x64)](../../releases/latest/download/jccm-linux-amd64.rpm)
+- [Download for Intel-based rpm (x64)](../../releases/latest/download/jccm-linux-x64.rpm)
 
 ### Install
 
