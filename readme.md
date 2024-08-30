@@ -82,13 +82,13 @@ Choose the appropriate installer for your system from the options below. macOS u
 
 1. Run the following command. Replace ~/Downloads with the appropriate path if your file is saved in a different directory.
 ```bash
-dpkg -i ~/Dowloads/jccm-linux-amd64.deb
+dpkg -i ~/Downloads/jccm-linux-amd64.deb
 ```
 
 #### Centos, Rocky, Redhat
 1. Run the following command. Replace ~/Downloads with the appropriate path if your file is saved in a different directory.
 ```bash
-yum -y install ~/Dowloads/jccm-linux-amd64.rpm
+yum -y install ~/Downloads/jccm-linux-amd64.rpm
 ```
 
 ### Post-Installation
