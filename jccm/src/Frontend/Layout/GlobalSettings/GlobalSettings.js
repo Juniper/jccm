@@ -49,14 +49,13 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
         height: window.innerHeight,
     });
 
-
     const onTabSelect = (event, data) => {
         setSelectedTab(data.value);
     };
 
     const handleClose = () => {
         onClose();
-    }
+    };
 
     return (
         <Dialog
@@ -102,31 +101,34 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
                         height: '100%',
                         flexDirection: 'column',
                         overflow: 'hidden',
-                        justifyContent: 'flex-start'
+                        justifyContent: 'flex-start',
                     }}
                 >
-                        <TabList
-                            selectedValue={selectedTab}
-                            onTabSelect={onTabSelect}
-                            size='small'
-                            appearance='transparent'
+                    <TabList
+                        selectedValue={selectedTab}
+                        onTabSelect={onTabSelect}
+                        size='small'
+                        appearance='transparent'
+                    >
+                        <Tab
+                            value='General'
                         >
-                            <Tab
-                                value='General'
-                                // icon={<PersonAvailableRegular />}
-                            >
-                                General
-                            </Tab>
-                            {/* <Tab
-                                value='BastionHost'
-                                // icon={<PersonAvailableRegular />}
-                            >
-                                Bastion Host
-                            </Tab> */}
-                        </TabList>
+                            General
+                        </Tab>
+                        <Tab
+                            value='BastionHost'
+                        >
+                            Bastion Host
+                        </Tab>
+                    </TabList>
 
                     <div
-                        style={{ display: selectedTab === 'General' ? 'flex' : 'none', width: '100%', height: '100%', marginTop: '20px' }}
+                        style={{
+                            display: selectedTab === 'General' ? 'flex' : 'none',
+                            width: '100%',
+                            height: '100%',
+                            marginTop: '20px',
+                        }}
                     >
                         <GeneralCard />
                     </div>
@@ -135,7 +137,7 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
                             display: selectedTab === 'BastionHost' ? 'flex' : 'none',
                             width: '100%',
                             height: '100%',
-                            marginTop: '20px'
+                            marginTop: '20px',
                         }}
                     >
                         <BastionHostCard />

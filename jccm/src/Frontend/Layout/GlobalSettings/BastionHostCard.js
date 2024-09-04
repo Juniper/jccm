@@ -22,6 +22,8 @@ import {
     DismissRegular,
     SubtractCircleRegular,
     SubtractCircleFilled,
+    ChevronCircleDownRegular,
+    ChevronCircleDownFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
 
@@ -33,6 +35,7 @@ import { useNotify } from '../../Common/NotificationContext';
 import useStore from '../../Common/StateStore';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
+const SaveIcon = bundleIcon(ChevronCircleDownFilled, ChevronCircleDownRegular);
 const DeleteIcon = bundleIcon(SubtractCircleFilled, SubtractCircleRegular);
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -182,6 +185,8 @@ export const BastionHostCard = () => {
     const saveBastionHost = (newBastionHost) => {
         const saveFunction = async () => {
             if (isFormValid) {
+                setBastionHost(newBastionHost);
+                
                 const newSettings = { ...settings, bastionHost: newBastionHost };
                 setSettings(newSettings);
                 exportSettings(newSettings);
@@ -190,14 +195,24 @@ export const BastionHostCard = () => {
         saveFunction();
     };
 
-    const handleClose = () => {
-        saveBastionHost({ host, port, username, password, active });
+    const handleSave = () => {
+        saveBastionHost({ host, port, username, password, active, readyTimeout: 5000 });
+
+        notify(
+            <Toast>
+                <ToastTitle>Bastion Host</ToastTitle>
+                <ToastBody>
+                    <Text size={100}>The Bastion Host settings have been successfully saved.</Text>
+                </ToastBody>
+            </Toast>,
+            { intent: 'success' }
+        );
     };
 
     const handleActive = async (event) => {
         const checked = event.currentTarget.checked;
 
-        saveBastionHost({ host, port, username, password, active: checked });
+        saveBastionHost({ host, port, username, password, active: checked, readyTimeout: 5000 });
         setActive(checked);
 
         const status = checked ? 'active' : 'inactive';
@@ -230,6 +245,16 @@ export const BastionHostCard = () => {
 
         setActive(false);
         saveBastionHost({});
+
+        notify(
+            <Toast>
+                <ToastTitle>Bastion Host</ToastTitle>
+                <ToastBody>
+                    <Text size={100}>The Bastion Host settings have been successfully deleted.</Text>
+                </ToastBody>
+            </Toast>,
+            { intent: 'success' }
+        );
     };
 
     return (
@@ -417,18 +442,45 @@ export const BastionHostCard = () => {
                         height: '25px',
                     }}
                 >
-                    <Button
-                        disabled={!isFormValid}
-                        appearance='subtle'
-                        shape='circular'
-                        size='small'
-                        icon={<DeleteIcon fontSize={15} />}
-                        onClick={async () => {
-                            await handleReset();
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            gap: '5px',
+                            alignItems: 'center',
                         }}
                     >
-                        Reset
-                    </Button>
+                        <Button
+                            disabled={
+                                !isFormValid ||
+                                (bastionHost?.host === host &&
+                                    bastionHost?.port === port &&
+                                    bastionHost?.username === username &&
+                                    bastionHost?.password === password)
+                            }
+                            appearance='subtle'
+                            shape='circular'
+                            size='small'
+                            icon={<SaveIcon fontSize={15} />}
+                            onClick={async () => {
+                                await handleSave();
+                            }}
+                        >
+                            Save
+                        </Button>
+                        <Button
+                            disabled={!isFormValid}
+                            appearance='subtle'
+                            shape='circular'
+                            size='small'
+                            icon={<DeleteIcon fontSize={15} />}
+                            onClick={async () => {
+                                await handleReset();
+                            }}
+                        >
+                            Clear
+                        </Button>
+                    </div>
                     {isFormValid && (
                         <div
                             style={{

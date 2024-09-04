@@ -2,6 +2,7 @@ import { app } from 'electron';
 import path from 'path';
 import Datastore from 'nedb-promises';
 import { getActiveThemeName } from '../Frontend/Common/CommonVariables';
+import { isBase64 } from 'validator'; // You might need to install the 'validator' package
 
 // Define the path to the database file
 const dbPath = path.join(app.getPath('userData'), 'sessionDB.db');
@@ -177,12 +178,30 @@ export const msSetOrgFilter = async (orgFilter) => {
 };
 
 export const msSetLocalInventory = async (inventory) => {
-    await db.update({ _id: localInventoryKey }, { _id: localInventoryKey, data: inventory }, { upsert: true });
+    const encodedInventory = encodeToBase64(inventory);
+
+    await db.update(
+        { _id: localInventoryKey },
+        { $set: { data: encodedInventory } }, // Use $set to ensure the data field is replaced, not merged
+        { upsert: true }
+    );
 };
 
 export const msGetLocalInventory = async () => {
     const doc = await db.findOne({ _id: localInventoryKey });
-    return doc ? doc.data : [];
+
+    if (doc && doc.data) {
+        if (typeof doc.data === 'string') {
+            // Check if the data is a Base64 encoded string
+            if (isBase64(doc.data)) {
+                return decodeFromBase64(doc.data);
+            }
+        } else {
+            // Data is presumably already an object or array
+            return doc.data;
+        }
+    }
+    return [];
 };
 
 export const msSaveDeviceFacts = async (facts) => {

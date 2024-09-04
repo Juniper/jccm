@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Button, Tooltip, tokens } from '@fluentui/react-components';
+import { Button, Tooltip, Text, tokens } from '@fluentui/react-components';
 import { HexagonThreeFilled, HexagonThreeRegular } from '@fluentui/react-icons';
 
 import useStore from '../Common/StateStore';
@@ -7,17 +7,23 @@ import { RotatingIcon } from './ChangeIcon';
 
 export const BastionHostButton = () => {
     const { settings, toggleBastionHostActive } = useStore();
-    const bastionHost = settings?.bastionHost || {};
 
     // Determine the status of bastionHost
-    const bastionHostStatus = () => {
-        if (Object.keys(bastionHost).length === 0) return 'not configured';
-        return bastionHost.active ? 'active' : 'inactive';
+    const getBastionHostStatus = () => {
+        const bastionHost = settings?.bastionHost || {};
+        const status =
+            Object.keys(bastionHost).length === 0 ? 'not configured' : bastionHost.active ? 'active' : 'inactive';
+        return status;
+    };
+
+    const getBastionHostName = () => {
+        const name = settings?.bastionHost ? `Host: ${settings.bastionHost.host} Port: ${settings.bastionHost.port}` : '';
+        return name;
     };
 
     // Get button details based on bastionHost status
     const getButtonDetails = () => {
-        const status = bastionHostStatus();
+        const status = getBastionHostStatus();
 
         switch (status) {
             case 'not configured':
@@ -25,23 +31,15 @@ export const BastionHostButton = () => {
                     icon: <HexagonThreeRegular fontSize={18} />,
                     color: tokens.colorNeutralStroke1Hover,
                 };
-            case 'active':
-                return {
-                    icon: (
-                        <RotatingIcon
-                            Icon={HexagonThreeFilled}
-                            size={18}
-                            rotationDuration='7000ms'
-                            color={tokens.colorNeutralForeground2BrandHover}
-                        />
-                    ),
-
-                    color: tokens.colorNeutralForeground2BrandHover,
-                };
             case 'inactive':
                 return {
                     icon: <HexagonThreeFilled fontSize={15} />,
-                    color: tokens.colorNeutralStrokeAccessibleHover,
+                    color: tokens.colorNeutralStroke1Hover,
+                };
+            case 'active':
+                return {
+                    icon: <HexagonThreeFilled fontSize={15} />,
+                    color: tokens.colorNeutralForeground2BrandHover,
                 };
             default:
                 return {
@@ -53,15 +51,18 @@ export const BastionHostButton = () => {
 
     const { icon, color } = getButtonDetails();
 
-    // useEffect(() => {
-    //     if (process.env.NODE_ENV !== 'production') {
-    //         console.log('BastionHostButton: bastionHost:', settings?.bastionHost);
-    //     }
-    // }, [settings?.bastionHost]);
-
     return (
         <Tooltip
-            content={`Bastion Host is ${bastionHostStatus()}.`}
+            content={
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <Text size={200}>
+                        Bastion Host is {getBastionHostStatus()}.
+                    </Text>
+                    <Text size={100}>
+                        {getBastionHostName()}
+                    </Text>
+                </div>
+            }
             relationship='label'
             withArrow
             positioning='above-end'

@@ -131,7 +131,9 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
                             // console.log(`Get device stats: ${JSON.stringify(cloudDeviceStates, null, 2)}`);
 
                             for (const cloudDevice of cloudDeviceStates) {
-                                SN2VSN[cloudDevice.serial] = cloudDevice.module_stat.find(item => item && item.serial);
+                                SN2VSN[cloudDevice.serial] = cloudDevice.module_stat.find(
+                                    (item) => item && item.serial
+                                );
                             }
                         }
                     }
@@ -165,6 +167,266 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
 
     const isFilterApplied = Object.keys(orgFilters).length > 0;
     return { inventory, isFilterApplied };
+};
+
+const startSSHConnectionStandalone = (event, device, { id, cols, rows }) => {
+    const { address, port, username, password } = device;
+
+    const conn = new Client();
+    sshSessions[id] = conn;
+
+    conn.on('ready', () => {
+        console.log(`SSH session successfully opened for id: ${id}`);
+        event.reply('sshSessionOpened', { id }); // Notify renderer that the session is open
+
+        conn.shell({ cols, rows }, (err, stream) => {
+            if (err) {
+                event.reply('sshErrorOccurred', { id, message: err.message });
+                return;
+            }
+
+            stream.on('data', (data) => {
+                event.reply('sshDataReceived', { id, data: data.toString() });
+            });
+
+            stream.on('close', () => {
+                event.reply('sshDataReceived', { id, data: 'The SSH session has been closed.\r\n' });
+
+                conn.end();
+                delete sshSessions[id];
+                event.reply('sshSessionClosed', { id });
+                // Clean up listeners
+                ipcMain.removeAllListeners(`sendSSHInput-${id}`);
+                ipcMain.removeAllListeners(`resizeSSHSession-${id}`);
+            });
+
+            ipcMain.on(`sendSSHInput-${id}`, (_, data) => {
+                stream.write(data);
+            });
+
+            ipcMain.on(`resizeSSHSession-${id}`, (_, { cols, rows }) => {
+                stream.setWindow(rows, cols, 0, 0);
+            });
+        });
+    }).connect({
+        host: address,
+        port,
+        username,
+        password,
+        poll: 10, // Adjust the polling interval to 10 milliseconds
+        keepaliveInterval: 10000, // Send keepalive every 10 seconds
+        keepaliveCountMax: 3, // Close the connection after 3 failed keepalives
+    });
+
+    conn.on('error', (err) => {
+        event.reply('sshErrorOccurred', { id, message: err.message });
+    });
+
+    conn.on('end', () => {
+        delete sshSessions[id];
+    });
+};
+
+const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows }) => {
+    const conn = new Client();
+    sshSessions[id] = conn;
+
+    conn.on('ready', () => {
+        console.log(`SSH session successfully opened for id: ${id}`);
+        event.reply('sshSessionOpened', { id }); // Notify renderer that the session is open
+
+        conn.shell({ cols, rows }, (err, stream) => {
+            if (err) {
+                event.reply('sshErrorOccurred', { id, message: err.message });
+                return;
+            }
+
+            let initialOutputBuffer = '';
+            let sshClientCommand = '';
+
+            const sshOptions = [
+                '-o StrictHostKeyChecking=no',
+                '-o ConnectTimeout=3',
+                '-o NumberOfPasswordPrompts=1',
+                '-o PreferredAuthentications=keyboard-interactive',
+            ].join(' ');
+
+            const linuxSSHCommand = `ssh -tt ${sshOptions} -p ${device.port} ${device.username}@${device.address};exit`;
+            const junosSSHCommand = `set cli prompt "> "\nstart shell command "ssh -tt ${sshOptions} -p ${device.port} ${device.username}@${device.address}"\nexit`;
+
+            const promptPattern = /\n[\s\S]*?[@#>%$]\s$/;
+
+            let isBastionHostOsTypeChecked = false;
+            let isBastionHostOsTypeCheckTimeoutPass = false;
+            let bastionHostOsTypeCheckTimeoutHandle;
+
+            let isSshClientPasswordInputted = false;
+            let isSshClientPasswordInputTimeoutPass = false;
+            let sshClientPasswordInputTimeoutHandle;
+
+            let isSshClientAuthErrorMonitoringTimeoutPass = false;
+            let sshClientAuthErrorMonitoringTimeoutHandle;
+
+            const resetBastionHostOsTypeCheckTimeout = (timeout) => {
+                clearTimeout(bastionHostOsTypeCheckTimeoutHandle);
+                bastionHostOsTypeCheckTimeoutHandle = setTimeout(() => {
+                    isBastionHostOsTypeCheckTimeoutPass = true;
+                }, timeout);
+            };
+
+            const resetSshClientPasswordInputTimeout = (timeout) => {
+                clearTimeout(sshClientPasswordInputTimeoutHandle);
+                sshClientPasswordInputTimeoutHandle = setTimeout(() => {
+                    isSshClientPasswordInputTimeoutPass = true;
+                }, timeout);
+            };
+
+            const resetSshClientAuthErrorMonitoringTimeout = (timeout) => {
+                clearTimeout(sshClientAuthErrorMonitoringTimeoutHandle);
+                sshClientAuthErrorMonitoringTimeoutHandle = setTimeout(() => {
+                    isSshClientAuthErrorMonitoringTimeoutPass = true;
+                }, timeout);
+            };
+
+            resetBastionHostOsTypeCheckTimeout(5000);
+
+            stream.on('data', (data) => {
+                const output = data.toString();
+
+                // process.stdout.write(output);
+
+                if (!isBastionHostOsTypeCheckTimeoutPass || !isSshClientPasswordInputTimeoutPass) {
+                    initialOutputBuffer += output;
+                }
+
+                // Check if either the timeout has passed without a check, or the check hasn't been done and it's ready
+                if (
+                    (!isBastionHostOsTypeChecked && promptPattern.test(initialOutputBuffer)) ||
+                    (isBastionHostOsTypeCheckTimeoutPass && !isBastionHostOsTypeChecked)
+                ) {
+                    isBastionHostOsTypeChecked = true;
+                    isBastionHostOsTypeCheckTimeoutPass = true;
+                    clearTimeout(bastionHostOsTypeCheckTimeoutHandle);
+
+                    // Determine the SSH command based on the output buffer content
+                    if (initialOutputBuffer.toLowerCase().includes('junos') && bastionHost.username !== 'root') {
+                        sshClientCommand = junosSSHCommand;
+                    } else {
+                        sshClientCommand = linuxSSHCommand;
+                    }
+
+                    // Send the determined SSH command and reset the initial output buffer
+                    stream.write(sshClientCommand + '\n');
+                    initialOutputBuffer = '';
+
+                    // Reset the password input timeout to prepare for the next step
+                    resetSshClientPasswordInputTimeout(5000);
+                }
+
+                // Check if the bastion host's OS type has been successfully checked.
+                if (isBastionHostOsTypeChecked) {
+                    // Handling input for the SSH client password
+                    if (!isSshClientPasswordInputted) {
+                        if (
+                            !isSshClientPasswordInputTimeoutPass &&
+                            initialOutputBuffer.toLowerCase().includes('password:')
+                        ) {
+                            // Password prompt found, input the password
+                            isSshClientPasswordInputted = true;
+                            stream.write(device.password + '\n');
+                            initialOutputBuffer = '';
+                            resetSshClientAuthErrorMonitoringTimeout(5000);
+                        } else if (isSshClientPasswordInputTimeoutPass) {
+                            // Handling timeout passing without password input
+                            isSshClientPasswordInputted = true;
+                            initialOutputBuffer = '';
+                            isSshClientAuthErrorMonitoringTimeoutPass = true;
+                        }
+                    } else {
+                        // Handling SSH client authentication error monitoring
+                        if (!isSshClientAuthErrorMonitoringTimeoutPass) {
+                            // Check if there's no error message indicating a connection issue
+                            const connectionErrorMessage = `${device.username}@${device.address}: `;
+                            const sshConnectionErrorMessage = `ssh: connect to host ${device.address} port ${device.port}: `;
+                            if (
+                                !initialOutputBuffer.includes(connectionErrorMessage) &&
+                                !initialOutputBuffer.includes(sshConnectionErrorMessage)
+                            ) {
+                                event.reply('sshDataReceived', { id, data: output });
+                            }
+                        } else {
+                            // Timeout has passed, send data regardless
+                            event.reply('sshDataReceived', { id, data: output });
+                        }
+                    }
+                }
+            });
+
+            stream.on('close', () => {
+                // console.log(`|||>>>${initialOutputBuffer}<<<|||`);
+
+                // Function to handle the extraction and cleanup of error messages
+                function handleSSHErrorMessage(pattern, messagePrefix) {
+                    const regex = new RegExp(`^${pattern}(.+)$`, 'm');
+                    const match = initialOutputBuffer.match(regex);
+
+                    if (match && match[1]) {
+                        const sshErrorMessage = match[1];
+                        const cleanedErrorMessage = sshErrorMessage.replace(/\.$/, '');
+                        event.reply('sshDataReceived', {
+                            id,
+                            data: `${messagePrefix}${cleanedErrorMessage}\r\n\r\n`,
+                        });
+                    }
+                }
+
+                // Check for error messages related to direct SSH or port issues
+                if (initialOutputBuffer.includes(`${device.username}@${device.address}: `)) {
+                    handleSSHErrorMessage(`${device.username}@${device.address}: `, 'SSH connection: ');
+                } else if (
+                    initialOutputBuffer.includes(`ssh: connect to host ${device.address} port ${device.port}: `)
+                ) {
+                    handleSSHErrorMessage(
+                        `ssh: connect to host ${device.address} port ${device.port}: `,
+                        '\r\nSSH connection: '
+                    );
+                }
+
+                conn.end();
+                delete sshSessions[id];
+                event.reply('sshSessionClosed', { id });
+
+                // Clean up listeners
+                ipcMain.removeAllListeners(`sendSSHInput-${id}`);
+                ipcMain.removeAllListeners(`resizeSSHSession-${id}`);
+            });
+
+            ipcMain.on(`sendSSHInput-${id}`, (_, data) => {
+                stream.write(data);
+            });
+
+            ipcMain.on(`resizeSSHSession-${id}`, (_, { cols, rows }) => {
+                stream.setWindow(rows, cols, 0, 0);
+            });
+        });
+    }).connect({
+        host: bastionHost.host,
+        port: bastionHost.port,
+        username: bastionHost.username,
+        password: bastionHost.password,
+        readyTimeout: bastionHost.readyTimeout,
+        poll: 10, // Adjust the polling interval to 10 milliseconds
+        keepaliveInterval: 10000, // Send keepalive every 10 seconds
+        keepaliveCountMax: 3, // Close the connection after 3 failed keepalives
+    });
+
+    conn.on('error', (err) => {
+        event.reply('sshErrorOccurred', { id, message: err.message });
+    });
+
+    conn.on('end', () => {
+        delete sshSessions[id];
+    });
 };
 
 export const setupApiHandlers = () => {
@@ -360,6 +622,8 @@ export const setupApiHandlers = () => {
     ipcMain.on('startSSHConnection', async (event, { id, cols, rows }) => {
         console.log('main: startSSHConnection: id: ' + id);
         const inventory = await msGetLocalInventory();
+        const settings = await msLoadSettings();
+        const bastionHost = settings?.bastionHost || {};
 
         const found = inventory.filter(
             ({ organization, site, address, port }) => id === `/Inventory/${organization}/${site}/${address}/${port}`
@@ -369,61 +633,11 @@ export const setupApiHandlers = () => {
             return;
         }
         const device = found[0];
-        const { address, port, username, password } = device;
-
-        const conn = new Client();
-        sshSessions[id] = conn;
-
-        conn.on('ready', () => {
-            console.log(`SSH session successfully opened for id: ${id}`);
-            event.reply('sshSessionOpened', { id }); // Notify renderer that the session is open
-
-            conn.shell({ cols, rows }, (err, stream) => {
-                if (err) {
-                    event.reply('sshErrorOccurred', { id, message: err.message });
-                    return;
-                }
-
-                stream.on('data', (data) => {
-                    event.reply('sshDataReceived', { id, data: data.toString() });
-                });
-
-                stream.on('close', () => {
-                    event.reply('sshDataReceived', { id, data: 'The SSH session has been closed.\r\n' });
-
-                    conn.end();
-                    delete sshSessions[id];
-                    event.reply('sshSessionClosed', { id });
-                    // Clean up listeners
-                    ipcMain.removeAllListeners(`sendSSHInput-${id}`);
-                    ipcMain.removeAllListeners(`resizeSSHSession-${id}`);
-                });
-
-                ipcMain.on(`sendSSHInput-${id}`, (_, data) => {
-                    stream.write(data);
-                });
-
-                ipcMain.on(`resizeSSHSession-${id}`, (_, { cols, rows }) => {
-                    stream.setWindow(rows, cols, 0, 0);
-                });
-            });
-        }).connect({
-            host: address,
-            port,
-            username,
-            password,
-            poll: 10, // Adjust the polling interval to 10 milliseconds
-            keepaliveInterval: 10000, // Send keepalive every 10 seconds
-            keepaliveCountMax: 3, // Close the connection after 3 failed keepalives
-        });
-
-        conn.on('error', (err) => {
-            event.reply('sshErrorOccurred', { id, message: err.message });
-        });
-
-        conn.on('end', () => {
-            delete sshSessions[id];
-        });
+        if (bastionHost?.active) {
+            startSSHConnectionProxy(event, device, bastionHost, { id, cols, rows });
+        } else {
+            startSSHConnectionStandalone(event, device, { id, cols, rows });
+        }
     });
 
     ipcMain.on('disconnectSSHSession', (event, { id }) => {
@@ -439,8 +653,16 @@ export const setupApiHandlers = () => {
         console.log('main: saGetDeviceFacts');
 
         try {
-            const { address, port, username, password, timeout, upperSerialNumber } = args;
-            const reply = await getDeviceFacts(address, port, username, password, timeout, upperSerialNumber);
+            const { address, port, username, password, timeout, upperSerialNumber, bastionHost } = args;
+            const reply = await getDeviceFacts(
+                address,
+                port,
+                username,
+                password,
+                timeout,
+                upperSerialNumber,
+                bastionHost
+            );
 
             return { facts: true, reply };
         } catch (error) {
@@ -451,8 +673,18 @@ export const setupApiHandlers = () => {
     ipcMain.handle('saAdoptDevice', async (event, args) => {
         console.log('main: saAdoptDevice');
 
-        const { organization, site, address, port, username, password, jsiTerm, deleteOutboundSSHTerm, ...others } =
-            args;
+        const {
+            organization,
+            site,
+            address,
+            port,
+            username,
+            password,
+            jsiTerm,
+            deleteOutboundSSHTerm,
+            bastionHost,
+            ...others
+        } = args;
 
         const cloudOrgs = await msGetCloudOrgs();
         const orgId = cloudOrgs[organization]?.id;
@@ -471,7 +703,7 @@ export const setupApiHandlers = () => {
                 ? `delete system services outbound-ssh\n${response.cmd}\n`
                 : `${response.cmd}\n`;
 
-            const reply = await commitJunosSetConfig(address, port, username, password, configCommand);
+            const reply = await commitJunosSetConfig(address, port, username, password, configCommand, bastionHost);
 
             if (reply.status === 'success' && reply.data.includes('<commit-success/>')) {
                 return { adopt: true, reply };

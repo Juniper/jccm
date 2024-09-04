@@ -800,7 +800,7 @@ const InventoryTreeMenuLocal = () => {
                                 font='numeric'
                                 style={{ color: 'red' }}
                             >
-                                {isChecking.error} - Retry attempt {isChecking.retry}
+                                {isChecking.error} - Retry {isChecking.retry}
                             </Text>
                         )}
                     </div>
@@ -830,7 +830,7 @@ const InventoryTreeMenuLocal = () => {
                                 font='numeric'
                                 style={{ color: 'red' }}
                             >
-                                {isAdopting[path]?.error} - Retry attempt {isAdopting[path]?.retry}
+                                {isAdopting[path]?.error} - Retry {isAdopting[path]?.retry}
                             </Text>
                         )}
                     </div>
@@ -861,15 +861,17 @@ const InventoryTreeMenuLocal = () => {
     };
 
     const fetchDeviceFacts = async (device) => {
-        const maxRetries = 3;
+        const maxRetries = 2;
         const retryInterval = 10000; // 10 seconds in milliseconds
         let response;
 
         setIsChecking(device._path, { status: true, retry: 0 });
         resetIsAdopting(device._path);
 
+        const bastionHost = settings?.bastionHost || {};
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            response = await getDeviceFacts({ ...device, timeout: 5000 }, true);
+            response = await getDeviceFacts({ ...device, timeout: 5000 }, true, bastionHost);
             if (response.status) {
                 setDeviceFacts(device._path, response.result);
                 resetIsChecking(device._path);
@@ -879,11 +881,16 @@ const InventoryTreeMenuLocal = () => {
                     `${device.address}:${device.port} - Error retrieving facts on attempt ${attempt}:`,
                     response
                 );
-                if (response.result?.status.toLowerCase().includes('authentication failed')) {
+                if (response.result?.status?.toLowerCase().includes('authentication failed')) {
+                    deleteDeviceFacts(device._path);
+                    setIsChecking(device._path, { status: false, retry: -1, error: response.result?.message });
+                    return;
+                } else if (response.result?.status?.toLowerCase().includes('ssh client error')) {
                     deleteDeviceFacts(device._path);
                     setIsChecking(device._path, { status: false, retry: -1, error: response.result?.message });
                     return;
                 }
+
                 setIsChecking(device._path, { status: true, retry: attempt, error: response.result?.message });
                 await new Promise((resolve) => setTimeout(resolve, retryInterval));
             }
@@ -946,15 +953,19 @@ const InventoryTreeMenuLocal = () => {
     };
 
     const actionAdoptDevice = async (device, jsiTerm = false, deleteOutboundSSHTerm = false) => {
-        const maxRetries = 6;
-        const retryInterval = 15 * 1000; // 15 seconds in milliseconds
+        const maxRetries = 2;
+        const retryInterval = 15000;
+        let response;
 
         setIsAdopting(device._path, { status: true, retry: 0 });
         resetIsChecking(device._path);
 
+        const bastionHost = settings?.bastionHost || {};
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            const response = await adoptDevices(device, jsiTerm, deleteOutboundSSHTerm);
-            if (response.status) {
+            response = await adoptDevices(device, jsiTerm, deleteOutboundSSHTerm, bastionHost);
+
+            if (response?.status) {
                 resetIsAdopting(device.path, false);
                 return;
             } else {
@@ -963,24 +974,26 @@ const InventoryTreeMenuLocal = () => {
                     response
                 );
 
-                if (response.result?.status.toLowerCase().includes('authentication failed')) {
-                    setIsAdopting(device._path, { status: false, retry: -1, error: response.result?.message });
+                if (response?.result?.status?.toLowerCase().includes('authentication failed')) {
+                    setIsAdopting(device._path, { status: false, retry: -1, error: response?.result?.message });
                     return;
                 }
-                setIsAdopting(device._path, { status: true, retry: attempt, error: response.result?.message });
+                setIsAdopting(device._path, { status: true, retry: attempt, error: response?.result?.message });
 
                 await new Promise((resolve) => setTimeout(resolve, retryInterval)); // Wait before retrying
             }
         }
 
-        resetIsAdopting(device._path, { status: false, retry: -1, error: response.result?.message });
+        resetIsAdopting(device._path, { status: false, retry: -1, error: response?.result?.message });
 
         notify(
             <Toast>
                 <ToastTitle>Device Adoption Failure</ToastTitle>
-                <ToastBody subtitle='Error Details'>
-                    <Text>The device could not be adopted into the organization: "{device.organization}".</Text>
-                    <Text>Error Message: {response.result.message}</Text>
+                <ToastBody>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <Text size={200}>The device could not be adopted into the organization: "{device.organization}".</Text>
+                        <Text size={200}>Error Message: {response?.result.message}</Text>
+                    </div>
                 </ToastBody>
             </Toast>,
             { intent: 'error' }

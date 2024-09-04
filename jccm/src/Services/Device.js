@@ -30,6 +30,10 @@ const StatusErrorMessages = {
         status: 'Inactivity timeout',
         message: 'Session closed due to inactivity',
     },
+    SSH_CLIENT_ERROR: {
+        status: 'SSH Client Error',
+        message: '',
+    },
 };
 
 /**
@@ -40,7 +44,44 @@ const StatusErrorMessages = {
  * @param {number} commitInactivityTimeout - Timeout in milliseconds for inactivity on commit commands.
  * @returns {Promise<object>} - A promise that resolves to an object with results.
  */
-function processCommands(commands, sshConfig, commandInactivityTimeout = 3000, commitInactivityTimeout = 60000) {
+
+const processCommands = async (
+    commands,
+    sshConfig,
+    bastionHost = {},
+    commandInactivityTimeout = 3000,
+    commitInactivityTimeout = 60000
+) => {
+    try {
+        if (bastionHost.active) {
+            // console.log('run processCommands proxy');
+            return await processCommandsProxy(
+                commands,
+                sshConfig,
+                bastionHost,
+                commandInactivityTimeout * 2,
+                commitInactivityTimeout
+            );
+        } else {
+            // console.log('run processCommands standalone');
+            return await processCommandsStandalone(
+                commands,
+                sshConfig,
+                commandInactivityTimeout,
+                commitInactivityTimeout
+            );
+        }
+    } catch (error) {
+        throw error;
+    }
+};
+
+function processCommandsStandalone(
+    commands,
+    sshConfig,
+    commandInactivityTimeout = 5000,
+    commitInactivityTimeout = 60000
+) {
     return new Promise((resolve, reject) => {
         const conn = new Client();
 
@@ -77,6 +118,7 @@ function processCommands(commands, sshConfig, commandInactivityTimeout = 3000, c
 
         const onDataReceived = (data) => {
             const output = data.toString();
+
             // process.stdout.write(output);
 
             eachCommandOutput += output;
@@ -181,6 +223,251 @@ function processCommands(commands, sshConfig, commandInactivityTimeout = 3000, c
     });
 }
 
+function processCommandsProxy(
+    _commands,
+    sshConfig,
+    bastionHost,
+    commandInactivityTimeout = 5000,
+    commitInactivityTimeout = 60000,
+    sshConnectTimeout = 5000
+) {
+    const commands = [..._commands];
+
+    // console.log('processCommandsProxy bastionHost: ', bastionHost);
+    // console.log('processCommandsProxy commands: ', commands);
+
+    return new Promise((resolve, reject) => {
+        const sshOptions = [
+            '-o StrictHostKeyChecking=no',
+            '-o ConnectTimeout=3',
+            '-o NumberOfPasswordPrompts=1',
+            '-o PreferredAuthentications=keyboard-interactive',
+        ].join(' ');
+
+        const linuxSSHCommand = `ssh -tt ${sshOptions} -p ${sshConfig.port} ${sshConfig.username}@${sshConfig.host}`;
+        const junosSSHCommand = `start shell command "ssh -tt ${sshOptions} -p ${sshConfig.port} ${sshConfig.username}@${sshConfig.host}"`;
+
+        const conn = new Client();
+
+        let currentCommand = null;
+        let eachCommandOutput = '';
+        let allCommandsOutput = '';
+        let timeoutHandle;
+        let stream;
+        let sshClientPasswordPass = false;
+        let sshClientCommand = '';
+        let sshClientError = false;
+        let isJunosDeviceBastionHostFound = false;
+
+        const results = [];
+        const promptPattern = /\n[\s\S]*?[@#>%$]\s$/;
+        const resetTimeout = (timeout) => {
+            clearTimeout(timeoutHandle);
+            timeoutHandle = setTimeout(() => {
+                stream.end();
+                conn.end();
+                reject({
+                    ...StatusErrorMessages.INACTIVITY_TIMEOUT,
+                    message: `${StatusErrorMessages.INACTIVITY_TIMEOUT.message}`,
+                });
+            }, timeout);
+        };
+
+        const getCommand = () => {
+            if (commands.length > 0) {
+                const cmd = commands.shift();
+                return cmd;
+            } else {
+                stream.end();
+                stream.close();
+            }
+        };
+
+        const onDataReceived = (data) => {
+            const output = data.toString();
+
+            // process.stdout.write(output);
+
+            eachCommandOutput += output;
+            allCommandsOutput += output;
+
+            // Check for password prompt and send the password
+            if (
+                !sshClientPasswordPass &&
+                currentCommand &&
+                currentCommand.startsWith(sshClientCommand) &&
+                eachCommandOutput.toLowerCase().includes('password:')
+            ) {
+                stream.write(`${sshConfig.password}\n`);
+                sshClientPasswordPass = true;
+            }
+
+            if (currentCommand && currentCommand.startsWith(sshClientCommand)) {
+                resetTimeout(sshConnectTimeout);
+            } else if (currentCommand && currentCommand.startsWith('commit')) {
+                resetTimeout(commitInactivityTimeout);
+            } else {
+                resetTimeout(commandInactivityTimeout);
+            }
+
+            // Check for a prompt in the command output
+            if (promptPattern.test(eachCommandOutput)) {
+                // Setup SSH command if it hasn't been set
+                if (!sshClientCommand) {
+                    if (
+                        !isJunosDeviceBastionHostFound &&
+                        eachCommandOutput.toLowerCase().includes('junos') &&
+                        bastionHost.username !== 'root'
+                    ) {
+                        sshClientCommand = junosSSHCommand;
+                        isJunosDeviceBastionHostFound = true;
+                    } else {
+                        sshClientCommand = linuxSSHCommand;
+                    }
+                    commands.unshift(sshClientCommand);
+                }
+
+                // Handle specific Junos errors
+                if (isJunosDeviceBastionHostFound) {
+                    const junosErrorPatterns = ['could not create child process', 'no more processes'];
+                    const isErrorPresent = junosErrorPatterns.some((pattern) =>
+                        eachCommandOutput.toLowerCase().includes(pattern)
+                    );
+
+                    if (isErrorPresent) {
+                        terminateConnectionWithErrorMessage('Failed to execute the SSH client');
+                        return; // Early exit to prevent further processing
+                    }
+                }
+
+                // Process SSH error messages using a consolidated error handler
+                processSSHErrorMessages(eachCommandOutput, sshConfig);
+
+                // Reset command output buffer
+                eachCommandOutput = '';
+
+                // Process incoming commands
+                processIncomingCommands();
+            }
+
+            // Function to handle the extraction and cleanup of error messages
+            function processSSHErrorMessages(output, config) {
+                const patterns = [
+                    `^${config.username}@${config.host}: (.+)$`,
+                    `^ssh: connect to host ${config.host} port ${config.port}: (.+)$`,
+                ];
+
+                patterns.forEach((pattern) => {
+                    const regex = new RegExp(`${pattern}`, 'm');
+                    const match = output.match(regex);
+
+                    if (match && match[1]) {
+                        const cleanedErrorMessage = match[1].replace(/\.$/, '');
+                        terminateConnectionWithErrorMessage(cleanedErrorMessage);
+                    }
+                });
+            }
+
+            function terminateConnectionWithErrorMessage(message) {
+                conn.end();
+                clearTimeout(timeoutHandle);
+                sshClientError = true;
+                reject({
+                    ...StatusErrorMessages.SSH_CLIENT_ERROR,
+                    message: message,
+                });
+            }
+
+            function processIncomingCommands() {
+                while (true) {
+                    const cmd = getCommand();
+                    if (!cmd) break;
+
+                    const parts = cmd.split(/\s+/);
+                    const timeoutKeyword = parts[0].toLowerCase();
+                    const number = parseInt(parts[1], 10);
+
+                    switch (timeoutKeyword) {
+                        case 'jcli-inactivity-timeout':
+                            commandInactivityTimeout = number * 1000;
+                            break;
+                        case 'jedit-inactivity-timeout':
+                            commitInactivityTimeout = number * 1000;
+                            break;
+                        default:
+                            currentCommand =
+                                cmd.startsWith('show') || cmd.startsWith('commit')
+                                    ? `${cmd} | display xml | no-more\n`
+                                    : `${cmd}\n`;
+                            stream.write(currentCommand);
+                            return;
+                    }
+                }
+            }
+        };
+
+        conn.on('ready', () => {
+            const shellOptions = {
+                cols: 2000, // Number of columns for the terminal
+                rows: 80, // Number of rows for the terminal
+            };
+
+            conn.shell(shellOptions, (err, _stream) => {
+                if (err) {
+                    conn.end();
+                    reject({
+                        ...StatusErrorMessages.UNREACHABLE,
+                    });
+                    return;
+                }
+
+                stream = _stream;
+
+                resetTimeout(commandInactivityTimeout);
+
+                stream.on('data', (data) => onDataReceived(data));
+
+                stream.on('close', () => {
+                    if (!sshClientError) {
+                        // console.log('>>> all commands output:', allCommandsOutput);
+
+                        const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
+                        let match;
+                        while ((match = regex.exec(allCommandsOutput)) !== null) {
+                            results.push(match[0]);
+                        }
+                        resolve({
+                            ...StatusErrorMessages.SUCCESS,
+                            data: results,
+                        });
+                    }
+                    conn.end();
+                    clearTimeout(timeoutHandle);
+                });
+            });
+        });
+        conn.on('error', (err) => {
+            conn.end();
+            if (err.level === 'client-authentication') {
+                reject({
+                    ...StatusErrorMessages.AUTHENTICATION_FAILED,
+                    message: `Bastion Host: ${StatusErrorMessages.AUTHENTICATION_FAILED.message}`,
+                });
+            } else if (err.level === 'client-timeout') {
+                reject({
+                    ...StatusErrorMessages.TIMEOUT,
+                    message: `Bastion Host: ${StatusErrorMessages.TIMEOUT.message}`,
+                });
+            } else {
+                reject({
+                    ...StatusErrorMessages.UNREACHABLE,
+                    message: `Bastion Host: ${StatusErrorMessages.UNREACHABLE.message}`,
+                });
+            }
+        }).connect(bastionHost);
+    });
+}
+
 const getRpcReply = (rpcName, result) => {
     // Escape any special characters in rpcName to safely include it in the regex
     const escapedRpcName = rpcName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -195,12 +482,16 @@ const getRpcReply = (rpcName, result) => {
     return null;
 };
 
-export const getDeviceFacts = async (address, port, username, password, timeout, upperSerialNumber = false) => {
-    const commands = [
-        'show system information',
-        'show virtual-chassis',
-        'exit',
-    ];
+export const getDeviceFacts = async (
+    address,
+    port,
+    username,
+    password,
+    timeout,
+    upperSerialNumber = false,
+    bastionHost = {}
+) => {
+    const commands = ['show system information', 'show chassis hardware', 'show virtual-chassis', 'exit'];
 
     if (username === 'root') commands.unshift('cli');
 
@@ -213,18 +504,16 @@ export const getDeviceFacts = async (address, port, username, password, timeout,
     };
 
     try {
-        const results = await processCommands(commands, sshConfig);
+        const results = await processCommands(commands, sshConfig, bastionHost);
 
         if (results.status === 'success') {
-            console.log('Command executed successfully');
+            // console.log('Command executed successfully');
 
             const parser = new xml2js.Parser({ explicitArray: false }); // Consider setting explicitArray to false to simplify the structure
             const facts = {};
             let rpcReply;
 
             for (const result of results.data) {
-                // console.log(`result: ${JSON.stringify(result, null, 2)}\n\n`);
-
                 rpcReply = getRpcReply('system-information', result);
 
                 if (rpcReply !== null) {
@@ -272,44 +561,51 @@ export const getDeviceFacts = async (address, port, username, password, timeout,
 
                     const v = await parser.parseStringPromise(rpcReply);
                     const vcMembers = v['virtual-chassis-information']['member-list']['member'].map((member) => ({
-                          model: member['member-model'],
-                          serial: member['member-serial-number'],
-                          slot: member['member-id'],
-                          role: member['member-role'],
-                      }))
-        
+                        model: member['member-model'],
+                        serial: member['member-serial-number'],
+                        slot: member['member-id'],
+                        role: member['member-role'],
+                    }));
+
                     facts.vc = vcMembers;
                 }
             }
 
-            // console.log(`>>>facts: ${JSON.stringify(facts, null, 2)}`);
-
             // Validate gathered facts
-            const missingInfo = ['systemInformation'].filter(
-                (info) => !facts[info]
-            );
+            const missingInfo = ['systemInformation', 'chassisInventory'].filter((info) => !facts[info]);
 
             if (missingInfo.length) {
                 console.error(`Missing data: ${missingInfo.join(', ')}`);
-                throw StatusErrorMessages.NO_RPC_REPLY;
+                throw {
+                    ...StatusErrorMessages.SSH_CLIENT_ERROR,
+                    message: `Rpc reply missing (${missingInfo.join(', ')})`,
+                };
             }
 
             facts.status = 'success';
 
-            console.log('facts:', JSON.stringify(facts, null, 2));
-
             return facts;
         } else {
-            console.error(`getDeviceFacts Error type 1: status: ${results.status} message: ${results.message}`);
+            console.error(
+                `getDeviceFacts Error(${address}:${port}) type 1: status: ${results.status} message: ${results.message}`
+            );
             throw results;
         }
     } catch (error) {
-        console.error(`getDeviceFacts Error message: "${error.message}"`);
-        throw error; // Rethrow the error after logging it
+        console.error(`getDeviceFacts Error(${address}:${port}): ${JSON.stringify(error)}`);
+        throw error;
     }
 };
 
-export const commitJunosSetConfig = async (address, port, username, password, config, readyTimeout = 10000) => {
+export const commitJunosSetConfig = async (
+    address,
+    port,
+    username,
+    password,
+    config,
+    bastionHost = {},
+    readyTimeout = 10000
+) => {
     const configs = config
         .trim()
         .split(/\n/)
@@ -327,7 +623,7 @@ export const commitJunosSetConfig = async (address, port, username, password, co
     };
 
     try {
-        const results = await processCommands(commands, sshConfig);
+        const results = await processCommands(commands, sshConfig, bastionHost);
 
         if (results.status === 'success') {
             let commitReply = null;
@@ -353,11 +649,13 @@ export const commitJunosSetConfig = async (address, port, username, password, co
 
             throw StatusErrorMessages.COMMIT_ERROR;
         } else {
-            console.error(`getDeviceFacts Error type 1: status: ${results.status} message: ${results.message}`);
+            console.error(
+                `commitJunosSetConfig Error(${address}:${port}) type 1: status: ${results.status} message: ${results.message}`
+            );
             throw results;
         }
     } catch (error) {
-        console.error(`getDeviceFacts Error message: "${error.message}"`);
-        throw error; // Rethrow the error after logging it
+        console.error(`commitJunosSetConfig Error(${address}:${port}): ${JSON.stringify(error)}`);
+        throw error;
     }
 };

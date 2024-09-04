@@ -29,6 +29,8 @@ import {
     TriangleLeftRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
+
+import useStore from '../../Common/StateStore';
 import { RotatingIcon } from '../ChangeIcon';
 import { CustomProgressBar } from './CustomProgressBar';
 import { getHostListMultiple, getHostCountMultiple } from './InventorySearchUtils';
@@ -41,12 +43,13 @@ import { getDeviceFacts } from '../Devices';
 
 export const InventorySearchControl = ({ subnets, startCallback, endCallback, onAddFact }) => {
     const { notify } = useNotify(); // Correctly use the hook here
+    const { settings } = useStore();
 
     const [isStart, setIsStart] = useState(false);
     const [searchRate, setSearchRate] = useState(10);
     const [hostSeq, setHostSeq] = useState(0);
     const [hostStatusCount, setHostStatusCount] = useState({});
-
+    const [sshClientErrorCount, setSshClientErrorCount] = useState({});
     const isStartRef = useRef(null);
     const hostSeqRef = useRef(null);
     const hostStatusCountRef = useRef(null);
@@ -62,7 +65,7 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
         hostStatusCountRef.current = hostStatusCount;
     }, [isStart, hostSeq, hostStatusCount]);
 
-    const updateHostStatusCount = (status) => {
+    const updateHostStatusCount2 = (status) => {
         setHostStatusCount((prevStatus) => {
             const updatedStatus = { ...prevStatus };
             if (updatedStatus[status]) {
@@ -74,18 +77,48 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
         });
     };
 
+    const updateCount = (result) => {
+        const { status, message } = result;
+
+        setHostStatusCount((prevStatus) => {
+            const updatedStatus = { ...prevStatus };
+            if (updatedStatus[status]) {
+                updatedStatus[status] += 1;
+            } else {
+                updatedStatus[status] = 1;
+            }
+            return updatedStatus;
+        });
+
+        if (status === 'SSH Client Error') {
+            setSshClientErrorCount((prevMessage) => {
+                const updatedMessage = { ...prevMessage };
+                if (updatedMessage[message]) {
+                    updatedMessage[message] += 1;
+                } else {
+                    updatedMessage[message] = 1;
+                }
+                return updatedMessage;
+            });
+        }
+    };
+
     const fetchDeviceFacts = async (device) => {
         const maxRetries = 2;
         const retryInterval = 1000; // 1 seconds in milliseconds
         let response;
 
+        const bastionHost = settings?.bastionHost || {};
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            response = await getDeviceFacts({ ...device, timeout: 3000 });
+            response = await getDeviceFacts({ ...device, timeout: 5000 }, false, bastionHost);
+
             // console.log(`${device.address}: response: `, response);
 
             if (response.status) {
-                updateHostStatusCount(response.result.status);
-
+                // updateHostStatusCount(response.result.status);
+                updateCount(response.result);
+                
                 const { address, port, username, password } = device;
 
                 if (!!response.result.vc) {
@@ -136,7 +169,8 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
             }
         }
 
-        updateHostStatusCount(response.result.status);
+        // updateHostStatusCount(response.result.status);
+        updateCount(response.result);
 
         return response;
     };
@@ -150,6 +184,9 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
         const promises = []; // Array to hold all the promises
         const startTime = Date.now();
         const interval = 1000 / searchRate; // Desired interval between each command
+
+        setHostStatusCount({});
+        setSshClientErrorCount({});
 
         for (const device of getHostListMultiple(subnets)) {
             promises.push(fetchDeviceFacts(device)); // Add the promise to the array
@@ -288,7 +325,7 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                         }}
                     >
                         <CustomProgressBar
-                            message={{ hostSeq, totalHostCount, hostStatusCount }}
+                            message={{ hostSeq, totalHostCount, hostStatusCount, sshClientErrorCount }}
                             size={100}
                             max={totalHostCount}
                             value={hostSeq}

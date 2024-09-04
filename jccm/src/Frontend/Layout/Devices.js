@@ -1,8 +1,8 @@
 const { electronAPI } = window;
 
-export const getDeviceFacts = async (device, upperSerialNumber=false) => {
+export const getDeviceFacts = async (device, upperSerialNumber=false, bastionHost = {}) => {
     const { address, port, username, password, timeout } = device;
-    const response = await electronAPI.saGetDeviceFacts({ address, port, username, password, timeout, upperSerialNumber });
+    const response = await electronAPI.saGetDeviceFacts({ address, port, username, password, timeout, upperSerialNumber, bastionHost });
 
     if (response.facts) {
         return { status: true, result: response.reply };
@@ -11,11 +11,13 @@ export const getDeviceFacts = async (device, upperSerialNumber=false) => {
     }
 };
 
-export const adoptDevices = async (device, jsiTerm=false, deleteOutboundSSHTerm=false) => {
+export const adoptDevices = async (device, jsiTerm=false, deleteOutboundSSHTerm=false, bastionHost = {}) => {
     const { address, port, username, password, organization, site } = device;
-    const response = await electronAPI.saAdoptDevice({ address, port, username, password, organization, site, jsiTerm, deleteOutboundSSHTerm });
+    const response = await electronAPI.saAdoptDevice({ address, port, username, password, organization, site, jsiTerm, deleteOutboundSSHTerm, bastionHost });
 
-    if (response.adopt) {
+    // console.log('>>>>adoptDevices -> response: ', response);
+
+    if (response?.adopt) {
         return { status: true, result: response.reply };
     } else {
         console.log('adoptDevice has failed', response);

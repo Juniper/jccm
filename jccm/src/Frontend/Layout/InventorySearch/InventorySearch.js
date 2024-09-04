@@ -73,10 +73,10 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
     const [facts, setFacts] = useState([]);
 
     const factsColumns = [
-        { label: 'Address', name: 'address', width: 8 },
+        { label: 'Address', name: 'address', width: 12 },
         { label: 'Port', name: 'port', width: 5 },
-        { label: 'Username', name: 'username', width: 10 },
-        { label: 'Password', name: 'password', width: 10 },
+        { label: 'Username', name: 'username', width: 8 },
+        { label: 'Password', name: 'password', width: 8 },
         { label: 'Host Name', name: 'hostName', width: 10 },
         { label: 'Hardware Model', name: 'hardwareModel', width: 10 },
         { label: 'Serial Number', name: 'serialNumber', width: 10 },

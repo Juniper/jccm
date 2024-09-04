@@ -1,5 +1,4 @@
 import { app, BrowserWindow, screen, dialog } from 'electron';
-import { initializeDatabase } from './Services/mainStore';
 import { setupApiHandlers } from './Services/ApiServer'; // Import the API handlers
 import path from 'path';
 import os from 'os';

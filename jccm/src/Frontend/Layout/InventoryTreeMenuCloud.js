@@ -351,7 +351,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
     const onReleaseConfirmButton = async (orgId, mac) => {
         setIsOpenReleaseDialog(false);
 
-        console.log('>>>> mac address:', mac);
+        // console.log('>>>> mac address:', mac);
 
         const data = await electronAPI.saProxyCall({
             api: `orgs/${orgId}/inventory`,

@@ -15,6 +15,26 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
 - **Multi-Platform Support:** Available for both Intel-based and ARM-based macOS systems and Intel-based Windows systems.
 - **Social Login Support:** Google Social SSO Login is currently in the tech preview stage.
 - **Network Search Support:** Network subnet search to generate an inventory file is in the tech preview stage.
+- **Bastion Host Proxy Support** 
+
+## Bastion Host Proxy Support
+
+- **Overview:** This feature enables access to target devices through a bastion host proxy, commonly referred to as a jump server. 
+- **Supported Systems:** Currently, Linux machines equipped with OpenSSH server/client are supported for use as the bastion host proxy. 
+
+### Note on Junos Machines
+
+- While Junos machines are technically capable of functioning as bastion hosts, they are not recommended due to performance limitations and potential adverse effects on regular operations.
+
+## Usage
+
+To configure a Linux machine as your bastion host proxy, ensure that the OpenSSH server/client is properly set up and accessible. For guidance on configuring OpenSSH, refer to the [OpenSSH documentation](https://www.openssh.com/manual.html).
+
+### Performance Considerations
+
+- **Linux Machines:** Optimal for use as bastion hosts due to their robust handling of SSH connections and minimal impact on device performance.
+- **Junos Machines:** Should be avoided as bastion hosts where possible to prevent degradation in the machine's core functionalities and overall performance.
+
 
 ## Device Adoption Demo
 
@@ -22,6 +42,9 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
 
 ## Network Search Demo
 ![JCCM Network Search Demo](./demo/jccm-network-search.gif)
+
+## Bastion Host Proxy Demo
+![JCCM Network Search Demo](./demo/jccm-bastionhost.gif)
 
 ## Installation
 

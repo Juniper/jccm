@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 import {
     Dialog,
@@ -26,6 +26,7 @@ import {
 
 import { read, utils, writeFile } from 'xlsx';
 
+import useStore from '../../Common/StateStore';
 import { RWTable } from './RWTable';
 import { useNotify } from '../../Common/NotificationContext';
 import { getHostCountMultiple } from './InventorySearchUtils';
@@ -50,6 +51,8 @@ const ImportButtonIcon = bundleIcon(RotatePlayCircleFilled, RotatePlayCircleRegu
 export const SubnetResult = ({ columns, items, onDeleteSubnet, onImportSubnet = undefined, rowHeight, disabled }) => {
     const { notify } = useNotify(); // Correctly use the hook here
     const fileInputRef = useRef(null);
+    const { settings } = useStore();
+    const [isBastionHostEmpty, setIsBastionHostEmpty] = useState(false);
 
     // Calculate the total sum of hostCounts
     const totalHostCount = getHostCountMultiple(items);
@@ -156,6 +159,12 @@ export const SubnetResult = ({ columns, items, onDeleteSubnet, onImportSubnet = 
         writeFile(wb, fileName);
     };
 
+    useEffect(() => {
+        const bastionHost = settings?.bastionHost || {};
+        const isEmpty = Object.keys(bastionHost).length === 0;
+        setIsBastionHostEmpty(isEmpty);
+    }, [settings]);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', margin: 0, padding: 0 }}>
             <RWTable
@@ -196,18 +205,28 @@ export const SubnetResult = ({ columns, items, onDeleteSubnet, onImportSubnet = 
                         alignItems: 'center',
                     }}
                 >
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', marginLeft: '5px' }}>
-                        {/* <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                height: '20px',
-                                overflow: 'visible',
-                            }}
-                        >
-                            <BastionHostButton />
-                        </div> */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            gap: '10px',
+                            alignItems: 'center',
+                            marginLeft: '5px',
+                        }}
+                    >
+                        {!isBastionHostEmpty && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    height: '20px',
+                                    overflow: 'visible',
+                                }}
+                            >
+                                <BastionHostButton />
+                            </div>
+                        )}
 
                         <Text size={100}>Total Subnets: {items?.length}</Text>
                         <Text size={100}>Total Hosts: {totalHostCount.toLocaleString()}</Text>

@@ -1,5 +1,15 @@
 import React from 'react';
-import { Field, ProgressBar, Text, tokens } from '@fluentui/react-components';
+import {
+    Field,
+    ProgressBar,
+    Text,
+    InfoLabel,
+    Link,
+    Popover,
+    PopoverSurface,
+    PopoverTrigger,
+    tokens,
+} from '@fluentui/react-components';
 import { RocketFilled, FireFilled, FlagCheckeredFilled } from '@fluentui/react-icons'; // Adjust the import path as necessary
 
 const getRandomFontSize = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -40,6 +50,7 @@ export const CustomProgressBar = ({ message, size, max, value, isStart }) => {
                     display: 'flex',
                     flexDirection: 'row',
                     justifyContent: 'space-between',
+                    alignItems: 'center',
                     width: '100%',
                     gap: '20px',
                     marginBottom: '3px',
@@ -79,25 +90,101 @@ export const CustomProgressBar = ({ message, size, max, value, isStart }) => {
                             {' devices'}
                         </Text>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginLeft: '20px' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            gap: '10px',
+                            marginLeft: '20px',
+                            alignItems: 'center',
+                        }}
+                    >
                         {Object.entries(message.hostStatusCount).map(([status, count]) => (
                             <div
                                 key={status}
-                                style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}
+                                style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}
                             >
-                                <Text
-                                    size={100}
-                                    font='numeric'
-                                >
-                                    {`${status}: `}
+                                {status.toLowerCase().includes('ssh client error') ? (
+                                    <Popover
+                                        withArrow
+                                        appearance='inverted'
+                                    >
+                                        <PopoverTrigger>
+                                            <Link
+                                                appearance='subtle'
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                }}
+                                            >
+                                                <Text
+                                                    size={100}
+                                                    font='numeric'
+                                                    underline={false}
+                                                >
+                                                    {`${status.toLowerCase()}: `}
+
+                                                    <Text
+                                                        size={100}
+                                                        font='monospace'
+                                                        weight='bold'
+                                                    >
+                                                        {count}
+                                                    </Text>
+                                                </Text>
+                                            </Link>
+                                        </PopoverTrigger>
+                                        <PopoverSurface
+                                            tabIndex={-1}
+                                            style={{
+                                                padding: '5px 10px 5px 10px',
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    gap: '15px',
+                                                }}
+                                            >
+                                                {Object.entries(message.sshClientErrorCount).map(
+                                                    ([message, messageCount]) => (
+                                                        <Text
+                                                            key={message} // Ensure you have a unique key for each child in a list
+                                                            size={100}
+                                                            font='numeric'
+                                                        >
+                                                            {`${message}: `}
+                                                            <Text
+                                                                size={100}
+                                                                font='monospace'
+                                                                weight='bold'
+                                                            >
+                                                                {messageCount}
+                                                            </Text>
+                                                        </Text>
+                                                    )
+                                                )}
+                                            </div>
+                                        </PopoverSurface>
+                                    </Popover>
+                                ) : (
                                     <Text
                                         size={100}
-                                        font='monospace'
-                                        weight='bold'
+                                        font='numeric'
                                     >
-                                        {count}
+                                        {`${status}: `}
+                                        <Text
+                                            size={100}
+                                            font='monospace'
+                                            weight='bold'
+                                        >
+                                            {count}
+                                        </Text>
                                     </Text>
-                                </Text>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -108,6 +195,7 @@ export const CustomProgressBar = ({ message, size, max, value, isStart }) => {
                         display: 'flex',
                         flexDirection: 'row',
                         justifyContent: 'space-between',
+                        alignItems: 'center',
                         gap: '5px',
                     }}
                 >

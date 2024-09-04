@@ -9,7 +9,9 @@ import { BastionHostButton } from './BastionHostButton';
 export default () => {
     const { isUserLoggedIn, inventory, deviceFacts, cloudDevices, cloudInventory } = useStore();
     const [countOfOrgOrSiteUnmatched, setCountOfOrgOrSiteUnmatched] = useState(0);
-
+    const { settings } = useStore();
+    const [isBastionHostEmpty, setIsBastionHostEmpty] = useState(false);
+    
     const countOfDeviceFacts = Object.keys(deviceFacts).length;
 
     const countOfAdoptedDevices = Object.values(deviceFacts).filter(
@@ -60,6 +62,12 @@ export default () => {
         return () => clearTimeout(timer); // Cleanup timer on component unmount
     }, [inventory, cloudDevices]);
 
+    useEffect(() => {
+        const bastionHost = settings?.bastionHost || {};
+        const isEmpty = Object.keys(bastionHost).length === 0;
+        setIsBastionHostEmpty(isEmpty);
+    }, [settings]);
+
     return (
         <div
             style={{
@@ -71,7 +79,7 @@ export default () => {
                 overflow: 'visible',
             }}
         >
-            {/* <BastionHostButton/> */}
+            {!isBastionHostEmpty && <BastionHostButton/>}
             <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', paddingLeft: '5px' }}>
                 <Label
                     size='small'

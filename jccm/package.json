@@ -1,7 +1,7 @@
 {
   "name": "jccm",
   "productName": "Juniper Cloud Connection Manager",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Juniper Cloud Connection Manager",
   "main": ".webpack/main",
   "scripts": {
