@@ -82,13 +82,13 @@ jobs:
             - name: Build and package (arm64)
               run: |
                   source myenv/bin/activate
-                  npm run make -- --arch=arm64
+                  run make -- --platform=darwin --arch=arm64
               working-directory: ./jccm
 
             - name: Build and package (x64)
               run: |
                   source myenv/bin/activate
-                  npm run make -- --arch=x64
+                  run make -- --platform=darwin --arch=x64
               working-directory: ./jccm
 
             - name: Notarize and Staple Packages

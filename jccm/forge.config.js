@@ -5,6 +5,9 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 console.log(`Current working directory: ${process.cwd()}`);
 
+let platformOption;
+let archOption;
+
 module.exports = {
     packagerConfig: {
         asar: true,
@@ -18,48 +21,24 @@ module.exports = {
             teamId: process.env.APPLE_DEVELOPER_TEAM_ID,
         },
     },
-    rebuildConfig: {},
+    rebuildConfig: { force: true },
     makers: [
         {
-            name: '@electron-forge/maker-dmg',
+            name: '@electron-forge/maker-pkg',
+            platforms: ['darwin'],
             config: {
                 icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Icon for macOS DMG
-                overwrite: true,
                 format: 'ULFO', // Optional: Customize DMG format
-                out: path.join(__dirname, 'out/make/darwin-arm64'),
-                name: 'jccm-darwin-arm64',
-                arch: 'arm64',
+                overwrite: true,
             },
         },
         {
             name: '@electron-forge/maker-dmg',
+            platforms: ['darwin'],
             config: {
                 icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Icon for macOS DMG
-                overwrite: true,
                 format: 'ULFO', // Optional: Customize DMG format
-                out: path.join(__dirname, 'out/make/darwin-x64'),
-                name: 'jccm-darwin-x64',
-                arch: 'x64',
-            },
-        },
-        {
-            name: '@electron-forge/maker-pkg',
-            config: {
                 overwrite: true,
-                out: path.join(__dirname, 'out/make/darwin-arm64'),
-                name: 'jccm-darwin-arm64',
-                icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
-                arch: 'arm64',
-            },
-        },
-        {
-            name: '@electron-forge/maker-pkg',
-            config: {
-                overwrite: true,
-                out: path.join(__dirname, 'out/make/darwin-x64'),
-                name: 'jccm-darwin-x64',
-                icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Use the same icon as for DMG
-                arch: 'x64',
             },
         },
         {
@@ -98,6 +77,22 @@ module.exports = {
             },
         },
     ],
+    hooks: {
+        generateAssets: async (config, platform, arch) => {
+            platformOption = platform ? platform : process.platform;
+            archOption = arch ? arch : process.arch;
+        },
+        preMake: async (config) => {
+            const makerPkg = config.makers.find((maker) => maker.name === '@electron-forge/maker-pkg');
+            const makerDmg = config.makers.find((maker) => maker.name === '@electron-forge/maker-dmg');
+
+            const name = `jccm-darwin-${archOption}`;
+
+            // Update the name in the maker's config to reflect the architecture passed in via the CLI
+            makerPkg.config.name = name;
+            makerDmg.config.name = name;
+        },
+    },
     plugins: [
         {
             name: '@electron-forge/plugin-auto-unpack-natives',
