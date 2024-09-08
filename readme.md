@@ -130,9 +130,9 @@ yum -y install ~/Downloads/jccm-linux-x64.rpm
 - The jccm app is signed with a developer certificate, yet initially, Microsoft Defender SmartScreen might still display a warning because the app is unrecognized. Over time, as more users install the application, SmartScreen will recognize it as trustworthy.
 
 - **To proceed with installation** when faced with the SmartScreen alert:
-  1. **Click on 'More info'**: This reveals more details about the application.
-  2. **Verify the Publisher**: Check that the publisher's name matches what you expect.
-  3. **Select 'Run anyway'**: This will bypass the SmartScreen alert and allow you to proceed with the installation.
+  1. Click on **"More info"**: This reveals more details about the application.
+  2. Verify **the Publisher**: Check that the publisher's name matches what you expect.
+  3. Select **"Run anyway"**: This will bypass the SmartScreen alert and allow you to proceed with the installation.
 
 
 ## Inventory Excel File Format

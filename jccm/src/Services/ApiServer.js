@@ -540,7 +540,7 @@ export const setupApiHandlers = () => {
     });
 
     ipcMain.handle('saSetThemeUser', async (event, args) => {
-        console.log('main: saSetThemeUser', args);
+        console.log('main: saSetThemeUser');
         const theme = args.theme;
         await msSetTheme(theme);
     });
@@ -780,7 +780,7 @@ export const setupApiHandlers = () => {
         console.log('main: saSaveSubnets');
         const subnets = args.subnets;
         await msSaveSubnets(subnets);
-        console.log('main: saSaveSubnets:', subnets);
+        // console.log('main: saSaveSubnets:', subnets);
 
         return { status: true };
     });
@@ -796,7 +796,7 @@ export const setupApiHandlers = () => {
         console.log('main: saSaveSettings');
         const settings = args.settings;
         await msSaveSettings(settings);
-        console.log('main: saSaveSettings:', settings);
+        // console.log('main: saSaveSettings:', settings);
 
         return { status: true };
     });
