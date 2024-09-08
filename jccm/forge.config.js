@@ -51,7 +51,7 @@ module.exports = {
                 name: 'jccm-windows-x64-setup',
                 arch: 'x64',
                 setupExe: 'jccm-windows-x64-setup.exe', // Name for the setup executable
-                setupMsi: 'jccm-windows-x64-setup.msi', // Name for the MSI installer
+                noMsi: true,
             },
         },
         {
@@ -63,6 +63,9 @@ module.exports = {
                 arch: 'x64',
                 bin: '', // Important note: Use an empty bin name due to a mismatch issue where the Electron app binary path could not be found.
                 desktopTemplate: path.join(__dirname, 'jccm.desktop'), // Specify the custom desktop file
+                scripts: {
+                    postinst: 'scripts/postinst.sh',
+                },
             },
         },
         {

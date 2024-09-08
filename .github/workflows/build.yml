@@ -146,13 +146,26 @@ jobs:
               run: npm run make -- --platform=win32 --arch=x64
               working-directory: ./jccm
 
+            - name: Sign Artifact with CodeSignTool
+              uses: sslcom/esigner-codesign@develop
+              continue-on-error: true
+              with:
+                  command: sign
+                  username: ${{secrets.ES_USERNAME}}
+                  password: ${{secrets.ES_PASSWORD}}
+                  credential_id: ${{secrets.ES_CREDENTIAL_ID}}
+                  totp_secret: ${{secrets.ES_TOTP_SECRET}}
+                  file_path: jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup.exe
+                  malware_block: false
+                  # Overrides the input file after signing, if this parameter is set and no -output_dir_path parameter
+                  override: true
+
             - name: Upload windows artifacts
               uses: actions/upload-artifact@v2
               with:
                   name: windows-installers
                   path: |
                       ./jccm/out/make/squirrel.windows/x64/*.exe
-                      ./jccm/out/make/squirrel.windows/x64/*.msi
 
     build-deb:
         runs-on: ubuntu-latest
@@ -181,10 +194,8 @@ jobs:
               working-directory: ./jccm
               run: |
                   npm run make-deb
-                  ls -al out
-                  ls -al out/make
                   mv out/make/deb/x64/*.deb out/make/deb/x64/jccm-linux-x64.deb
-                  ls -al out/make
+                  ls -alR out/make
 
             - name: Archive .deb artifact
               uses: actions/upload-artifact@v3
@@ -218,11 +229,11 @@ jobs:
             - name: Package Electron app (.rpm)
               working-directory: ./jccm
               run: |
-                  npm run make-rpm
-                  ls -al out
-                  ls -al out/make
-                  mv out/make/rpm/x64/*.rpm out/make/rpm/x64/jccm-linux-x64.rpm
-                  ls -al out/make
+                  npm run make-deb
+                  sudo alien -v -r --scripts out/make/deb/x64/*.deb
+                  mkdir -p out/make/rpm/x64
+                  mv *.rpm out/make/rpm/x64/jccm-linux-x64.rpm
+                  ls -alR out/make
 
             - name: Archive .rpm artifact
               uses: actions/upload-artifact@v3
@@ -232,6 +243,7 @@ jobs:
 
     release:
         needs: [build-macos, build-windows, build-deb, build-rpm]
+
         runs-on: ubuntu-latest
         steps:
             - name: Check out repository
