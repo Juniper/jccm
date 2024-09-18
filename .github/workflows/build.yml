@@ -17,7 +17,7 @@ jobs:
 
         steps:
             - name: Check out repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Install signing certificate
               run: |
@@ -50,7 +50,7 @@ jobs:
               working-directory: ./jccm
 
             - name: Set up Node.js
-              uses: actions/setup-node@v2
+              uses: actions/setup-node@v3
               with:
                   node-version: '20.10.0'
 
@@ -121,7 +121,7 @@ jobs:
               working-directory: ./jccm
 
             - name: Upload macOS artifacts
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                   name: macos-installers
                   path: |
@@ -131,10 +131,10 @@ jobs:
     build-windows:
         runs-on: windows-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
 
             - name: Set up Node.js
-              uses: actions/setup-node@v2
+              uses: actions/setup-node@v3
               with:
                   node-version: '20.10.0'
 
@@ -161,7 +161,7 @@ jobs:
                   override: true
 
             - name: Upload windows artifacts
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                   name: windows-installers
                   path: |
@@ -247,13 +247,13 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Check out repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Read version from package.json
               run: echo "VERSION=$(jq -r '.version' ./jccm/package.json)" >> $GITHUB_ENV
 
             - name: Download Artifacts
-              uses: actions/download-artifact@v2
+              uses: actions/download-artifact@v3
               with:
                   path: ./installers
 
