@@ -127,7 +127,6 @@ export const ConsoleWindow = () => {
                     width: '100%',
                     height: '100%',
                     overflow: 'hidden',
-                    zIndex: 1000002, // Ensures it stays above other elements
                 }}
             >
                 <div
@@ -141,7 +140,6 @@ export const ConsoleWindow = () => {
                         height: `${30}px`,
                         overflow: 'hidden',
                         backgroundColor: tokens.colorNeutralBackground1Selected,
-                        zIndex: 1000002, // Ensures it stays above other elements
                     }}
                 >
                     <Button

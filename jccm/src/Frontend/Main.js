@@ -54,12 +54,9 @@ const PersonQuestionMark = bundleIcon(
 );
 
 export const Main = () => {
-    const {
-        consoleWindowButtonShow,
-        consoleWindowOpen,
-        getConsoleWindowWidth,
-        isUserLoggedIn,
-    } = useStore();
+    const { isUserLoggedIn } = useStore();
+    const { consoleWindowOpen, consoleWindowWidth, setConsoleWindowWidth, getConsoleWindowWidth } =
+        useStore();
 
     const containerRef = useRef(null);
     const leftRef = useRef(null);
@@ -160,6 +157,41 @@ export const Main = () => {
         event.preventDefault(); // Prevents the default handling (e.g., the popup)
         // You can add additional logic here to log the error to a file, or display a custom error message
     });
+
+    // Mouse down handler
+    const handleConsoleResizeStart = (e) => {
+        // Add mousemove and mouseup event listeners to handle resizing
+        window.addEventListener('mousemove', handleConsoleResize);
+        window.addEventListener('mouseup', handleConsoleResizeEnd);
+        e.preventDefault();
+    };
+
+    // Mouse move handler (resize logic)
+    const handleConsoleResize = (e) => {
+        const newWidth = window.innerWidth - e.clientX; // Calculate new width based on cursor position
+        if (newWidth >= 250 && newWidth <= 800) {
+            // Set min and max width
+            setConsoleWindowWidth(newWidth);
+        }
+    };
+
+    // Mouse up handler
+    const handleConsoleResizeEnd = () => {
+        // Remove the mousemove and mouseup event listeners after resizing
+        window.removeEventListener('mousemove', handleConsoleResize);
+        window.removeEventListener('mouseup', handleConsoleResizeEnd);
+    };
+
+    useEffect(() => {
+        const savedWidth = localStorage.getItem('consoleWindowWidth');
+        if (savedWidth) {
+            setConsoleWindowWidth(Number(savedWidth));
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('consoleWindowWidth', consoleWindowWidth);
+    }, [consoleWindowWidth]);
 
     return (
         <div
@@ -410,13 +442,25 @@ export const Main = () => {
                     overflowY: 'auto',
                     margin: 0,
                     padding: 0,
-                    border: `3px solid ${tokens.colorNeutralBackground1Selected}`,
-                    boxSizing: 'border-box', // Includes border in the element's width and height
-                    zIndex: 1000001, // Ensures it stays above other elements
-                    backgroundColor: tokens.colorNeutralBackground4Hover,
+                    zIndex: 1000001, // Ensures it stays above other elements (FYO. Fluent React v9's Dialog component has a z-index of 1000000)
+                    backgroundColor: tokens.colorNeutralBackground4Selected,
                 }}
             >
                 <ConsoleWindow />
+
+                {/* Resizer */}
+                <div
+                    onMouseDown={handleConsoleResizeStart}
+                    style={{
+                        width: '2px',
+                        cursor: 'ew-resize',
+                        backgroundColor: tokens.colorNeutralBackground1Selected,
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        height: '100%',
+                    }}
+                />
             </div>
         </div>
     );

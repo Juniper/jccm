@@ -13,11 +13,23 @@ export const MainEventProcessor = () => {
 
     const { importSettings, settings } = useStore();
 
-    const { isUserLoggedIn, setIsUserLoggedIn, user, setUser, setIsInventoryLoading } = useStore();
+    const {
+        isUserLoggedIn,
+        setIsUserLoggedIn,
+        user,
+        setUser,
+        setIsInventoryLoading,
+    } = useStore();
     const { inventory, setInventory } = useStore();
     const { cloudInventory, setCloudInventory } = useStore();
-    const { deviceFacts, setDeviceFactsAll, cleanUpDeviceFacts, zeroDeviceFacts } = useStore();
-    const { cloudInventoryFilterApplied, setCloudInventoryFilterApplied } = useStore();
+    const {
+        deviceFacts,
+        setDeviceFactsAll,
+        cleanUpDeviceFacts,
+        zeroDeviceFacts,
+    } = useStore();
+    const { cloudInventoryFilterApplied, setCloudInventoryFilterApplied } =
+        useStore();
     const { currentActiveThemeName, setCurrentActiveThemeName } = useStore();
 
     const userRef = useRef(user);
@@ -28,7 +40,6 @@ export const MainEventProcessor = () => {
 
     useEffect(() => {
         importSettings();
-        console.log('imported settings', settings);
     }, []);
 
     useEffect(() => {
@@ -40,7 +51,9 @@ export const MainEventProcessor = () => {
     }, [inventory, deviceFacts, cloudInventory, currentActiveThemeName]);
 
     useEffect(() => {
-        const handleLocalInventoryRefresh = async ({ notification = false } = {}) => {
+        const handleLocalInventoryRefresh = async ({
+            notification = false,
+        } = {}) => {
             // console.log('Event: "local-inventory-refresh"');
             const response = await electronAPI.saGetLocalInventory();
             if (response.localInventory) {
@@ -53,7 +66,10 @@ export const MainEventProcessor = () => {
                         <Toast>
                             <ToastTitle>Local Inventory Refreshed</ToastTitle>
                             <ToastBody subtitle='Update Successful'>
-                                <Text>The local inventory has been successfully updated.</Text>
+                                <Text>
+                                    The local inventory has been successfully
+                                    updated.
+                                </Text>
                             </ToastBody>
                         </Toast>,
                         { intent: 'success' }
@@ -62,7 +78,10 @@ export const MainEventProcessor = () => {
             }
         };
 
-        const handleCloudInventoryRefresh = async ({ targetOrgs = null, notification = false } = {}) => {
+        const handleCloudInventoryRefresh = async ({
+            targetOrgs = null,
+            notification = false,
+        } = {}) => {
             if (!isUserLoggedIn) return;
 
             // console.log('Event: "cloud-inventory-refresh"');
@@ -72,7 +91,9 @@ export const MainEventProcessor = () => {
                 setIsInventoryLoading(true);
             }, 3000);
 
-            const response = await electronAPI.saGetCloudInventory({targetOrgs});
+            const response = await electronAPI.saGetCloudInventory({
+                targetOrgs,
+            });
 
             clearTimeout(loadingTimeout);
             setIsInventoryLoading(false);
@@ -87,7 +108,10 @@ export const MainEventProcessor = () => {
                         <Toast>
                             <ToastTitle>Cloud Inventory Refreshed</ToastTitle>
                             <ToastBody subtitle='Update Successful'>
-                                <Text>The cloud inventory has been successfully updated.</Text>
+                                <Text>
+                                    The cloud inventory has been successfully
+                                    updated.
+                                </Text>
                             </ToastBody>
                         </Toast>,
                         { intent: 'success' } // Changed from 'warning' to 'success' to match the positive nature of the message
@@ -97,9 +121,13 @@ export const MainEventProcessor = () => {
                 if (notification) {
                     notify(
                         <Toast>
-                            <ToastTitle>Cloud Inventory Refresh Failed</ToastTitle>
+                            <ToastTitle>
+                                Cloud Inventory Refresh Failed
+                            </ToastTitle>
                             <ToastBody subtitle='Update Error'>
-                                <Text>The cloud inventory update was unsuccessful.</Text>
+                                <Text>
+                                    The cloud inventory update was unsuccessful.
+                                </Text>
                             </ToastBody>
                         </Toast>,
                         { intent: 'error' }
@@ -112,7 +140,9 @@ export const MainEventProcessor = () => {
             setCloudInventory([]);
         };
 
-        const handleResetDeviceFacts = async ({ notification = false } = {}) => {
+        const handleResetDeviceFacts = async ({
+            notification = false,
+        } = {}) => {
             // console.log('Event: "reset-device-facts"');
 
             zeroDeviceFacts();
@@ -123,7 +153,9 @@ export const MainEventProcessor = () => {
                     <Toast>
                         <ToastTitle>Device facts Reset</ToastTitle>
                         <ToastBody subtitle='Device facts'>
-                            <Text>The Device facts has been successfully reset.</Text>
+                            <Text>
+                                The Device facts has been successfully reset.
+                            </Text>
                         </ToastBody>
                     </Toast>,
                     { intent: 'success' }
@@ -140,7 +172,9 @@ export const MainEventProcessor = () => {
                         setUser(data.user);
                         setIsUserLoggedIn(true);
                     }
-                    if (currentActiveThemeNameRef.current !== data?.user?.theme) {
+                    if (
+                        currentActiveThemeNameRef.current !== data?.user?.theme
+                    ) {
                         setCurrentActiveThemeName(data.user.theme);
                     }
 
@@ -184,8 +218,14 @@ export const MainEventProcessor = () => {
         eventBus.on('device-facts-cleanup', handleDeviceFactsCleanup);
 
         return () => {
-            eventBus.off('local-inventory-refresh', handleLocalInventoryRefresh);
-            eventBus.off('cloud-inventory-refresh', handleCloudInventoryRefresh);
+            eventBus.off(
+                'local-inventory-refresh',
+                handleLocalInventoryRefresh
+            );
+            eventBus.off(
+                'cloud-inventory-refresh',
+                handleCloudInventoryRefresh
+            );
             eventBus.off('cloud-inventory-reset', handleCloudInventoryReset);
             eventBus.off('reset-device-facts', handleResetDeviceFacts);
             eventBus.off('user-session-check', handleUserSessionCheck);
