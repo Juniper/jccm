@@ -42,6 +42,8 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const GlobalSettings = ({ title, isOpen, onClose }) => {
     if (!isOpen) return null;
+    
+    const {getConsoleWindowWidth} = useStore();  
     const [selectedTab, setSelectedTab] = useState('General');
 
     const [windowSize, setWindowSize] = useState({
@@ -74,6 +76,10 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
                     overflow: 'hidden',
                     border: 0, // Hide border lines
                     background: tokens.colorNeutralBackground1,
+                    
+                    position: 'fixed',
+                    top: '0%',
+                    left: `calc(0% - ${getConsoleWindowWidth()}px)`,
                 }}
             >
                 <div

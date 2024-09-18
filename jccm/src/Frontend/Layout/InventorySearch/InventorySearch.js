@@ -400,28 +400,6 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                         </div>
                     </div>
                 </div>
-
-                {/* Footer - Status bar */}
-                {/* <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        width: '100%',
-                        height: `${FooterSpaceHeight - 10}px`,
-                        alignItems: 'center',
-                        zIndex: 1,
-                        background: tokens.colorNeutralBackground1Selected,
-                    }}
-                >
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', paddingLeft: '20px' }}>
-                        <Label
-                            size='small'
-                            style={{ color: tokens.colorNeutralForeground4 }}
-                        >
-                            Total searching devices: 10
-                        </Label>
-                    </div>
-                </div> */}
             </DialogSurface>
         </Dialog>
     );

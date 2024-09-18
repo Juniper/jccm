@@ -27,7 +27,7 @@ export const RotatingIcon = ({
     );
 };
 
-export const CircleIcon = ({ Icon, color = tokens.colorPaletteGreenBorder2, size = '12px' }) => {
+export const CircleIcon = ({ Icon, color = tokens.colorPaletteGreenBorder2, size = '12px', iconSize = '' }) => {
     return (
         <div
             style={{
@@ -40,7 +40,7 @@ export const CircleIcon = ({ Icon, color = tokens.colorPaletteGreenBorder2, size
                 border: `0.5px solid ${color}`,
             }}
         >
-            <Icon style={{ fontSize: size, color: color }} />
+            <Icon style={{ fontSize: iconSize.length === 0? size : iconSize, color: color }} />
         </div>
     );
 };

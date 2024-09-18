@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow, session, screen } from 'electron';
 import { getCloudInfoMinVersion } from '../config';
 import { Client } from 'ssh2';
 
-import { mainWindow } from '../main.js';
+import { mainWindow, sendLogMessage } from '../main.js';
 
 import {
     msGetActiveCloud,
@@ -42,7 +42,11 @@ import {
 } from './ApiCalls';
 
 import { CloudInfo } from '../config';
-import { commitJunosSetConfig, executeJunosCommand, getDeviceFacts } from './Device';
+import {
+    commitJunosSetConfig,
+    executeJunosCommand,
+    getDeviceFacts,
+} from './Device';
 const sshSessions = {};
 
 const serverGetCloudInventory = async (targetOrgs = null) => {
@@ -69,7 +73,9 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
 
             if (targetOrgs !== null && !targetOrgs.includes(orgName)) {
                 // Find the organization in the current inventory with the same orgId
-                const existingOrg = currentInventory.find((org) => org.id === orgId);
+                const existingOrg = currentInventory.find(
+                    (org) => org.id === orgId
+                );
                 if (existingOrg) {
                     // console.log('>>>> Reuse existing org:', JSON.stringify(existingOrg, null, 2));
                     inventory.push(existingOrg);
@@ -81,12 +87,17 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
 
             const sitesData = await acGetCloudSites(orgId);
             if (sitesData.status === 'error') {
-                console.error(`serverGetCloudInventory: acGetCloudSites error on org ${orgId}`);
+                console.error(
+                    `serverGetCloudInventory: acGetCloudSites error on org ${orgId}`
+                );
                 continue;
             }
 
             const sites = Object.fromEntries(
-                Object.entries(sitesData.data).map(([key, value]) => [value.name, { id: value.id }])
+                Object.entries(sitesData.data).map(([key, value]) => [
+                    value.name,
+                    { id: value.id },
+                ])
             );
 
             orgs[orgName] = { id: orgId, sites };
@@ -111,7 +122,11 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
                             }
                         }
                         device.org_name = item.name;
-                        if (device?.mac.toUpperCase() === device.serial.toUpperCase() && device.type === 'switch') {
+                        if (
+                            device?.mac.toUpperCase() ===
+                                device.serial.toUpperCase() &&
+                            device.type === 'switch'
+                        ) {
                             // console.log(`mac === serial: device: ${JSON.stringify(device, null, 2)}`);
                             siteIdHavingVMAC.add(device.site_id);
                         }
@@ -124,22 +139,30 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
                     const SN2VSN = {};
                     for (const siteId of siteIdHavingVMAC) {
                         console.log(`Get device stats for site(${siteId})`);
-                        const response = await acGetDeviceStatsType(siteId, 'switch');
+                        const response = await acGetDeviceStatsType(
+                            siteId,
+                            'switch'
+                        );
 
                         if (response.status === 'success') {
                             const cloudDeviceStates = response.data;
                             // console.log(`Get device stats: ${JSON.stringify(cloudDeviceStates, null, 2)}`);
 
                             for (const cloudDevice of cloudDeviceStates) {
-                                SN2VSN[cloudDevice.serial] = cloudDevice.module_stat.find(
-                                    (item) => item && item.serial
-                                );
+                                SN2VSN[cloudDevice.serial] =
+                                    cloudDevice.module_stat.find(
+                                        (item) => item && item.serial
+                                    );
                             }
                         }
                     }
 
                     for (const device of devices) {
-                        if (device?.mac.toUpperCase() === device.serial.toUpperCase() && device.type === 'switch') {
+                        if (
+                            device?.mac.toUpperCase() ===
+                                device.serial.toUpperCase() &&
+                            device.type === 'switch'
+                        ) {
                             module = SN2VSN[device.serial];
                             device.original_mac = module?.mac;
                             device.original_serial = module?.serial;
@@ -190,7 +213,10 @@ const startSSHConnectionStandalone = (event, device, { id, cols, rows }) => {
             });
 
             stream.on('close', () => {
-                event.reply('sshDataReceived', { id, data: 'The SSH session has been closed.\r\n' });
+                event.reply('sshDataReceived', {
+                    id,
+                    data: 'The SSH session has been closed.\r\n',
+                });
 
                 conn.end();
                 delete sshSessions[id];
@@ -227,7 +253,12 @@ const startSSHConnectionStandalone = (event, device, { id, cols, rows }) => {
     });
 };
 
-const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows }) => {
+const startSSHConnectionProxy = (
+    event,
+    device,
+    bastionHost,
+    { id, cols, rows }
+) => {
     const conn = new Client();
     sshSessions[id] = conn;
 
@@ -295,21 +326,29 @@ const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows })
 
                 // process.stdout.write(output);
 
-                if (!isBastionHostOsTypeCheckTimeoutPass || !isSshClientPasswordInputTimeoutPass) {
+                if (
+                    !isBastionHostOsTypeCheckTimeoutPass ||
+                    !isSshClientPasswordInputTimeoutPass
+                ) {
                     initialOutputBuffer += output;
                 }
 
                 // Check if either the timeout has passed without a check, or the check hasn't been done and it's ready
                 if (
-                    (!isBastionHostOsTypeChecked && promptPattern.test(initialOutputBuffer)) ||
-                    (isBastionHostOsTypeCheckTimeoutPass && !isBastionHostOsTypeChecked)
+                    (!isBastionHostOsTypeChecked &&
+                        promptPattern.test(initialOutputBuffer)) ||
+                    (isBastionHostOsTypeCheckTimeoutPass &&
+                        !isBastionHostOsTypeChecked)
                 ) {
                     isBastionHostOsTypeChecked = true;
                     isBastionHostOsTypeCheckTimeoutPass = true;
                     clearTimeout(bastionHostOsTypeCheckTimeoutHandle);
 
                     // Determine the SSH command based on the output buffer content
-                    if (initialOutputBuffer.toLowerCase().includes('junos') && bastionHost.username !== 'root') {
+                    if (
+                        initialOutputBuffer.toLowerCase().includes('junos') &&
+                        bastionHost.username !== 'root'
+                    ) {
                         sshClientCommand = junosSSHCommand;
                     } else {
                         sshClientCommand = linuxSSHCommand;
@@ -329,7 +368,9 @@ const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows })
                     if (!isSshClientPasswordInputted) {
                         if (
                             !isSshClientPasswordInputTimeoutPass &&
-                            initialOutputBuffer.toLowerCase().includes('password:')
+                            initialOutputBuffer
+                                .toLowerCase()
+                                .includes('password:')
                         ) {
                             // Password prompt found, input the password
                             isSshClientPasswordInputted = true;
@@ -349,14 +390,24 @@ const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows })
                             const connectionErrorMessage = `${device.username}@${device.address}: `;
                             const sshConnectionErrorMessage = `ssh: connect to host ${device.address} port ${device.port}: `;
                             if (
-                                !initialOutputBuffer.includes(connectionErrorMessage) &&
-                                !initialOutputBuffer.includes(sshConnectionErrorMessage)
+                                !initialOutputBuffer.includes(
+                                    connectionErrorMessage
+                                ) &&
+                                !initialOutputBuffer.includes(
+                                    sshConnectionErrorMessage
+                                )
                             ) {
-                                event.reply('sshDataReceived', { id, data: output });
+                                event.reply('sshDataReceived', {
+                                    id,
+                                    data: output,
+                                });
                             }
                         } else {
                             // Timeout has passed, send data regardless
-                            event.reply('sshDataReceived', { id, data: output });
+                            event.reply('sshDataReceived', {
+                                id,
+                                data: output,
+                            });
                         }
                     }
                 }
@@ -372,7 +423,10 @@ const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows })
 
                     if (match && match[1]) {
                         const sshErrorMessage = match[1];
-                        const cleanedErrorMessage = sshErrorMessage.replace(/\.$/, '');
+                        const cleanedErrorMessage = sshErrorMessage.replace(
+                            /\.$/,
+                            ''
+                        );
                         event.reply('sshDataReceived', {
                             id,
                             data: `${messagePrefix}${cleanedErrorMessage}\r\n\r\n`,
@@ -381,10 +435,19 @@ const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows })
                 }
 
                 // Check for error messages related to direct SSH or port issues
-                if (initialOutputBuffer.includes(`${device.username}@${device.address}: `)) {
-                    handleSSHErrorMessage(`${device.username}@${device.address}: `, 'SSH connection: ');
+                if (
+                    initialOutputBuffer.includes(
+                        `${device.username}@${device.address}: `
+                    )
+                ) {
+                    handleSSHErrorMessage(
+                        `${device.username}@${device.address}: `,
+                        'SSH connection: '
+                    );
                 } else if (
-                    initialOutputBuffer.includes(`ssh: connect to host ${device.address} port ${device.port}: `)
+                    initialOutputBuffer.includes(
+                        `ssh: connect to host ${device.address} port ${device.port}: `
+                    )
                 ) {
                     handleSSHErrorMessage(
                         `ssh: connect to host ${device.address} port ${device.port}: `,
@@ -458,14 +521,28 @@ export const setupApiHandlers = () => {
         const password = args.password || null;
         const passcode = args.passcode || null;
 
-        if (!regionName || !email) return { login: 'error', error: 'Missing required fields' };
-        if (!password && !passcode) return { login: 'error', error: 'Missing authentication credentials' };
+        if (!regionName || !email)
+            return { login: 'error', error: 'Missing required fields' };
+        if (!password && !passcode)
+            return {
+                login: 'error',
+                error: 'Missing authentication credentials',
+            };
 
         if (password && !passcode) {
-            const response = await acUserLogin(cloudId, regionName, email, password);
+            const response = await acUserLogin(
+                cloudId,
+                regionName,
+                email,
+                password
+            );
+            console.log('main: saLoginUser: response:', JSON.stringify(response, null, 2));
 
             if (response.status === 'success') {
-                if (response.data.two_factor_required && !response.data.two_factor_passed) {
+                if (
+                    response.data.two_factor_required &&
+                    !response.data.two_factor_passed
+                ) {
                     return { login: true, two_factor: true };
                 } else {
                     const cloudDescription = CloudInfo[cloudId].description;
@@ -473,29 +550,49 @@ export const setupApiHandlers = () => {
                     const theme = await msGetTheme();
                     return {
                         login: true,
-                        user: { ...response.data, service, theme, cloudDescription, regionName },
+                        user: {
+                            ...response.data,
+                            service,
+                            theme,
+                            cloudDescription,
+                            regionName,
+                        },
                     };
                 }
+            } else {
+                return { login: false, error: response?.detail };
             }
         } else if (passcode) {
             const response = await acUserMFA(passcode);
 
             if (response.status === 'success') {
-                if (response.data.two_factor_verified) {
+                if (response.data?.two_factor_verified) {
                     const cloudDescription = CloudInfo[cloudId].description;
                     const service = `${cloudDescription}/${regionName}`;
                     const theme = await msGetTheme();
 
                     return {
                         login: true,
-                        user: { ...response.data, service, theme, cloudDescription, regionName },
+                        user: {
+                            ...response.data,
+                            service,
+                            theme,
+                            cloudDescription,
+                            regionName,
+                        },
                     };
                 } else {
                     return { login: false, error: 'two factor auth failed' };
                 }
+            } else {
+                return { login: false, error: response?.detail };
             }
         } else {
-            if (!password && !passcode) return { login: 'error', error: 'Missing authentication credentials.' };
+            if (!password && !passcode)
+                return {
+                    login: false,
+                    error: 'Missing authentication credentials.',
+                };
         }
     });
 
@@ -525,13 +622,23 @@ export const setupApiHandlers = () => {
 
                 return {
                     sessionValid: true,
-                    user: { ...response.data, service, theme, cloudDescription, regionName },
+                    user: {
+                        ...response.data,
+                        service,
+                        theme,
+                        cloudDescription,
+                        regionName,
+                    },
                     // inventory,
                     // isFilterApplied,
                 };
             } else {
                 const theme = await msGetTheme();
-                return { sessionValid: false, error: 'whoami call failed', theme };
+                return {
+                    sessionValid: false,
+                    error: 'whoami call failed',
+                    theme,
+                };
             }
         } catch (error) {
             console.log('main: saWhoamiUser: error:', error);
@@ -549,7 +656,9 @@ export const setupApiHandlers = () => {
         console.log('main: saGetCloudInventory');
         const { targetOrgs = null } = args;
 
-        const { inventory, isFilterApplied } = await serverGetCloudInventory(targetOrgs);
+        const { inventory, isFilterApplied } = await serverGetCloudInventory(
+            targetOrgs
+        );
 
         return { cloudInventory: true, inventory, isFilterApplied };
     });
@@ -626,7 +735,8 @@ export const setupApiHandlers = () => {
         const bastionHost = settings?.bastionHost || {};
 
         const found = inventory.filter(
-            ({ organization, site, address, port }) => id === `/Inventory/${organization}/${site}/${address}/${port}`
+            ({ organization, site, address, port }) =>
+                id === `/Inventory/${organization}/${site}/${address}/${port}`
         );
         if (found.length === 0) {
             console.error('No device found: path id: ', id);
@@ -634,7 +744,11 @@ export const setupApiHandlers = () => {
         }
         const device = found[0];
         if (bastionHost?.active) {
-            startSSHConnectionProxy(event, device, bastionHost, { id, cols, rows });
+            startSSHConnectionProxy(event, device, bastionHost, {
+                id,
+                cols,
+                rows,
+            });
         } else {
             startSSHConnectionStandalone(event, device, { id, cols, rows });
         }
@@ -653,7 +767,15 @@ export const setupApiHandlers = () => {
         console.log('main: saGetDeviceFacts');
 
         try {
-            const { address, port, username, password, timeout, upperSerialNumber, bastionHost } = args;
+            const {
+                address,
+                port,
+                username,
+                password,
+                timeout,
+                upperSerialNumber,
+                bastionHost,
+            } = args;
             const reply = await getDeviceFacts(
                 address,
                 port,
@@ -696,16 +818,28 @@ export const setupApiHandlers = () => {
                 endpoint = 'jsi/devices';
             }
 
-            const api = `orgs/${orgId}/${endpoint}/outbound_ssh_cmd${siteId ? `?site_id=${siteId}` : ''}`;
+            const api = `orgs/${orgId}/${endpoint}/outbound_ssh_cmd${
+                siteId ? `?site_id=${siteId}` : ''
+            }`;
             const response = await acRequest(api, 'GET', null);
 
             const configCommand = deleteOutboundSSHTerm
                 ? `delete system services outbound-ssh\n${response.cmd}\n`
                 : `${response.cmd}\n`;
 
-            const reply = await commitJunosSetConfig(address, port, username, password, configCommand, bastionHost);
+            const reply = await commitJunosSetConfig(
+                address,
+                port,
+                username,
+                password,
+                configCommand,
+                bastionHost
+            );
 
-            if (reply.status === 'success' && reply.data.includes('<commit-success/>')) {
+            if (
+                reply.status === 'success' &&
+                reply.data.includes('<commit-success/>')
+            ) {
                 return { adopt: true, reply };
             } else {
                 return { adopt: false, reply };
@@ -727,7 +861,8 @@ export const setupApiHandlers = () => {
         try {
             console.log('device releasing!');
 
-            const serialsPayload = typeof serial === 'string' ? [serial] : serial;
+            const serialsPayload =
+                typeof serial === 'string' ? [serial] : serial;
 
             const response = await acRequest(`orgs/${orgId}/inventory`, 'PUT', {
                 op: 'delete',
@@ -745,8 +880,16 @@ export const setupApiHandlers = () => {
         console.log('main: saExecuteJunosCommand');
 
         try {
-            const { address, port, username, password, command, timeout } = args;
-            const reply = await executeJunosCommand(address, port, username, password, command, timeout);
+            const { address, port, username, password, command, timeout } =
+                args;
+            const reply = await executeJunosCommand(
+                address,
+                port,
+                username,
+                password,
+                command,
+                timeout
+            );
             return { command: true, reply };
         } catch (error) {
             console.error('Junos command execution failed!', error);
@@ -811,11 +954,16 @@ export const setupApiHandlers = () => {
             return { login: 'error', error: 'Missing required fields' };
         }
 
-        const response = await acGetGoogleSSOAuthorizationUrl(cloudId, regionName);
+        const response = await acGetGoogleSSOAuthorizationUrl(
+            cloudId,
+            regionName
+        );
 
         if (response.status === 'success') {
             const authorizationUrl = response.authorizationUrl;
-            console.log('saGetGoogleSSOAuthCode gets authorization url successfully');
+            console.log(
+                'saGetGoogleSSOAuthCode gets authorization url successfully'
+            );
 
             const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
@@ -846,11 +994,16 @@ export const setupApiHandlers = () => {
                         // Load a success message and close the auth window after the request processing is done
                         setImmediate(() => {
                             // a built-in function in Node.js that schedules a callback to be executed immediately after I/O events
-                            authWindow.loadURL('data:text/html,Authentication successful! You can close this window.');
+                            authWindow.loadURL(
+                                'data:text/html,Authentication successful! You can close this window.'
+                            );
                             authWindow.close();
 
                             // Send the authorization code to the renderer process
-                            mainWindow.webContents.send('saGoogleSSOAuthCodeReceived', authCode);
+                            mainWindow.webContents.send(
+                                'saGoogleSSOAuthCodeReceived',
+                                authCode
+                            );
                         });
                     } else {
                         callback({ cancel: false });
@@ -860,7 +1013,10 @@ export const setupApiHandlers = () => {
 
             return { login: true };
         } else {
-            console.log('saGetGoogleSSOAuthCode failed to get authorization url: ', response);
+            console.log(
+                'saGetGoogleSSOAuthCode failed to get authorization url: ',
+                response
+            );
             return { login: false, error: response.error };
         }
     });
@@ -870,7 +1026,8 @@ export const setupApiHandlers = () => {
 
         const authCode = args.authCode;
 
-        if (!authCode) return { login: 'error', error: 'Missing required fields' };
+        if (!authCode)
+            return { login: 'error', error: 'Missing required fields' };
 
         const response = await acLoginUserGoogleSSO(authCode);
 
@@ -884,8 +1041,22 @@ export const setupApiHandlers = () => {
 
             return {
                 login: true,
-                user: { ...response.data, service, theme, cloudDescription, regionName },
+                user: {
+                    ...response.data,
+                    service,
+                    theme,
+                    cloudDescription,
+                    regionName,
+                },
             };
+        }
+    });
+
+    ipcMain.on('saToggleDevTools', () => {
+        if (mainWindow.webContents.isDevToolsOpened()) {
+            mainWindow.webContents.closeDevTools();
+        } else {
+            mainWindow.webContents.openDevTools();
         }
     });
 };

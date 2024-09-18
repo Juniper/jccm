@@ -3,6 +3,25 @@ import _ from 'lodash';
 const { electronAPI } = window;
 
 const useStore = create((set, get) => ({
+    consoleWindowButtonShow: false,
+    setConsoleWindowButtonShow: (consoleWindowButtonShow) =>
+        set(() => ({ consoleWindowButtonShow })),
+
+    consoleWindowOpen: false,
+    setConsoleWindowOpen: (consoleWindowOpen) =>
+        set(() => ({ consoleWindowOpen })),
+
+    consoleWindowWidth: 300,
+    setConsoleWindowWidth: (consoleWindowWidth) =>
+        set(() => ({ consoleWindowWidth })),
+
+    getConsoleWindowWidth: () => {
+        if (get().consoleWindowOpen) {
+            return get().consoleWindowWidth;
+        } 
+        return 0;
+    },
+
     settings: {},
 
     setSettings: (settings) =>
@@ -30,7 +49,8 @@ const useStore = create((set, get) => ({
 
     exportSettings: (newSettings = undefined) => {
         const exportFunction = async () => {
-            const settings = newSettings === undefined ? get().settings : newSettings;
+            const settings =
+                newSettings === undefined ? get().settings : newSettings;
             try {
                 await electronAPI.saSaveSettings({ settings });
                 set({ settings });
@@ -47,8 +67,14 @@ const useStore = create((set, get) => ({
 
         // Only toggle if bastionHost exists and is not empty or undefined
         if (bastionHost && !_.isEmpty(bastionHost)) {
-            const updatedBastionHost = { ...bastionHost, active: !bastionHost.active };
-            const updatedSettings = { ...currentSettings, bastionHost: updatedBastionHost };
+            const updatedBastionHost = {
+                ...bastionHost,
+                active: !bastionHost.active,
+            };
+            const updatedSettings = {
+                ...currentSettings,
+                bastionHost: updatedBastionHost,
+            };
 
             // Update state and export the updated settings
             set({ settings: updatedSettings });
@@ -60,7 +86,8 @@ const useStore = create((set, get) => ({
     setIsUserLoggedIn: (isUserLoggedIn) => set(() => ({ isUserLoggedIn })),
 
     isInventoryLoading: false,
-    setIsInventoryLoading: (isInventoryLoading) => set(() => ({ isInventoryLoading })),
+    setIsInventoryLoading: (isInventoryLoading) =>
+        set(() => ({ isInventoryLoading })),
 
     user: null,
     orgs: {},
@@ -112,7 +139,8 @@ const useStore = create((set, get) => ({
                     if (org.inventory) {
                         org.inventory.forEach((device) => {
                             device.is_vmac_enabled
-                                ? (cloudDevices[device.original_serial] = device)
+                                ? (cloudDevices[device.original_serial] =
+                                      device)
                                 : (cloudDevices[device.serial] = device);
                         });
                     }
@@ -125,7 +153,8 @@ const useStore = create((set, get) => ({
         }),
 
     cloudInventoryFilterApplied: false,
-    setCloudInventoryFilterApplied: (cloudInventoryFilterApplied) => set(() => ({ cloudInventoryFilterApplied })),
+    setCloudInventoryFilterApplied: (cloudInventoryFilterApplied) =>
+        set(() => ({ cloudInventoryFilterApplied })),
 
     localDevices: {},
     siteDevices: {},
@@ -135,7 +164,9 @@ const useStore = create((set, get) => ({
         set((state) => {
             if (!_.isEqual(state.inventory, newInventory)) {
                 newInventory.sort((a, b) => {
-                    const orgCompare = a.organization.localeCompare(b.organization);
+                    const orgCompare = a.organization.localeCompare(
+                        b.organization
+                    );
                     if (orgCompare !== 0) return orgCompare;
 
                     const siteCompare = a.site.localeCompare(b.site);
@@ -172,7 +203,12 @@ const useStore = create((set, get) => ({
                     orgDevices[device.organization].push(device);
                 });
 
-                return { inventory: updatedInventory, localDevices, siteDevices, orgDevices };
+                return {
+                    inventory: updatedInventory,
+                    localDevices,
+                    siteDevices,
+                    orgDevices,
+                };
             } else {
                 return {};
             }
@@ -215,7 +251,8 @@ const useStore = create((set, get) => ({
     // tab (device) state management
     tabs: [],
     selectedTabValue: '',
-    setSelectedTabValue: (selectedTabValue) => set(() => ({ selectedTabValue })),
+    setSelectedTabValue: (selectedTabValue) =>
+        set(() => ({ selectedTabValue })),
 
     resetTabs: () =>
         set(() => {
@@ -228,7 +265,9 @@ const useStore = create((set, get) => ({
     addTab: (newTab) =>
         set((state) => {
             // Check if the tab already exists based on the 'path' property
-            const tabExists = state.tabs.some((tab) => tab.path === newTab.path);
+            const tabExists = state.tabs.some(
+                (tab) => tab.path === newTab.path
+            );
 
             if (!tabExists) {
                 // If the tab doesn't exist, add it and set it as the selected tab
@@ -248,7 +287,9 @@ const useStore = create((set, get) => ({
     removeTab: (tabPath) =>
         set((state) => {
             // Find the index of the tab to be removed
-            const tabIndex = state.tabs.findIndex((tab) => tab.path === tabPath);
+            const tabIndex = state.tabs.findIndex(
+                (tab) => tab.path === tabPath
+            );
 
             // If the tab isn't found, return the state unchanged
             if (tabIndex === -1) {
@@ -256,7 +297,10 @@ const useStore = create((set, get) => ({
             }
 
             // Create a new array with the tab removed
-            const newTabs = [...state.tabs.slice(0, tabIndex), ...state.tabs.slice(tabIndex + 1)];
+            const newTabs = [
+                ...state.tabs.slice(0, tabIndex),
+                ...state.tabs.slice(tabIndex + 1),
+            ];
 
             // Determine the new selectedTabValue
             let newSelectedTabValue = '';
@@ -264,7 +308,9 @@ const useStore = create((set, get) => ({
             if (newTabs.length > 0) {
                 if (state.selectedTabValue === tabPath) {
                     // If the removed tab was the selected one, choose the next one or the previous if it was the last
-                    newSelectedTabValue = newTabs[tabIndex] ? newTabs[tabIndex].path : newTabs[tabIndex - 1].path;
+                    newSelectedTabValue = newTabs[tabIndex]
+                        ? newTabs[tabIndex].path
+                        : newTabs[tabIndex - 1].path;
                 } else {
                     // If the removed tab was not the selected one, keep the selectedTabValue unchanged
                     newSelectedTabValue = state.selectedTabValue;
@@ -297,7 +343,10 @@ const useStore = create((set, get) => ({
             };
 
             // Update the specified tab's properties
-            updatedTabs[tabIndex] = { ...updatedTabs[tabIndex], properties: updatedProperties };
+            updatedTabs[tabIndex] = {
+                ...updatedTabs[tabIndex],
+                properties: updatedProperties,
+            };
 
             // Return the new state with the tab's properties updated
             return { ...state, tabs: updatedTabs };
@@ -317,7 +366,10 @@ const useStore = create((set, get) => ({
     },
 
     isChecking: {},
-    setIsChecking: (path, value) => set((state) => ({ isChecking: { ...state.isChecking, [path]: value } })),
+    setIsChecking: (path, value) =>
+        set((state) => ({
+            isChecking: { ...state.isChecking, [path]: value },
+        })),
     resetIsChecking: (path) =>
         set((state) => {
             const { [path]: _, ...rest } = state.isChecking;
@@ -339,9 +391,13 @@ const useStore = create((set, get) => ({
 
     cleanUpDeviceFacts: async () => {
         const state = get();
-        const inventoryPaths = new Set(state.inventory.map((item) => item._path));
+        const inventoryPaths = new Set(
+            state.inventory.map((item) => item._path)
+        );
         const cleanedDeviceFacts = Object.fromEntries(
-            Object.entries(state.deviceFacts).filter(([key]) => inventoryPaths.has(key))
+            Object.entries(state.deviceFacts).filter(([key]) =>
+                inventoryPaths.has(key)
+            )
         );
 
         console.log('inventoryPaths', inventoryPaths);

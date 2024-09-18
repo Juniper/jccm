@@ -10,10 +10,21 @@ import useStore from './Frontend/Common/StateStore';
 
 function App() {
     const { currentActiveThemeName } = useStore();
-
+    const zIndex = {
+        background: 0,
+        content: 1,
+        overlay: 1000,
+        popup: 2000,
+        messages: 3000,
+        floating: 4000,
+        priority: 5000,
+        debug: 6000,
+      };
+    
+    
     return (
         <div>
-            <FluentProvider theme={getActiveTheme(currentActiveThemeName).theme}>
+            <FluentProvider zIndex={zIndex} theme={getActiveTheme(currentActiveThemeName).theme}>
                 <MessageBarProvider>
                     <NotificationProvider>
                         <ContextMenuProvider>

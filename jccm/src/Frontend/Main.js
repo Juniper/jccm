@@ -1,5 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Persona, Button, Tooltip, tokens } from '@fluentui/react-components';
+import {
+    Persona,
+    Button,
+    Tooltip,
+    Text,
+    Portal,
+    tokens,
+    useFluent,
+} from '@fluentui/react-components';
 import _ from 'lodash';
 
 import {
@@ -32,14 +40,26 @@ import useStore from './Common/StateStore';
 import Login from './Components/Login';
 import TerminalLayout from './Components/Terminals/TerminalLayout';
 import eventBus from './Common/eventBus';
+import { ConsoleWindow } from './ConsoleWindow';
 
 const CloudAdd = bundleIcon(CloudAddFilled, CloudAddRegular);
-const ArrowCircleRight = bundleIcon(ArrowCircleRightRegular, ArrowCircleRightRegular);
+const ArrowCircleRight = bundleIcon(
+    ArrowCircleRightRegular,
+    ArrowCircleRightRegular
+);
 const LeafThree = bundleIcon(LeafThreeFilled, LeafThreeRegular);
-const PersonQuestionMark = bundleIcon(PersonQuestionMarkFilled, PersonQuestionMarkRegular);
+const PersonQuestionMark = bundleIcon(
+    PersonQuestionMarkFilled,
+    PersonQuestionMarkRegular
+);
 
 export const Main = () => {
-    const { isUserLoggedIn } = useStore();
+    const {
+        consoleWindowButtonShow,
+        consoleWindowOpen,
+        getConsoleWindowWidth,
+        isUserLoggedIn,
+    } = useStore();
 
     const containerRef = useRef(null);
     const leftRef = useRef(null);
@@ -49,12 +69,16 @@ export const Main = () => {
 
     const [isLeftOpen, setIsLeftOpen] = useState(true);
     const [leftWidth, setLeftWidth] = useState(LeftSideSpaceWidth);
-    const [leftResizerColor, setLeftResizerColor] = useState(tokens.colorNeutralBackground1Pressed);
+    const [leftResizerColor, setLeftResizerColor] = useState(
+        tokens.colorNeutralBackground1Pressed
+    );
     const [isLeftResizerHovered, setIsLeftResizerHovered] = useState(false);
     const [isLeftResizerActive, setIsLeftResizerActive] = useState(false);
     const resizeColorTimeoutRef = useRef(null); // Ref to store the timeout ID
 
-    const [centerWidth, setCenterWidth] = useState(`calc(100% - ${LeftSideSpaceWidth}px)`);
+    const [centerWidth, setCenterWidth] = useState(
+        `calc(100% - ${LeftSideSpaceWidth}px)`
+    );
 
     const leftMinWidth = 250;
     const leftMaxWidth = 900;
@@ -112,7 +136,8 @@ export const Main = () => {
 
     const handleMouseLeave = () => {
         setIsLeftResizerHovered(false);
-        if (!isLeftResizerActive) setLeftResizerColor(tokens.colorNeutralBackground1Pressed);
+        if (!isLeftResizerActive)
+            setLeftResizerColor(tokens.colorNeutralBackground1Pressed);
         clearTimeout(resizeColorTimeoutRef.current);
     };
 
@@ -140,7 +165,7 @@ export const Main = () => {
         <div
             style={{
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
                 width: '100vw',
                 height: '100vh',
                 overflow: 'hidden',
@@ -151,198 +176,247 @@ export const Main = () => {
             <div
                 style={{
                     display: 'flex',
-                    flexDirection: 'row',
-                    width: '100%',
-                    height: `${HeaderSpaceHeight}px`,
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    position: 'relative',
-                    top: 0,
-                    left: 0,
-                    backgroundColor: tokens.colorNeutralBackground1Selected,
+                    flexDirection: 'column',
+                    width: `calc(100% - ${getConsoleWindowWidth()}px)`,
+                    height: '100vh',
+                    overflow: 'hidden',
+                    margin: '0 0 0 0',
+                    padding: '0 0 0 0',
+                    // backgroundColor: 'green',
                 }}
             >
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        height: '100%',
-                        alignItems: 'center',
-                        justifyContent: 'flex-start',
-                        marginLeft: '10px',
-                    }}
-                >
-                    <Button
-                        icon={<LeafThree />}
-                        appearance='transparent'
-                        shape='circular'
-                        size='large'
-                    />
-                </div>
                 <div
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
                         width: '100%',
-                        height: '100%',
+                        height: `${HeaderSpaceHeight}px`,
                         alignItems: 'center',
                         justifyContent: 'flex-start',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        top: 0,
+                        left: 0,
+                        backgroundColor: tokens.colorNeutralBackground1Selected,
                     }}
                 >
-                    <Header />
-                </div>
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        width: `${RightSideSpaceWidth}px`,
-                        height: '100%',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        paddingRight: '10px',
-                    }}
-                >
-                    {isUserLoggedIn ? (
-                        <UserAvatar />
-                    ) : (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                height: '100%',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end',
-                                marginLeft: '10px',
-                            }}
-                        >
-                            <Tooltip
-                                content='User is not logged in.'
-                                relationship='label'
-                                withArrow
-                                positioning='above-end'
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            height: '100%',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            marginLeft: '10px',
+                        }}
+                    >
+                        <Button
+                            icon={<LeafThree />}
+                            appearance='transparent'
+                            shape='circular'
+                            size='large'
+                        />
+                    </div>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            width: '100%',
+                            height: '100%',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                        }}
+                    >
+                        <Header />
+                    </div>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            width: `${RightSideSpaceWidth}px`,
+                            height: '100%',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            paddingRight: '10px',
+                        }}
+                    >
+                        {isUserLoggedIn ? (
+                            <UserAvatar />
+                        ) : (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    height: '100%',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    marginLeft: '10px',
+                                }}
                             >
-                                <Button
-                                    icon={<PersonQuestionMark />}
-                                    appearance='transparent'
-                                    shape='circular'
-                                    size='large'
-                                    onClick={() => {
-                                        setIsUserLoginCardVisible(true);
-                                    }}
-                                />
-                            </Tooltip>
-                            {isUserLoginCardVisible && (
-                                <div>
-                                    <Login
-                                        isOpen={isUserLoginCardVisible}
-                                        onClose={() => {
-                                            setIsUserLoginCardVisible(false);
+                                <Tooltip
+                                    content='User is not logged in.'
+                                    relationship='label'
+                                    withArrow
+                                    positioning='above-end'
+                                >
+                                    <Button
+                                        icon={<PersonQuestionMark />}
+                                        appearance='transparent'
+                                        shape='circular'
+                                        size='large'
+                                        onClick={() => {
+                                            setIsUserLoginCardVisible(true);
                                         }}
                                     />
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                </Tooltip>
+                                {isUserLoginCardVisible && (
+                                    <div>
+                                        <Login
+                                            isOpen={isUserLoginCardVisible}
+                                            onClose={() => {
+                                                setIsUserLoginCardVisible(
+                                                    false
+                                                );
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-            <div
-                ref={containerRef}
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    width: '100%',
-                    height: sidebarHeight,
-                    resize: 'none',
-                    overflow: 'hidden',
-                }}
-            >
                 <div
-                    ref={leftRef}
-                    style={{
-                        display: isLeftOpen ? 'flex' : 'none',
-                        flexDirection: 'row',
-                        width: `${leftWidth}px`,
-                        height: '100%',
-                        backgroundColor: tokens.colorNeutralBackground2,
-                    }}
-                >
-                    <LeftSide />
-                </div>
-                <Tooltip
-                    content={isLeftOpen ? 'Resize Left Sidebar' : 'Open Left Sidebar'}
-                    relationship='label'
-                >
-                    {isLeftOpen ? (
-                        <div
-                            onMouseDown={handleLeftMouseDown}
-                            onMouseEnter={handleMouseEnter}
-                            onMouseLeave={handleMouseLeave}
-                            onDoubleClick={handleDoubleClick}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                width: `${isLeftOpen ? resizeKnobWidthInOpen : resizeKnobWidthInClose}px`,
-                                height: '100%',
-                                cursor: 'ew-resize',
-                                backgroundColor:
-                                    isLeftResizerHovered || isLeftResizerActive
-                                        ? leftResizerColor
-                                        : tokens.colorNeutralBackground1Pressed,
-                            }}
-                        />
-                    ) : (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'flex-start',
-                                alignItems: 'center',
-                                height: '100%',
-                                backgroundColor: tokens.colorNeutralBackground1Selected,
-                            }}
-                        >
-                            <Button
-                                shape='circular'
-                                appearance='subtle'
-                                size='small'
-                                icon={<ArrowCircleRight />}
-                                onClick={() => {
-                                    setIsLeftOpen(true);
-                                    setCenterWidth(`calc(100% - ${leftWidth}px)`);
-                                }}
-                            />
-                        </div>
-                    )}
-                </Tooltip>
-
-                <div
-                    ref={centerRef}
+                    ref={containerRef}
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
-                        width: centerWidth,
-                        height: '100%',
+                        width: '100%',
+                        height: sidebarHeight,
+                        resize: 'none',
+                        overflow: 'hidden',
                     }}
                 >
-                    <TerminalLayout />
+                    <div
+                        ref={leftRef}
+                        style={{
+                            display: isLeftOpen ? 'flex' : 'none',
+                            flexDirection: 'row',
+                            width: `${leftWidth}px`,
+                            height: '100%',
+                            backgroundColor: tokens.colorNeutralBackground2,
+                        }}
+                    >
+                        <LeftSide />
+                    </div>
+                    <Tooltip
+                        content={
+                            isLeftOpen
+                                ? 'Resize Left Sidebar'
+                                : 'Open Left Sidebar'
+                        }
+                        relationship='label'
+                    >
+                        {isLeftOpen ? (
+                            <div
+                                onMouseDown={handleLeftMouseDown}
+                                onMouseEnter={handleMouseEnter}
+                                onMouseLeave={handleMouseLeave}
+                                onDoubleClick={handleDoubleClick}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    width: `${
+                                        isLeftOpen
+                                            ? resizeKnobWidthInOpen
+                                            : resizeKnobWidthInClose
+                                    }px`,
+                                    height: '100%',
+                                    cursor: 'ew-resize',
+                                    backgroundColor:
+                                        isLeftResizerHovered ||
+                                        isLeftResizerActive
+                                            ? leftResizerColor
+                                            : tokens.colorNeutralBackground1Pressed,
+                                }}
+                            />
+                        ) : (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'flex-start',
+                                    alignItems: 'center',
+                                    height: '100%',
+                                    backgroundColor:
+                                        tokens.colorNeutralBackground1Selected,
+                                }}
+                            >
+                                <Button
+                                    shape='circular'
+                                    appearance='subtle'
+                                    size='small'
+                                    icon={<ArrowCircleRight />}
+                                    onClick={() => {
+                                        setIsLeftOpen(true);
+                                        setCenterWidth(
+                                            `calc(100% - ${leftWidth}px)`
+                                        );
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </Tooltip>
+
+                    <div
+                        ref={centerRef}
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            width: centerWidth,
+                            height: '100%',
+                        }}
+                    >
+                        <TerminalLayout />
+                    </div>
+                </div>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        width: `calc(100% - ${getConsoleWindowWidth()}px)`,
+                        height: `${FooterSpaceHeight}px`,
+                        alignItems: 'center',
+                        position: 'fixed',
+                        left: 0,
+                        bottom: 0,
+                        backgroundColor: tokens.colorNeutralBackground1Selected,
+                    }}
+                >
+                    <Footer />
                 </div>
             </div>
             <div
                 style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    width: '100%',
-                    height: `${FooterSpaceHeight}px`,
-                    alignItems: 'center',
-                    position: 'fixed',
-                    left: 0,
-                    bottom: 0,
-                    backgroundColor: tokens.colorNeutralBackground1Selected,
+                    display: consoleWindowOpen ? 'flex' : 'none',
+                    flexDirection: 'column',
+                    position: 'fixed', // Keeps the window fixed to the viewport
+                    right: '0', // Aligns the window to the right edge
+                    top: '0', // Aligns the window to the top edge
+                    width: `${getConsoleWindowWidth()}px`, // Sets the width based on your function
+                    height: '100vh', // Full viewport height
+                    overflowX: 'hidden',
+                    overflowY: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    border: `3px solid ${tokens.colorNeutralBackground1Selected}`,
+                    boxSizing: 'border-box', // Includes border in the element's width and height
+                    zIndex: 1000001, // Ensures it stays above other elements
+                    backgroundColor: 'white',
                 }}
             >
-                <Footer />
+                <ConsoleWindow />
             </div>
         </div>
     );

@@ -18,7 +18,7 @@ import { useMessageBar } from '../Common/MessageBarContext';
 
 function Logout({ isOpen, onClose }) {
     const [isLoggingOut, setIsLoggingOut] = useState(false); // State to track logout operation
-    const { setIsUserLoggedIn, setCloudInventory } = useStore(); // Get the login status from your global state
+    const { getConsoleWindowWidth, setIsUserLoggedIn, setCloudInventory } = useStore(); // Get the login status from your global state
     const { showMessageBar } = useMessageBar();
 
     const handleLogoutItem = async () => {
@@ -30,26 +30,37 @@ function Logout({ isOpen, onClose }) {
                 console.log('logout: ', data);
                 setIsUserLoggedIn(false);
                 setCloudInventory([]);
-                showMessageBar({ message: 'Logout successful!', intent: 'success' });
+                showMessageBar({
+                    message: 'Logout successful!',
+                    intent: 'success',
+                });
                 await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate delay for demonstration
                 onClose();
             }
         } catch (error) {
             console.error('Logout error:', error);
-            showMessageBar({ message: 'Logout failed. Please try again.', intent: 'error' });
+            showMessageBar({
+                message: 'Logout failed. Please try again.',
+                intent: 'error',
+            });
         }
     };
 
     return (
-        <Dialog
-            open={isOpen}
-            onOpenChange={onClose}
-        >
-            <DialogSurface>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogSurface
+                style={{
+                    position: 'fixed',
+                    top: '0%',
+                    left: `calc(0% - ${getConsoleWindowWidth()}px)`,
+                }}
+            >
                 <DialogBody>
                     <DialogContent>
                         <DialogTitle>Confirm Logout</DialogTitle>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div
+                            style={{ display: 'flex', flexDirection: 'column' }}
+                        >
                             <Label>Are you sure you want to logout?</Label>
                             <div
                                 style={{
@@ -69,8 +80,20 @@ function Logout({ isOpen, onClose }) {
                             </div>
                         </div>
                     </DialogContent>
-                    <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', flexDirection: 'row', columnGap: '20px' }}>
+                    <DialogActions
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                columnGap: '20px',
+                            }}
+                        >
                             {/* Confirm Button */}
                             <Button
                                 onClick={handleLogoutItem}

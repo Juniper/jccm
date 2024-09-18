@@ -46,4 +46,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saExecuteJunosCommand: (args) => ipcRenderer.invoke('saExecuteJunosCommand', args),
     saGetDeviceFacts: (args) => ipcRenderer.invoke('saGetDeviceFacts', args),
     saCommitJunosSetConfig: (args) => ipcRenderer.invoke('saCommitJunosSetConfig', args),
+
+    saToggleDevTools: () => ipcRenderer.send('saToggleDevTools'),
+
+    onLogMessage: (callback) => ipcRenderer.on('onLogMessage', (event, args) => callback(args)),
 });

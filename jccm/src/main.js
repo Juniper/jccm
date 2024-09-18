@@ -22,6 +22,12 @@ if (platform === 'linux') {
 // Initialize mainWindow as undefined
 export let mainWindow;
 
+// A function to send log messages from the main process to the renderer
+export const sendLogMessage = (type, ...args) => {
+    // Send the log message to the renderer via IPC
+    mainWindow.webContents.send('onLogMessage', {type, args});
+};
+
 const createWindow = () => {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     mainWindow = new BrowserWindow({

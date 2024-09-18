@@ -6,6 +6,8 @@ import { CookieJar } from 'tough-cookie';
 const cookieJar = new CookieJar();
 const fetch = FetchCookie(originalFetch, cookieJar); // Wraps node-fetch with cookie support
 
+import { sendLogMessage } from '../main.js';
+
 import { CloudInfo } from '../config';
 import {
     msSetToken,
@@ -68,11 +70,9 @@ export const acRequest = async (api, method, body = null) => {
     if (!response.ok) {
         const errorData = await response.json(); // Try to extract error details from the response
         throw new Error(
-            `acRequest "${api}" acRequest Request failed with status ${response.status}: ${JSON.stringify(
-                errorData,
-                null,
-                2
-            )}`
+            `acRequest "${api}" acRequest Request failed with status ${
+                response.status
+            }: ${JSON.stringify(errorData, null, 2)}`
         );
     }
 
@@ -93,7 +93,9 @@ export const acRequest = async (api, method, body = null) => {
 
         return responseData; // Return JSON data directly
     } catch (error) {
-        throw new Error(`acRequest "${api}" acRequest Request failed with status ${error}`);
+        throw new Error(
+            `acRequest "${api}" acRequest Request failed with status ${error}`
+        );
     }
 };
 
@@ -127,6 +129,13 @@ export const acLookupRegions = async (cloudId, email) => {
         });
 
         const data = await response.json();
+
+        sendLogMessage(
+            'INFO',
+            `Cloud list contains the account ("${email}") with the following result:`,
+            data
+        );
+
         const accounts = data.accounts || [];
 
         if (accounts.length === 0) {
@@ -137,7 +146,10 @@ export const acLookupRegions = async (cloudId, email) => {
 
         const envFiles = accounts.map((account) => {
             let url = account.api_url;
-            url = (url.includes('mist.com') ? url.replace('https://api', 'https://manage') : url) + '/env.json';
+            url =
+                (url.includes('mist.com')
+                    ? url.replace('https://api', 'https://manage')
+                    : url) + '/env.json';
             return url;
         });
 
@@ -148,11 +160,22 @@ export const acLookupRegions = async (cloudId, email) => {
             return regions;
         }, {});
 
+        sendLogMessage(
+            'INFO',
+            `Region list contains the account ("${email}") with the following result:`,
+            regions
+        );
+
         await msSetRegions(regions);
 
         return { status: 'success', regions: Object.keys(regions) };
     } catch (error) {
         console.error('User lookup failed!', error.message);
+        sendLogMessage(
+            'ERROR',
+            `Failed to look up cloud list containing the account ("${email}") with the following result:`,
+            error
+        );
         return { status: 'error', error };
     }
 };
@@ -172,7 +195,9 @@ export const acUserLogin = async (cloudId, regionName, email, password) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(cookies.map((cookie) => cookie.toString()).join('; '));
+                    resolve(
+                        cookies.map((cookie) => cookie.toString()).join('; ')
+                    );
                 }
             });
         });
@@ -180,10 +205,21 @@ export const acUserLogin = async (cloudId, regionName, email, password) => {
         await msSetCookies(cookies);
 
         const selfData = await acUserSelf();
-
+        sendLogMessage(
+            'INFO',
+            `User ("${email}") login returned the following result:`,
+            selfData
+        );
+        
         return selfData;
     } catch (error) {
         console.error('User login failed!', error.message);
+        sendLogMessage(
+            'ERROR',
+            `User ("${email}") login failed with the following result:`,
+            error
+        );
+
         return { status: 'error', error };
     }
 };
@@ -194,9 +230,22 @@ export const acUserLogout = async () => {
         await msSetIsUserLoggedIn(false);
         await msSetToken(null);
         await msSetCookies(null);
+
+        sendLogMessage(
+            'INFO',
+            `User logout successful.`
+        );
+        
+
         return { status: 'success' };
     } catch (error) {
         console.error('User logout failed!', error.message);
+        sendLogMessage(
+            'ERROR',
+            `User logout failed with the following result:`,
+            error
+        );
+
         return { status: 'error', error };
     }
 };
@@ -206,13 +255,32 @@ export const acUserMFA = async (passcode) => {
         await acRequest('login/two_factor', 'POST', { two_factor: passcode });
         try {
             const selfData = await acUserSelf();
+            sendLogMessage(
+                'INFO',
+                `User MFA login returned the following result:`,
+                selfData
+            );
+    
             return selfData;
         } catch (error) {
             console.error('User self failed!', error.message);
+            sendLogMessage(
+                'INFO',
+                `User MFA login failed returned the following result:`,
+                error
+            );
+            
+    
             return { status: 'error', error };
         }
     } catch (error) {
         console.error('User MFA failed!', error.message);
+        sendLogMessage(
+            'ERROR',
+            `User MFA login failed with the following result:`,
+            error
+        );
+
         return { status: 'error', error };
     }
 };
@@ -237,7 +305,8 @@ export const acUserSelf = async () => {
 
 export const acGetCloudSites = async (orgId) => {
     const isLoggedIn = await msIsUserLoggedIn();
-    if (!isLoggedIn) return { status: 'error', error: 'User is not logged in.' };
+    if (!isLoggedIn)
+        return { status: 'error', error: 'User is not logged in.' };
 
     try {
         const data = await acRequest(`orgs/${orgId}/sites`, 'GET');
@@ -249,13 +318,23 @@ export const acGetCloudSites = async (orgId) => {
 
 export const acGetCloudInventory = async (orgId) => {
     const isLoggedIn = await msIsUserLoggedIn();
-    if (!isLoggedIn) return { status: 'error', error: 'User is not logged in.' };
+    if (!isLoggedIn)
+        return { status: 'error', error: 'User is not logged in.' };
 
     try {
-        const data1 = await acRequest(`orgs/${orgId}/inventory?vc=true&type=switch`, 'GET');
-        const _data2 = await acRequest(`orgs/${orgId}/inventory?vc=true&type=gateway`, 'GET');
-        const data2 = _data2.filter(device => !device.model.includes('SSR'))
-        const data3 = await acRequest(`orgs/${orgId}/inventory?vc=true&type=router`, 'GET');
+        const data1 = await acRequest(
+            `orgs/${orgId}/inventory?vc=true&type=switch`,
+            'GET'
+        );
+        const _data2 = await acRequest(
+            `orgs/${orgId}/inventory?vc=true&type=gateway`,
+            'GET'
+        );
+        const data2 = _data2.filter((device) => !device.model.includes('SSR'));
+        const data3 = await acRequest(
+            `orgs/${orgId}/inventory?vc=true&type=router`,
+            'GET'
+        );
 
         const data = [...data1, ...data2, ...data3];
 
@@ -286,10 +365,14 @@ export const acGetCloudInventory = async (orgId) => {
 
 export const acGetDeviceStats = async (siteId, deviceId) => {
     const isLoggedIn = await msIsUserLoggedIn();
-    if (!isLoggedIn) return { status: 'error', error: 'User is not logged in.' };
+    if (!isLoggedIn)
+        return { status: 'error', error: 'User is not logged in.' };
 
     try {
-        const data = await acRequest(`sites/${siteId}/stats/devices/${deviceId}`, 'GET');
+        const data = await acRequest(
+            `sites/${siteId}/stats/devices/${deviceId}`,
+            'GET'
+        );
         return { status: 'success', data };
     } catch (error) {
         console.error('apiGetSites failed!', error.message);
@@ -299,10 +382,14 @@ export const acGetDeviceStats = async (siteId, deviceId) => {
 
 export const acGetDeviceStatsType = async (siteId, type) => {
     const isLoggedIn = await msIsUserLoggedIn();
-    if (!isLoggedIn) return { status: 'error', error: 'User is not logged in.' };
+    if (!isLoggedIn)
+        return { status: 'error', error: 'User is not logged in.' };
 
     try {
-        const data = await acRequest(`sites/${siteId}/stats/devices?type=switch`, 'GET');
+        const data = await acRequest(
+            `sites/${siteId}/stats/devices?type=switch`,
+            'GET'
+        );
         return { status: 'success', data };
     } catch (error) {
         console.error('apiGetSites failed!', error.message);
@@ -343,7 +430,9 @@ export const acLoginUserGoogleSSO = async (code) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(cookies.map((cookie) => cookie.toString()).join('; '));
+                    resolve(
+                        cookies.map((cookie) => cookie.toString()).join('; ')
+                    );
                 }
             });
         });

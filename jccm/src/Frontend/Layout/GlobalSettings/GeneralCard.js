@@ -31,32 +31,27 @@ import _ from 'lodash';
 
 import { useNotify } from '../../Common/NotificationContext';
 import useStore from '../../Common/StateStore';
+import { on } from 'node-cache';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const DeleteIcon = bundleIcon(SubtractCircleFilled, SubtractCircleRegular);
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const GeneralCard = () => {
-    const { settings, setSettings, importSettings, exportSettings } = useStore();
-    const [jsiTerm, setJsiTerm] = useState(false);
-    const [deleteOutboundSSHTerm, setDeleteOutboundSSHTerm] = useState(false);
+    const { settings, setSettings, setConsoleWindowOpen, exportSettings } =
+        useStore();
 
-    const [windowSize, setWindowSize] = useState({
-        width: window.innerWidth,
-        height: window.innerHeight,
-    });
-
-    useEffect(() => {
-        const fetchData = async () => {
-            importSettings();
-            await delay(300);
-
-            console.log('importing settings', settings);
-            setJsiTerm(settings?.jsiTerm ? true : false);
-            setDeleteOutboundSSHTerm(settings?.deleteOutboundSSHTerm ? true : false);
+    const saveConsoleWindowButtonShow = (newShowConsoleWindow) => {
+        const saveFunction = async () => {
+            const newSettings = {
+                ...settings,
+                consoleWindowButtonShow: newShowConsoleWindow,
+            };
+            setSettings(newSettings);
+            exportSettings(newSettings);
         };
-        fetchData();
-    }, []);
+        saveFunction();
+    };
 
     const saveJsiTerm = (newJsiTerm) => {
         const saveFunction = async () => {
@@ -69,22 +64,29 @@ export const GeneralCard = () => {
 
     const saveDeleteOutboundSSHTerm = (newDeleteOutboundSSHTerm) => {
         const saveFunction = async () => {
-            const newSettings = { ...settings, deleteOutboundSSHTerm: newDeleteOutboundSSHTerm };
+            const newSettings = {
+                ...settings,
+                deleteOutboundSSHTerm: newDeleteOutboundSSHTerm,
+            };
             setSettings(newSettings);
             exportSettings(newSettings);
         };
         saveFunction();
     };
 
+    const onChangConsoleWindowButtonShow = async (event) => {
+        const checked = event.currentTarget.checked;
+        if (!checked) setConsoleWindowOpen(false);
+        saveConsoleWindowButtonShow(checked);
+    };
+
     const onChangeJsiTerm = async (event) => {
         const checked = event.currentTarget.checked;
-        setJsiTerm(checked);
         saveJsiTerm(checked);
     };
 
     const onChangeDeleteOutboundSSHTerm = async (event) => {
         const checked = event.currentTarget.checked;
-        setDeleteOutboundSSHTerm(checked);
         saveDeleteOutboundSSHTerm(checked);
     };
 
@@ -105,12 +107,13 @@ export const GeneralCard = () => {
                     flexDirection: 'row',
                     justifyContent: 'flex-start',
                     alignItems: 'center',
-                    gap: '5px',
+                    gap: '0px',
                     width: '100%',
                     marginLeft: '10px',
                 }}
             >
-                <Text>JSI-Term Adoption Menu: </Text>
+                <Text>Show Debug Console Window:</Text>
+
                 <div
                     style={{
                         transform: 'scale(0.6)',
@@ -118,11 +121,41 @@ export const GeneralCard = () => {
                     }}
                 >
                     <Switch
-                        checked={jsiTerm}
+                        checked={
+                            settings?.consoleWindowButtonShow ? true : false
+                        }
+                        onChange={onChangConsoleWindowButtonShow}
+                    />
+                </div>
+                <Text>
+                    {settings?.consoleWindowButtonShow ? 'Enabled' : 'Disabled'}
+                </Text>
+            </div>
+
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    gap: '5px',
+                    width: '100%',
+                    marginLeft: '10px',
+                }}
+            >
+                <Text>Show JSI-Term Adoption Menu: </Text>
+                <div
+                    style={{
+                        transform: 'scale(0.6)',
+                        transformOrigin: 'right',
+                    }}
+                >
+                    <Switch
+                        checked={settings.jsiTerm ? true : false}
                         onChange={onChangeJsiTerm}
                     />
                 </div>
-                <Text>{jsiTerm ? 'Enabled' : 'Disabled'}</Text>
+                <Text>{settings.jsiTerm ? 'Enabled' : 'Disabled'}</Text>
             </div>
 
             <div
@@ -145,11 +178,13 @@ export const GeneralCard = () => {
                     }}
                 >
                     <Switch
-                        checked={deleteOutboundSSHTerm}
+                        checked={settings.deleteOutboundSSHTerm ? true : false}
                         onChange={onChangeDeleteOutboundSSHTerm}
                     />
                 </div>
-                <Text>{deleteOutboundSSHTerm ? 'Enabled' : 'Disabled'}</Text>
+                <Text>
+                    {settings.deleteOutboundSSHTerm ? 'Enabled' : 'Disabled'}
+                </Text>
             </div>
         </div>
     );

@@ -41,7 +41,7 @@ export const MainEventProcessor = () => {
 
     useEffect(() => {
         const handleLocalInventoryRefresh = async ({ notification = false } = {}) => {
-            console.log('Event: "local-inventory-refresh"');
+            // console.log('Event: "local-inventory-refresh"');
             const response = await electronAPI.saGetLocalInventory();
             if (response.localInventory) {
                 if (!_.isEqual(inventoryRef.current, response.localInventory)) {
@@ -63,7 +63,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleCloudInventoryRefresh = async ({ targetOrgs = null, notification = false } = {}) => {
-            console.log('Event: "cloud-inventory-refresh"');
+            // console.log('Event: "cloud-inventory-refresh"');
 
             // Initialize a timeout for setting the loading state
             const loadingTimeout = setTimeout(() => {
@@ -107,7 +107,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleResetDeviceFacts = async ({ notification = false } = {}) => {
-            console.log('Event: "reset-device-facts"');
+            // console.log('Event: "reset-device-facts"');
 
             zeroDeviceFacts();
             await electronAPI.saSaveDeviceFacts({ facts: {} });
@@ -126,7 +126,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleUserSessionCheck = async ({ message = '' } = {}) => {
-            console.log(`Event: "user-session-check" ${message.length > 0  ? `-> "${message}"` : ''}`);
+            // console.log(`Event: "user-session-check" ${message.length > 0  ? `-> "${message}"` : ''}`);
             try {
                 const data = await electronAPI.saWhoamiUser();
                 if (data.sessionValid) {
@@ -154,7 +154,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleDeviceFactsRefresh = async () => {
-            console.log('Event: "device-facts-refresh"');
+            // console.log('Event: "device-facts-refresh"');
             const data = await electronAPI.saLoadDeviceFacts();
 
             if (data.deviceFacts) {
@@ -165,7 +165,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleDeviceFactsCleanup = async () => {
-            console.log('Event: "device-facts-cleanup"');
+            // console.log('Event: "device-facts-cleanup"');
             cleanUpDeviceFacts();
         };
 
