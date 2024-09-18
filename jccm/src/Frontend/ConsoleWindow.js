@@ -18,41 +18,29 @@ import {
     bundleIcon,
 } from '@fluentui/react-icons';
 
-import { JSONTree, bright } from 'react-json-tree';
+import ReactJson from '@microlink/react-json-view';
 import { HeaderSpaceHeight } from './Common/CommonVariables';
 
 import useStore from './Common/StateStore';
+import eventBus from './Common/eventBus';
 
 const { electronAPI } = window;
 const EraserIcon = bundleIcon(CircleEraserFilled, CircleEraserRegular);
 const CopyIcon = bundleIcon(CopyFilled, CopyRegular);
 const DismissIcon = bundleIcon(DismissCircleFilled, DismissCircleRegular);
 
-const theme = {
-    base00: '#272822',
-    base01: '#383830',
-    base02: '#49483e',
-    base03: '#75715e',
-    base04: '#a59f85',
-    base05: '#f8f8f2',
-    base06: '#f5f4f1',
-    base07: '#f9f8f5',
-    base08: '#f92672',
-    base09: '#fd971f',
-    base0A: '#f4bf75',
-    base0B: '#a6e22e',
-    base0C: '#a1efe4',
-    base0D: '#66d9ef',
-    base0E: '#ae81ff',
-    base0F: '#cc6633',
-};
-
 export const ConsoleWindow = () => {
-    const { setConsoleWindowOpen } = useStore();
+    const { setConsoleWindowOpen, currentActiveThemeName } = useStore();
     const [consoleWindowContents, setConsoleWindowContents] = useState([]);
     const consoleWindowRef = useRef(null);
     const [copyButtonName, setCopyButtonName] = useState('Copy');
     const [isCopyButtonClicked, setIsCopyButtonClicked] = useState(false);
+
+
+    const handleConsoleWindowReset = () => {
+        console.log('Console window reset');
+        setConsoleWindowContents([]);
+    }
 
     // Capture and display logs in the console window
     useEffect(() => {
@@ -85,7 +73,11 @@ export const ConsoleWindow = () => {
             }
         });
 
-        return () => {};
+        eventBus.on('console-window-reset', handleConsoleWindowReset);
+
+        return () => {
+            eventBus.off('console-window-reset', handleConsoleWindowReset);
+        };
     }, []);
 
     // Auto-scroll when consoleWindowContents changes
@@ -204,11 +196,11 @@ export const ConsoleWindow = () => {
                         overflowX: 'hidden',
                         overflowY: 'auto',
                         whiteSpace: 'pre-wrap',
-                        fontSize: '10px',
-                        fontFamily: 'Consolas, monospace', // Consolas prioritized, fallbacks if unavailable
-                        lineHeight: '1.5',
                         marginBottom: '20px',
                         paddingLeft: '5px',
+
+                        fontSize: '12px',
+                        lineHeight: '1.5',
                     }}
                 >
                     {consoleWindowContents.map((log, index) => (
@@ -228,18 +220,23 @@ export const ConsoleWindow = () => {
 
                             {log.args.map((arg, idx) =>
                                 typeof arg === 'object' ? (
-                                    <JSONTree
+                                    <ReactJson
                                         key={idx}
-                                        data={arg}
-                                        theme={theme}
-                                        invertTheme={true}
-                                        hideRoot={true}
-                                        shouldExpandNodeInitially={(
-                                            keyPath,
-                                            data,
-                                            level
-                                        ) => {
-                                            return level > 2;
+                                        src={arg}
+                                        name={false}
+                                        collapsed={true}
+                                        displayDataTypes={false}
+                                        quotesOnKeys={false}
+                                        enableClipboard={false}
+                                        theme={
+                                            currentActiveThemeName
+                                                .toLowerCase()
+                                                .includes('dark')
+                                                ? 'chalk'
+                                                : 'rjv-default'
+                                        }
+                                        style={{
+                                            fontSize: '11px',
                                         }}
                                     />
                                 ) : (

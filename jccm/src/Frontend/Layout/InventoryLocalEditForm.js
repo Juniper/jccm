@@ -73,7 +73,7 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
     if (!isOpen) return null;
     const { notify } = useNotify(); // Correctly use the hook here
 
-    const { currentActiveThemeName, inventory, setInventory } = useStore();
+    const { currentActiveThemeName, inventory, setInventory, getConsoleWindowWidth } = useStore();
 
     const [rowData, setRowData] = useState(JSON.parse(JSON.stringify(importedInventory)));
     const [isDataModified, setIsDataModified] = useState(true);
@@ -302,8 +302,12 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-start',
-                    minWidth: 'calc(100% - 200px)',
+                    minWidth: `calc(100% - 200px - ${getConsoleWindowWidth()}px)`,
                     minHeight: `${Constants.sharedInventoryWindowHeight}px`,
+                    
+                    position: 'fixed',
+                    top: '0%',
+                    left: `calc(0% - ${getConsoleWindowWidth()}px)`,
                 }}
             >
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>

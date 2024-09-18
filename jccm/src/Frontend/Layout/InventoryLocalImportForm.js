@@ -96,7 +96,7 @@ const validateData = (data) => {
 const InventoryLocalImportForm = ({ isOpen, onClose, title, importedInventory }) => {
     if (!isOpen) return null;
     const { notify } = useNotify(); // Correctly use the hook here
-    const { currentActiveThemeName, inventory, setInventory } = useStore();
+    const { currentActiveThemeName, inventory, setInventory, getConsoleWindowWidth } = useStore();
     const data = JSON.parse(JSON.stringify(importedInventory));
     const [rowData, setRowData] = useState(data);
     const [isValid, setIsValid] = useState(validateData(data));
@@ -292,8 +292,14 @@ const InventoryLocalImportForm = ({ isOpen, onClose, title, importedInventory })
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-start',
-                    minWidth: 'calc(100% - 200px)',
+
+                    minWidth: `calc(100% - 200px - ${getConsoleWindowWidth()}px)`,
                     minHeight: `${Constants.sharedInventoryWindowHeight}px`,
+                    
+                    position: 'fixed',
+                    top: '0%',
+                    left: `calc(0% - ${getConsoleWindowWidth()}px)`,
+
                 }}
             >
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>

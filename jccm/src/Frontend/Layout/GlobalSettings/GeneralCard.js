@@ -31,7 +31,7 @@ import _ from 'lodash';
 
 import { useNotify } from '../../Common/NotificationContext';
 import useStore from '../../Common/StateStore';
-import { on } from 'node-cache';
+import eventBus from '../../Common/eventBus';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const DeleteIcon = bundleIcon(SubtractCircleFilled, SubtractCircleRegular);
@@ -76,7 +76,10 @@ export const GeneralCard = () => {
 
     const onChangConsoleWindowButtonShow = async (event) => {
         const checked = event.currentTarget.checked;
-        if (!checked) setConsoleWindowOpen(false);
+        if (!checked) {
+            setConsoleWindowOpen(false);
+            await eventBus.emit('console-window-reset');
+        }
         saveConsoleWindowButtonShow(checked);
     };
 

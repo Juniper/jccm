@@ -560,7 +560,7 @@ export const setupApiHandlers = () => {
                     };
                 }
             } else {
-                return { login: false, error: response?.detail };
+                return { login: false, error: response.error };
             }
         } else if (passcode) {
             const response = await acUserMFA(passcode);
@@ -585,7 +585,7 @@ export const setupApiHandlers = () => {
                     return { login: false, error: 'two factor auth failed' };
                 }
             } else {
-                return { login: false, error: response?.detail };
+                return { login: false, error: response.error };
             }
         } else {
             if (!password && !passcode)

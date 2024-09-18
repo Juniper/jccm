@@ -63,6 +63,8 @@ export const MainEventProcessor = () => {
         };
 
         const handleCloudInventoryRefresh = async ({ targetOrgs = null, notification = false } = {}) => {
+            if (!isUserLoggedIn) return;
+
             // console.log('Event: "cloud-inventory-refresh"');
 
             // Initialize a timeout for setting the loading state
@@ -104,6 +106,10 @@ export const MainEventProcessor = () => {
                     );
                 }
             }
+        };
+
+        const handleCloudInventoryReset = async () => {
+            setCloudInventory([]);
         };
 
         const handleResetDeviceFacts = async ({ notification = false } = {}) => {
@@ -171,6 +177,7 @@ export const MainEventProcessor = () => {
 
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
+        eventBus.on('cloud-inventory-reset', handleCloudInventoryReset);
         eventBus.on('reset-device-facts', handleResetDeviceFacts);
         eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('device-facts-refresh', handleDeviceFactsRefresh);
@@ -179,6 +186,7 @@ export const MainEventProcessor = () => {
         return () => {
             eventBus.off('local-inventory-refresh', handleLocalInventoryRefresh);
             eventBus.off('cloud-inventory-refresh', handleCloudInventoryRefresh);
+            eventBus.off('cloud-inventory-reset', handleCloudInventoryReset);
             eventBus.off('reset-device-facts', handleResetDeviceFacts);
             eventBus.off('user-session-check', handleUserSessionCheck);
             eventBus.off('device-facts-refresh', handleDeviceFactsRefresh);

@@ -413,7 +413,7 @@ export const Main = () => {
                     border: `3px solid ${tokens.colorNeutralBackground1Selected}`,
                     boxSizing: 'border-box', // Includes border in the element's width and height
                     zIndex: 1000001, // Ensures it stays above other elements
-                    backgroundColor: 'white',
+                    backgroundColor: tokens.colorNeutralBackground4Hover,
                 }}
             >
                 <ConsoleWindow />

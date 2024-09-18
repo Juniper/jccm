@@ -69,11 +69,7 @@ export const acRequest = async (api, method, body = null) => {
 
     if (!response.ok) {
         const errorData = await response.json(); // Try to extract error details from the response
-        throw new Error(
-            `acRequest "${api}" acRequest Request failed with status ${
-                response.status
-            }: ${JSON.stringify(errorData, null, 2)}`
-        );
+        throw errorData;
     }
 
     try {
@@ -213,7 +209,7 @@ export const acUserLogin = async (cloudId, regionName, email, password) => {
         
         return selfData;
     } catch (error) {
-        console.error('User login failed!', error.message);
+        console.error('User login failed!!!', error.message);
         sendLogMessage(
             'ERROR',
             `User ("${email}") login failed with the following result:`,

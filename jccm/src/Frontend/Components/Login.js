@@ -254,14 +254,20 @@ export const Login = ({ isOpen, onClose }) => {
                     };
                 }
             } else {
-                console.log('Login failed!: ', data);
-                await eventBus.emit('cloud-inventory-refresh');
+                console.log('Login failed!: ', data.error);
+                await eventBus.emit('cloud-inventory-reset');
 
-                return { status: 'error', message: `Login failed: ${JSON.stringify(data)}` };
+                return {
+                    status: 'error',
+                    message: data.error?.detail || JSON.stringify(data.error),
+                };
             }
         } catch (error) {
-            console.error('Login failed!', error);
-            return { status: 'error', message: `Login failed: ${JSON.stringify(error)}`, error: error };
+            console.error('Login failed!!!', error);
+            return {
+                status: 'error',
+                message: error?.detail || JSON.stringify(error),
+            };
         }
     };
 
@@ -294,7 +300,12 @@ export const Login = ({ isOpen, onClose }) => {
         } else {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             setLoginButtonStatus('Login');
-            showMessageBar({ message: `Something wrong: ${JSON.stringify(response)}`, intent: 'error' });
+            console.log('error response: ', response);
+            showMessageBar({
+                message: `Oops! Login failed: ${response.message}`,
+                intent: 'error',
+                timeout: 7000,
+            });
         }
     };
 
@@ -325,9 +336,16 @@ export const Login = ({ isOpen, onClose }) => {
                     password
                 );
                 await processLoginResponse(response);
+            } if (lookupResult.regions.length > 1) {
+                setRegions(lookupResult.regions);
+                setOpenRegionSelect(true); 
             } else {
-                setRegions(lookupResult.regions); // Assume regions are returned in the lookup result
-                setOpenRegionSelect(true);
+                console.error('Error during lookup - regions not found');
+                showMessageBar({
+                    message: 'User not found or error occurred.',
+                    intent: 'error',
+                });
+                setLoginButtonStatus('Login');
             }
         } else if (lookupResult?.status === 'notfound') {
             console.log('User not found');
@@ -542,6 +560,13 @@ export const Login = ({ isOpen, onClose }) => {
             passcodeInputPositioningRef.current?.setTarget(
                 loginButtonRef.current
             );
+        } else if (!openRegionSelect && !openPasscodeInput) {
+            // Restore focus to the email or password input after popover closes
+            if (emailInputRef.current) {
+                emailInputRef.current.focus();
+            } else if (passwordInputRef.current) {
+                passwordInputRef.current.focus();
+            }
         }
     }, [loginButtonRef, openRegionSelect, openPasscodeInput]);
 
@@ -564,7 +589,6 @@ export const Login = ({ isOpen, onClose }) => {
             }}
         >
             <DialogSurface
-                backdrop={<div aria-hidden='true'>TEST</div>}
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
