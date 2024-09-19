@@ -48,6 +48,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saCommitJunosSetConfig: (args) => ipcRenderer.invoke('saCommitJunosSetConfig', args),
 
     saToggleDevTools: () => ipcRenderer.send('saToggleDevTools'),
-
     onLogMessage: (callback) => ipcRenderer.on('onLogMessage', (event, args) => callback(args)),
+    getAppInfo: () => ipcRenderer.invoke('get-app-info'),
 });

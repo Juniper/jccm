@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, session, screen } from 'electron';
+import { app, ipcMain, BrowserWindow, session, screen } from 'electron';
 import { getCloudInfoMinVersion } from '../config';
 import { Client } from 'ssh2';
 
@@ -536,7 +536,10 @@ export const setupApiHandlers = () => {
                 email,
                 password
             );
-            console.log('main: saLoginUser: response:', JSON.stringify(response, null, 2));
+            console.log(
+                'main: saLoginUser: response:',
+                JSON.stringify(response, null, 2)
+            );
 
             if (response.status === 'success') {
                 if (
@@ -1058,5 +1061,19 @@ export const setupApiHandlers = () => {
         } else {
             mainWindow.webContents.openDevTools();
         }
+    });
+
+    ipcMain.handle('get-app-info', () => {
+        return {
+            name: app.getName(), // App name from package.json
+            version: app.getVersion(), // App version from package.json
+            electron: process.versions.electron,
+            chrome: process.versions.chrome,
+            node: process.versions.node,
+            v8: process.versions.v8,
+            os: process.platform,
+            osVersion: process.getSystemVersion(),
+            electronBuildId: process.versions.electronBuildId || 'Unknown',
+        };
     });
 };

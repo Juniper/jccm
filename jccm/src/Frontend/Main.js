@@ -21,11 +21,7 @@ import {
     PersonQuestionMarkRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
-const { electronAPI } = window;
 
-import { useNotify } from './Common/NotificationContext';
-import { useContextMenu } from './Common/ContextMenuContext';
-import { useMessageBar } from './Common/MessageBarContext';
 import {
     LeftSideSpaceWidth,
     HeaderSpaceHeight,
@@ -41,6 +37,7 @@ import Login from './Components/Login';
 import TerminalLayout from './Components/Terminals/TerminalLayout';
 import eventBus from './Common/eventBus';
 import { ConsoleWindow } from './ConsoleWindow';
+import { AboutWindow } from './AboutWindow';
 
 const CloudAdd = bundleIcon(CloudAddFilled, CloudAddRegular);
 const ArrowCircleRight = bundleIcon(
@@ -53,10 +50,16 @@ const PersonQuestionMark = bundleIcon(
     PersonQuestionMarkRegular
 );
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const Main = () => {
     const { isUserLoggedIn } = useStore();
-    const { consoleWindowOpen, consoleWindowWidth, setConsoleWindowWidth, getConsoleWindowWidth } =
-        useStore();
+    const {
+        consoleWindowOpen,
+        consoleWindowWidth,
+        setConsoleWindowWidth,
+        getConsoleWindowWidth,
+    } = useStore();
 
     const containerRef = useRef(null);
     const leftRef = useRef(null);
@@ -73,6 +76,8 @@ export const Main = () => {
     const [isLeftResizerActive, setIsLeftResizerActive] = useState(false);
     const resizeColorTimeoutRef = useRef(null); // Ref to store the timeout ID
 
+    const [isOpenAbout, setIsOpenAbout] = useState(false);
+
     const [centerWidth, setCenterWidth] = useState(
         `calc(100% - ${LeftSideSpaceWidth}px)`
     );
@@ -85,8 +90,6 @@ export const Main = () => {
     const sidebarHeight = `calc(100vh - ${HeaderSpaceHeight}px - ${FooterSpaceHeight}px)`;
 
     useEffect(() => {
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
         const generateEvents = async () => {
             await delay(500);
             await eventBus.emit('user-session-check');
@@ -247,6 +250,7 @@ export const Main = () => {
                             appearance='transparent'
                             shape='circular'
                             size='large'
+                            onClick={() => setIsOpenAbout(true)}
                         />
                     </div>
                     <div
@@ -462,6 +466,12 @@ export const Main = () => {
                     }}
                 />
             </div>
+            {isOpenAbout && (
+                <AboutWindow
+                    isOpen={isOpenAbout}
+                    onClose={() => setIsOpenAbout(false)}
+                />
+            )}
         </div>
     );
 };

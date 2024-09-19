@@ -36,11 +36,10 @@ export const ConsoleWindow = () => {
     const [copyButtonName, setCopyButtonName] = useState('Copy');
     const [isCopyButtonClicked, setIsCopyButtonClicked] = useState(false);
 
-
     const handleConsoleWindowReset = () => {
         console.log('Console window reset');
         setConsoleWindowContents([]);
-    }
+    };
 
     // Capture and display logs in the console window
     useEffect(() => {
@@ -119,132 +118,130 @@ export const ConsoleWindow = () => {
     };
 
     return (
-        <>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                height: '100%',
+                overflow: 'hidden',
+            }}
+        >
             <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    width: '100%',
+                    //     height: `${HeaderSpaceHeight+4}px`,
+                    height: `${30}px`,
+                    overflow: 'hidden',
+                    backgroundColor: tokens.colorNeutralBackground1Selected,
+                }}
+            >
+                <Button
+                    disabled={consoleWindowContents.length === 0}
+                    icon={<EraserIcon fontSize='14px' />}
+                    size='small'
+                    appearance='transparent'
+                    shape='circular'
+                    style={{ marginRight: '10px' }}
+                    onClick={() => setConsoleWindowContents([])}
+                >
+                    Erase
+                </Button>
+                <Button
+                    disabled={consoleWindowContents.length === 0}
+                    icon={<CopyIcon fontSize='16px' />}
+                    size='small'
+                    appearance='transparent'
+                    shape='circular'
+                    style={{ marginRight: '10px' }}
+                    onClick={() => {
+                        copyConsoleWindowContents();
+                    }}
+                >
+                    <Text
+                        size={200}
+                        weight={isCopyButtonClicked ? 'bold' : 'regular'}
+                    >
+                        {copyButtonName}
+                    </Text>
+                </Button>
+                <Button
+                    icon={<DismissIcon fontSize='16px' />}
+                    size='small'
+                    appearance='transparent'
+                    shape='circular'
+                    style={{ marginRight: '10px' }}
+                    onClick={() => {
+                        setConsoleWindowOpen(false);
+                    }}
+                >
+                    Close
+                </Button>
+            </div>
+            <div
+                ref={consoleWindowRef}
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
                     width: '100%',
                     height: '100%',
-                    overflow: 'hidden',
+                    overflowX: 'hidden',
+                    overflowY: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    marginBottom: '20px',
+                    paddingLeft: '5px',
+
+                    fontSize: '12px',
+                    lineHeight: '1.5',
                 }}
             >
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        justifyContent: 'flex-end',
-                        alignItems: 'center',
-                        width: '100%',
-                        //     height: `${HeaderSpaceHeight+4}px`,
-                        height: `${30}px`,
-                        overflow: 'hidden',
-                        backgroundColor: tokens.colorNeutralBackground1Selected,
-                    }}
-                >
-                    <Button
-                        disabled={consoleWindowContents.length === 0}
-                        icon={<EraserIcon fontSize='14px' />}
-                        size='small'
-                        appearance='transparent'
-                        shape='circular'
-                        style={{ marginRight: '10px' }}
-                        onClick={() => setConsoleWindowContents([])}
-                    >
-                        Erase
-                    </Button>
-                    <Button
-                        disabled={consoleWindowContents.length === 0}
-                        icon={<CopyIcon fontSize='16px' />}
-                        size='small'
-                        appearance='transparent'
-                        shape='circular'
-                        style={{ marginRight: '10px' }}
-                        onClick={() => {
-                            copyConsoleWindowContents();
-                        }}
-                    >
-                        <Text
-                            size={200}
-                            weight={isCopyButtonClicked ? 'bold' : 'regular'}
-                        >
-                            {copyButtonName}
-                        </Text>
-                    </Button>
-                    <Button
-                        icon={<DismissIcon fontSize='16px' />}
-                        size='small'
-                        appearance='transparent'
-                        shape='circular'
-                        style={{ marginRight: '10px' }}
-                        onClick={() => {
-                            setConsoleWindowOpen(false);
-                        }}
-                    >
-                        Close
-                    </Button>
-                </div>
-                <div
-                    ref={consoleWindowRef}
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        width: '100%',
-                        height: '100%',
-                        overflowX: 'hidden',
-                        overflowY: 'auto',
-                        whiteSpace: 'pre-wrap',
-                        marginBottom: '20px',
-                        paddingLeft: '5px',
+                {consoleWindowContents.map((log, index) => (
+                    <div key={index} style={{ marginBottom: '10px' }}>
+                        {index > 0 && (
+                            <div
+                                style={{
+                                    width: '100%',
+                                    marginBottom: '10px',
+                                    padding: 0,
+                                }}
+                            >
+                                <Divider appearance='default' />
+                            </div>
+                        )}
+                        <strong>{log.type}: </strong>
 
-                        fontSize: '12px',
-                        lineHeight: '1.5',
-                    }}
-                >
-                    {consoleWindowContents.map((log, index) => (
-                        <div key={index} style={{ marginBottom: '10px' }}>
-                            {index > 0 && (
-                                <div
+                        {log.args.map((arg, idx) =>
+                            typeof arg === 'object' ? (
+                                <ReactJson
+                                    key={idx}
+                                    src={arg}
+                                    name={false}
+                                    collapsed={true}
+                                    displayDataTypes={false}
+                                    quotesOnKeys={false}
+                                    enableClipboard={false}
+                                    theme={
+                                        currentActiveThemeName
+                                            .toLowerCase()
+                                            .includes('dark')
+                                            ? 'chalk'
+                                            : 'rjv-default'
+                                    }
                                     style={{
-                                        width: '100%',
-                                        marginBottom: '10px',
-                                        padding: 0,
+                                        fontSize: '11px',
                                     }}
-                                >
-                                    <Divider appearance='default' />
-                                </div>
-                            )}
-                            <strong>{log.type}: </strong>
-
-                            {log.args.map((arg, idx) =>
-                                typeof arg === 'object' ? (
-                                    <ReactJson
-                                        key={idx}
-                                        src={arg}
-                                        name={false}
-                                        collapsed={true}
-                                        displayDataTypes={false}
-                                        quotesOnKeys={false}
-                                        enableClipboard={false}
-                                        theme={
-                                            currentActiveThemeName
-                                                .toLowerCase()
-                                                .includes('dark')
-                                                ? 'chalk'
-                                                : 'rjv-default'
-                                        }
-                                        style={{
-                                            fontSize: '11px',
-                                        }}
-                                    />
-                                ) : (
-                                    <span key={idx}>{String(arg)}</span>
-                                )
-                            )}
-                        </div>
-                    ))}
-                </div>
+                                />
+                            ) : (
+                                <span key={idx}>{String(arg)}</span>
+                            )
+                        )}
+                    </div>
+                ))}
             </div>
-        </>
+        </div>
     );
 };
