@@ -46,6 +46,8 @@ const Eye = bundleIcon(EyeRegular, EyeRegular);
 const EyeOff = bundleIcon(EyeOffRegular, EyeOffRegular);
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const Login = ({ isOpen, onClose }) => {
     const {
         setUser,

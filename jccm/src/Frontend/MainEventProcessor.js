@@ -33,6 +33,7 @@ export const MainEventProcessor = () => {
     const { currentActiveThemeName, setCurrentActiveThemeName } = useStore();
 
     const userRef = useRef(user);
+    const isUserLoggedInRef = useRef(isUserLoggedIn);
     const inventoryRef = useRef(inventory);
     const deviceFactsRef = useRef(deviceFacts);
     const cloudInventoryRef = useRef(cloudInventory);
@@ -43,12 +44,28 @@ export const MainEventProcessor = () => {
     }, []);
 
     useEffect(() => {
+        isUserLoggedInRef.current = isUserLoggedIn;
+    }, [isUserLoggedIn]);
+
+    useEffect(() => {
         userRef.current = user;
+    }, [user]);
+
+    useEffect(() => {
         inventoryRef.current = inventory;
+    }, [inventory]);
+
+    useEffect(() => {
         deviceFactsRef.current = deviceFacts;
+    }, [deviceFacts]);
+
+    useEffect(() => {
         cloudInventoryRef.current = cloudInventory;
+    }, [cloudInventory]);
+
+    useEffect(() => {
         currentActiveThemeNameRef.current = currentActiveThemeName;
-    }, [inventory, deviceFacts, cloudInventory, currentActiveThemeName]);
+    }, [currentActiveThemeName]);
 
     useEffect(() => {
         const handleLocalInventoryRefresh = async ({
@@ -78,13 +95,52 @@ export const MainEventProcessor = () => {
             }
         };
 
+        const handleUserSessionCheck = async ({ message = '' } = {}) => {
+            console.log(
+                `Event: "user-session-check" ${
+                    message.length > 0 ? `-> "${message}"` : ''
+                }`
+            );
+            try {
+                const data = await electronAPI.saWhoamiUser();
+
+                if (data.sessionValid) {
+                    if (!_.isEqual(userRef.current, data.user)) {
+                        setUser(data.user);
+                        setIsUserLoggedIn(true);
+                    }
+                    if (
+                        currentActiveThemeNameRef.current !== data?.user?.theme
+                    ) {
+                        setCurrentActiveThemeName(data.user.theme);
+                    }
+
+                    setTimeout(async () => {
+                        await handleCloudInventoryRefresh();
+                    }, 3000);
+                } else {
+                    setUser(null);
+                    setCloudInventory([]);
+                    setIsUserLoggedIn(false);
+                    setCurrentActiveThemeName(data.theme);
+                }
+            } catch (error) {
+                setUser(null);
+                setCloudInventory([]);
+                setIsUserLoggedIn(false);
+                console.error('Session check error:', error);
+            }
+        };
+
         const handleCloudInventoryRefresh = async ({
             targetOrgs = null,
             notification = false,
         } = {}) => {
-            if (!isUserLoggedIn) return;
-
-            // console.log('Event: "cloud-inventory-refresh"');
+            console.log('Event: "cloud-inventory-refresh"');
+            if (!isUserLoggedInRef.current) return;
+            console.log(
+                'Event: "cloud-inventory-refresh" -> User is logged in'
+            );
 
             // Initialize a timeout for setting the loading state
             const loadingTimeout = setTimeout(() => {
@@ -163,36 +219,6 @@ export const MainEventProcessor = () => {
             }
         };
 
-        const handleUserSessionCheck = async ({ message = '' } = {}) => {
-            // console.log(`Event: "user-session-check" ${message.length > 0  ? `-> "${message}"` : ''}`);
-            try {
-                const data = await electronAPI.saWhoamiUser();
-                if (data.sessionValid) {
-                    if (!_.isEqual(userRef.current, data.user)) {
-                        setUser(data.user);
-                        setIsUserLoggedIn(true);
-                    }
-                    if (
-                        currentActiveThemeNameRef.current !== data?.user?.theme
-                    ) {
-                        setCurrentActiveThemeName(data.user.theme);
-                    }
-
-                    await handleCloudInventoryRefresh();
-                } else {
-                    setUser(null);
-                    setCloudInventory([]);
-                    setIsUserLoggedIn(false);
-                    setCurrentActiveThemeName(data.theme);
-                }
-            } catch (error) {
-                setUser(null);
-                setCloudInventory([]);
-                setIsUserLoggedIn(false);
-                console.error('Session check error:', error);
-            }
-        };
-
         const handleDeviceFactsRefresh = async () => {
             // console.log('Event: "device-facts-refresh"');
             const data = await electronAPI.saLoadDeviceFacts();
@@ -209,11 +235,11 @@ export const MainEventProcessor = () => {
             cleanUpDeviceFacts();
         };
 
+        eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
         eventBus.on('cloud-inventory-reset', handleCloudInventoryReset);
         eventBus.on('reset-device-facts', handleResetDeviceFacts);
-        eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('device-facts-refresh', handleDeviceFactsRefresh);
         eventBus.on('device-facts-cleanup', handleDeviceFactsCleanup);
 
@@ -226,9 +252,9 @@ export const MainEventProcessor = () => {
                 'cloud-inventory-refresh',
                 handleCloudInventoryRefresh
             );
+            eventBus.off('user-session-check', handleUserSessionCheck);
             eventBus.off('cloud-inventory-reset', handleCloudInventoryReset);
             eventBus.off('reset-device-facts', handleResetDeviceFacts);
-            eventBus.off('user-session-check', handleUserSessionCheck);
             eventBus.off('device-facts-refresh', handleDeviceFactsRefresh);
             eventBus.off('device-facts-cleanup', handleDeviceFactsCleanup);
         };

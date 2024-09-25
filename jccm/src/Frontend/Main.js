@@ -91,7 +91,7 @@ export const Main = () => {
 
     useEffect(() => {
         const generateEvents = async () => {
-            await delay(500);
+            await delay(1000);
             await eventBus.emit('user-session-check');
             await eventBus.emit('local-inventory-refresh');
             await eventBus.emit('device-facts-refresh');
