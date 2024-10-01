@@ -62,6 +62,15 @@ export const GeneralCard = () => {
         saveFunction();
     };
 
+    const saveIgnoreCase = (newIgnoreCase) => {
+        const saveFunction = async () => {
+            const newSettings = { ...settings, ignoreCase: newIgnoreCase };
+            setSettings(newSettings);
+            exportSettings(newSettings);
+        };
+        saveFunction();
+    };
+
     const saveDeleteOutboundSSHTerm = (newDeleteOutboundSSHTerm) => {
         const saveFunction = async () => {
             const newSettings = {
@@ -92,6 +101,12 @@ export const GeneralCard = () => {
         const checked = event.currentTarget.checked;
         saveDeleteOutboundSSHTerm(checked);
     };
+
+    const onChangeIgnoreCase = async (event) => {
+        const checked = event.currentTarget.checked;
+        saveIgnoreCase(checked);
+    };
+
 
     return (
         <div
@@ -159,6 +174,32 @@ export const GeneralCard = () => {
                     />
                 </div>
                 <Text>{settings.jsiTerm ? 'Enabled' : 'Disabled'}</Text>
+            </div>
+
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    gap: '5px',
+                    width: '100%',
+                    marginLeft: '10px',
+                }}
+            >
+                <Text>Ignore case of org name and site name: </Text>
+                <div
+                    style={{
+                        transform: 'scale(0.6)',
+                        transformOrigin: 'right',
+                    }}
+                >
+                    <Switch
+                        checked={settings.ignoreCase ? true : false}
+                        onChange={onChangeIgnoreCase}
+                    />
+                </div>
+                <Text>{settings.ignoreCase ? 'Enabled' : 'Disabled'}</Text>
             </div>
 
             <div

@@ -49,7 +49,10 @@ import {
 } from './Device';
 const sshSessions = {};
 
-const serverGetCloudInventory = async (targetOrgs = null) => {
+const serverGetCloudInventory = async (
+    targetOrgs = null,
+    ignoreCaseInName = false
+) => {
     console.log('main: serverGetCloudInventory');
 
     const orgFilters = await msGetOrgFilter();
@@ -71,7 +74,15 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
 
             if (!!orgFilters[orgId]) continue;
 
-            if (targetOrgs !== null && !targetOrgs.includes(orgName)) {
+            // Check targetOrgs with or without case sensitivity
+            const orgNameMatch = ignoreCaseInName
+                ? targetOrgs?.some(
+                      (targetOrg) =>
+                          targetOrg.toLowerCase() === orgName.toLowerCase()
+                  )
+                : targetOrgs?.some((targetOrg) => targetOrg === orgName);
+
+            if (targetOrgs !== null && !orgNameMatch) {
                 // Find the organization in the current inventory with the same orgId
                 const existingOrg = currentInventory.find(
                     (org) => org.id === orgId
@@ -79,8 +90,8 @@ const serverGetCloudInventory = async (targetOrgs = null) => {
                 if (existingOrg) {
                     // console.log('>>>> Reuse existing org:', JSON.stringify(existingOrg, null, 2));
                     inventory.push(existingOrg);
+                    continue; // Skip further processing for this organization
                 }
-                continue; // Skip further processing for this organization
             }
 
             const item = { name: orgName, id: orgId };
@@ -621,8 +632,6 @@ export const setupApiHandlers = () => {
                 const service = `${cloudDescription}/${regionName}`;
                 const theme = await msGetTheme();
 
-                // const { inventory, isFilterApplied } = await serverGetCloudInventory();
-
                 return {
                     sessionValid: true,
                     user: {
@@ -632,8 +641,6 @@ export const setupApiHandlers = () => {
                         cloudDescription,
                         regionName,
                     },
-                    // inventory,
-                    // isFilterApplied,
                 };
             } else {
                 const theme = await msGetTheme();
@@ -657,10 +664,11 @@ export const setupApiHandlers = () => {
 
     ipcMain.handle('saGetCloudInventory', async (event, args = {}) => {
         console.log('main: saGetCloudInventory');
-        const { targetOrgs = null } = args;
+        const { targetOrgs = nul, ignoreCaseInName = false } = args;
 
         const { inventory, isFilterApplied } = await serverGetCloudInventory(
-            targetOrgs
+            targetOrgs,
+            ignoreCaseInName
         );
 
         return { cloudInventory: true, inventory, isFilterApplied };
@@ -808,12 +816,59 @@ export const setupApiHandlers = () => {
             jsiTerm,
             deleteOutboundSSHTerm,
             bastionHost,
+            ignoreCaseInName = false,
             ...others
         } = args;
 
         const cloudOrgs = await msGetCloudOrgs();
-        const orgId = cloudOrgs[organization]?.id;
-        const siteId = cloudOrgs[organization]?.sites?.[site]?.id || null;
+
+        console.log(
+            'Adopting device:',
+            organization,
+            site,
+            address,
+            port,
+            ignoreCaseInName,
+            cloudOrgs
+        );
+
+        let orgId = null;
+        let siteId = null;
+
+        // Adjust organization and site lookup to support ignoreCaseInName
+        if (ignoreCaseInName) {
+            const matchingOrg = Object.keys(cloudOrgs).find(
+                (org) => org.toLowerCase() === organization.toLowerCase()
+            );
+            if (matchingOrg) {
+                orgId = cloudOrgs[matchingOrg]?.id;
+                const matchingSite =
+                    cloudOrgs[matchingOrg]?.sites &&
+                    Object.keys(cloudOrgs[matchingOrg].sites).find(
+                        (s) => s.toLowerCase() === site.toLowerCase()
+                    );
+                if (matchingSite) {
+                    siteId =
+                        cloudOrgs[matchingOrg].sites[matchingSite]?.id || null;
+                }
+            }
+        } else {
+            orgId = cloudOrgs[organization]?.id;
+            siteId = cloudOrgs[organization]?.sites?.[site]?.id || null;
+        }
+
+        // Check if orgId or siteId is null
+        if (!orgId) {
+            console.error('Organization not found');
+            return {
+                adopt: false,
+                reply: { message: 'Organization not found' },
+            };
+        }
+
+        if (!siteId) {
+            console.warn('Site not found, proceeding without siteId');
+        }
 
         try {
             let endpoint = 'ocdevices';
@@ -825,8 +880,6 @@ export const setupApiHandlers = () => {
                 siteId ? `?site_id=${siteId}` : ''
             }`;
             const response = await acRequest(api, 'GET', null);
-
-            // console.log('Adopting device:', response.cmd);
 
             const configCommand = deleteOutboundSSHTerm
                 ? `delete system services outbound-ssh\n${response.cmd}\n`
@@ -858,10 +911,29 @@ export const setupApiHandlers = () => {
     ipcMain.handle('saReleaseDevice', async (event, args) => {
         console.log('main: saReleaseDevice');
 
-        const { organization, serial } = args;
+        const { organization, serial, ignoreCaseInName = false } = args;
 
         const cloudOrgs = await msGetCloudOrgs();
-        const orgId = cloudOrgs[organization]?.id;
+
+        // Adjust organization lookup to support ignoreCaseInName
+        let orgId = null;
+        if (ignoreCaseInName) {
+            const matchingOrg = Object.keys(cloudOrgs).find(
+                (org) => org.toLowerCase() === organization.toLowerCase()
+            );
+            orgId = cloudOrgs[matchingOrg]?.id;
+        } else {
+            orgId = cloudOrgs[organization]?.id;
+        }
+
+        // Check if orgId is null
+        if (!orgId) {
+            console.error('Organization not found');
+            return {
+                release: false,
+                reply: { message: 'Organization not found' },
+            };
+        }
 
         try {
             console.log('device releasing!');

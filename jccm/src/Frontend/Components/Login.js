@@ -56,6 +56,7 @@ export const Login = ({ isOpen, onClose }) => {
         setIsUserLoggedIn,
         setCurrentActiveThemeName,
         getConsoleWindowWidth,
+        settings,
     } = useStore();
     const { showMessageBar } = useMessageBar();
     const [cloudList, setCloudList] = useState([]);
@@ -94,6 +95,8 @@ export const Login = ({ isOpen, onClose }) => {
     const passcodeInputRef = useRef(null);
 
     const [isGoogleSSOLogin, setIsGoogleSSOLogin] = useState(false);
+
+    const ignoreCaseInName = settings?.ignoreCaseInName || false;
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
@@ -247,7 +250,7 @@ export const Login = ({ isOpen, onClose }) => {
                     return { status: 'two_factor' };
                 } else {
                     // console.log('Login successful!');
-                    // await eventBus.emit('cloud-inventory-refresh');
+                    // await eventBus.emit('cloud-inventory-refresh', {force: true, ignoreCaseInName});
 
                     return {
                         status: 'success',
@@ -294,9 +297,10 @@ export const Login = ({ isOpen, onClose }) => {
                 Constants.getActiveThemeName(data?.user?.theme)
             );
 
-            setTimeout(async () => {
-                await eventBus.emit('cloud-inventory-refresh');
-            }, 1000);
+            await eventBus.emit('cloud-inventory-refresh', {
+                force: true,
+                ignoreCaseInName,
+            });
 
             onClose();
         } else if (response.status === 'two_factor') {

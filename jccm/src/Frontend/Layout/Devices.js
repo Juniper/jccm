@@ -11,11 +11,9 @@ export const getDeviceFacts = async (device, upperSerialNumber=false, bastionHos
     }
 };
 
-export const adoptDevices = async (device, jsiTerm=false, deleteOutboundSSHTerm=false, bastionHost = {}) => {
+export const adoptDevices = async (device, jsiTerm=false, deleteOutboundSSHTerm=false, bastionHost = {}, ignoreCaseInName = false) => {
     const { address, port, username, password, organization, site } = device;
-    const response = await electronAPI.saAdoptDevice({ address, port, username, password, organization, site, jsiTerm, deleteOutboundSSHTerm, bastionHost });
-
-    // console.log('>>>>adoptDevices -> response: ', response);
+    const response = await electronAPI.saAdoptDevice({ address, port, username, password, organization, site, jsiTerm, deleteOutboundSSHTerm, bastionHost, ignoreCaseInName });
 
     if (response?.adopt) {
         return { status: true, result: response.reply };
@@ -26,8 +24,8 @@ export const adoptDevices = async (device, jsiTerm=false, deleteOutboundSSHTerm=
 };
 
 export const releaseDevices = async (deviceInfo) => {
-    const { organization, serialNumber} = deviceInfo;
-    const response = await electronAPI.saReleaseDevice({ organization, serial: serialNumber });
+    const { organization, serialNumber, ignoreCaseInName = false} = deviceInfo;
+    const response = await electronAPI.saReleaseDevice({ organization, serial: serialNumber, ignoreCaseInName });
 
     if (response.release) {
         return { status: true, result: response.reply };

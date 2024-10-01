@@ -77,11 +77,14 @@ const LeftSide = () => {
         setCloudInventoryFilterApplied,
         currentActiveThemeName,
         isInventoryLoading,
+        settings,
     } = useStore();
 
     const [selectedTree, setSelectedTree] = useState('local');
     const [isOpenOrgFilterMenu, setIsOpenOrgFilterMenu] = useState(false);
     const [countOfDeviceWithFacts, setCountOfDeviceWithFacts] = useState(0);
+    
+    const ignoreCaseInName = settings.ignoreCase || false;
 
     useEffect(() => {
         const count = Object.keys(deviceFacts).length;
@@ -278,7 +281,7 @@ const LeftSide = () => {
                                         />
                                     }
                                     onClick={async () => {
-                                        await eventBus.emit('cloud-inventory-refresh', { notification: true });
+                                        await eventBus.emit('cloud-inventory-refresh', { notification: true, ignoreCaseInName });
                                     }}
                                 />
                             </Tooltip>

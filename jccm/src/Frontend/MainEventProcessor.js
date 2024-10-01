@@ -108,16 +108,13 @@ export const MainEventProcessor = () => {
                     if (!_.isEqual(userRef.current, data.user)) {
                         setUser(data.user);
                         setIsUserLoggedIn(true);
+                        await handleCloudInventoryRefresh({ force: true });
                     }
                     if (
                         currentActiveThemeNameRef.current !== data?.user?.theme
                     ) {
                         setCurrentActiveThemeName(data.user.theme);
                     }
-
-                    setTimeout(async () => {
-                        await handleCloudInventoryRefresh();
-                    }, 3000);
                 } else {
                     setUser(null);
                     setCloudInventory([]);
@@ -135,12 +132,11 @@ export const MainEventProcessor = () => {
         const handleCloudInventoryRefresh = async ({
             targetOrgs = null,
             notification = false,
+            force = false,
+            ignoreCaseInName = false,
         } = {}) => {
-            console.log('Event: "cloud-inventory-refresh"');
-            if (!isUserLoggedInRef.current) return;
-            console.log(
-                'Event: "cloud-inventory-refresh" -> User is logged in'
-            );
+            console.log('Event: "cloud-inventory-refresh" force:', force);
+            if (!force && !isUserLoggedInRef.current) return;
 
             // Initialize a timeout for setting the loading state
             const loadingTimeout = setTimeout(() => {
@@ -149,6 +145,7 @@ export const MainEventProcessor = () => {
 
             const response = await electronAPI.saGetCloudInventory({
                 targetOrgs,
+                ignoreCaseInName,
             });
 
             clearTimeout(loadingTimeout);
@@ -159,6 +156,7 @@ export const MainEventProcessor = () => {
                     setCloudInventory(response.inventory);
                     setCloudInventoryFilterApplied(response.isFilterApplied);
                 }
+
                 if (notification) {
                     notify(
                         <Toast>
