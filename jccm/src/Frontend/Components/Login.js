@@ -246,8 +246,8 @@ export const Login = ({ isOpen, onClose }) => {
                     console.log('Two Factor Auth required!');
                     return { status: 'two_factor' };
                 } else {
-                    console.log('Login successful!');
-                    await eventBus.emit('cloud-inventory-refresh');
+                    // console.log('Login successful!');
+                    // await eventBus.emit('cloud-inventory-refresh');
 
                     return {
                         status: 'success',
@@ -293,6 +293,10 @@ export const Login = ({ isOpen, onClose }) => {
             setCurrentActiveThemeName(
                 Constants.getActiveThemeName(data?.user?.theme)
             );
+
+            setTimeout(async () => {
+                await eventBus.emit('cloud-inventory-refresh');
+            }, 1000);
 
             onClose();
         } else if (response.status === 'two_factor') {
