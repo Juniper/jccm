@@ -338,13 +338,13 @@ export const Login = ({ isOpen, onClose }) => {
                     password
                 );
                 await processLoginResponse(response);
-            } if (lookupResult.regions.length > 1) {
+            } else if (lookupResult.regions.length > 1) {
                 setRegions(lookupResult.regions);
-                setOpenRegionSelect(true); 
+                setOpenRegionSelect(true);
             } else {
                 console.error('Error during lookup - regions not found');
                 showMessageBar({
-                    message: 'User not found or error occurred.',
+                    message: 'Error during lookup - regions not found.',
                     intent: 'error',
                 });
                 setLoginButtonStatus('Login');
@@ -352,14 +352,14 @@ export const Login = ({ isOpen, onClose }) => {
         } else if (lookupResult?.status === 'notfound') {
             console.log('User not found');
             showMessageBar({
-                message: 'User not found or error occurred.',
+                message: 'User not found.',
                 intent: 'error',
             });
             setLoginButtonStatus('Login');
         } else if (lookupResult?.status === 'error') {
             console.error('Error during lookup:', lookupResult.error);
             showMessageBar({
-                message: 'User not found or error occurred.',
+                message: `Error during lookup: ${lookupResult.error}`,
                 intent: 'error',
             });
             setLoginButtonStatus('Login');

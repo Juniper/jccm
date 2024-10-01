@@ -826,6 +826,8 @@ export const setupApiHandlers = () => {
             }`;
             const response = await acRequest(api, 'GET', null);
 
+            // console.log('Adopting device:', response.cmd);
+
             const configCommand = deleteOutboundSSHTerm
                 ? `delete system services outbound-ssh\n${response.cmd}\n`
                 : `${response.cmd}\n`;
