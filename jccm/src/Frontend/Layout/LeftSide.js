@@ -68,15 +68,11 @@ const LeftSide = () => {
     const { notify } = useNotify();
     const {
         isUserLoggedIn,
-        inventory,
-        setInventory,
         deviceFacts,
         cloudInventory,
-        setCloudInventory,
         cloudInventoryFilterApplied,
-        setCloudInventoryFilterApplied,
-        currentActiveThemeName,
         isInventoryLoading,
+        isChecking,
         settings,
     } = useStore();
 
@@ -212,7 +208,7 @@ const LeftSide = () => {
                                 relationship='label'
                             >
                                 <Button
-                                    disabled={countOfDeviceWithFacts === 0}
+                                    disabled={countOfDeviceWithFacts === 0 && Object.keys(isChecking).length === 0}
                                     appearance='subtle'
                                     icon={<ResetFactsIcon fontSize='15px' />}
                                     onClick={async () => {
