@@ -45,6 +45,8 @@ export const acRequest = async (api, method, body = null) => {
     const activeRegion = regions[activeRegionName];
     const url = normalizeUrl(activeRegion.apiBase, api);
 
+    // console.log('acRequest', url, method, body);
+
     const headers = {
         'Content-Type': 'application/json',
     };
@@ -295,6 +297,16 @@ export const acUserSelf = async () => {
         return { status: 'success', data: selfData };
     } catch (error) {
         await msSetIsUserLoggedIn(false);
+        return { status: 'error', error };
+    }
+};
+
+export const acDeviceModels = async () => {
+    try {
+        const deviceModels = await acRequest('const/device_models', 'GET');
+
+        return { status: 'success', deviceModels };
+    } catch (error) {
         return { status: 'error', error };
     }
 };

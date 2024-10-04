@@ -95,6 +95,7 @@ export const Main = () => {
             await eventBus.emit('user-session-check');
             await eventBus.emit('local-inventory-refresh');
             await eventBus.emit('device-facts-refresh');
+            await eventBus.emit('device-models-refresh');
         };
 
         generateEvents();

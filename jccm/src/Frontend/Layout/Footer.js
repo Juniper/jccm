@@ -20,6 +20,7 @@ import {
 import useStore from '../Common/StateStore';
 import { BastionHostButton } from './BastionHostButton';
 import { CircleIcon } from './ChangeIcon';
+import DeviceModels from './DeviceModels';
 
 const { electronAPI } = window;
 const ConsoleWindowIcon = bundleIcon(WrenchRegular, WrenchFilled);
@@ -158,45 +159,57 @@ export default () => {
             </div>
             <div
                 style={{
-                    display:
-                        settings?.consoleWindowButtonShow || false
-                            ? 'flex'
-                            : 'none',
+                    display: 'flex',
                     flexDirection: 'row',
-                    marginRight: '10px',
-                    justifyContent: 'flex-end',
                     alignItems: 'center',
-                    overflow: 'visible',
+                    justifyContent: 'space-between',
                 }}
             >
-                <Tooltip
-                    content={
-                        <Text size={100}>
-                            {!consoleWindowOpen
-                                ? 'Open Console Window'
-                                : 'Close Console Window'}
-                        </Text>
-                    }
-                    positioning='before'
-                    withArrow
+                <div style={{ display: 'flex', paddingRight: '15px' }}>
+                    <DeviceModels />
+                </div>
+                <div
+                    style={{
+                        display:
+                            settings?.consoleWindowButtonShow || false
+                                ? 'flex'
+                                : 'none',
+                        flexDirection: 'row',
+                        marginRight: '10px',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        overflow: 'visible',
+                    }}
                 >
-                    <Button
-                        icon={
-                            <CircleIcon
-                                Icon={ConsoleWindowIcon}
-                                size='16px'
-                                iconSize='12px'
-                                color={
-                                    tokens.colorNeutralForeground3BrandPressed
-                                }
-                            />
+                    <Tooltip
+                        content={
+                            <Text size={100}>
+                                {!consoleWindowOpen
+                                    ? 'Open Console Window'
+                                    : 'Close Console Window'}
+                            </Text>
                         }
-                        size='small'
-                        appearance='subtle'
-                        shape='circular'
-                        onClick={handleOnConsoleWindow}
-                    />
-                </Tooltip>
+                        positioning='before'
+                        withArrow
+                    >
+                        <Button
+                            icon={
+                                <CircleIcon
+                                    Icon={ConsoleWindowIcon}
+                                    size='16px'
+                                    iconSize='12px'
+                                    color={
+                                        tokens.colorNeutralForeground3BrandPressed
+                                    }
+                                />
+                            }
+                            size='small'
+                            appearance='subtle'
+                            shape='circular'
+                            onClick={handleOnConsoleWindow}
+                        />
+                    </Tooltip>
+                </div>
             </div>
         </div>
     );

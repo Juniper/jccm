@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saLoginUser: (args) => ipcRenderer.invoke('saLoginUser', args),
     saLogoutUser: () => ipcRenderer.invoke('saLogoutUser'),
 
+    saDeviceModels: () => ipcRenderer.invoke('device-models'),
+
     saGetGoogleSSOAuthCode: (args) => ipcRenderer.invoke('saGetGoogleSSOAuthCode', args),
     saGoogleSSOAuthCodeReceived: (callback) => ipcRenderer.on('saGoogleSSOAuthCodeReceived', (event, code) => callback(code)),
     saLoginUserGoogleSSO: (args) => ipcRenderer.invoke('saLoginUserGoogleSSO', args),

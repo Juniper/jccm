@@ -18,7 +18,7 @@ import { useMessageBar } from '../Common/MessageBarContext';
 
 function Logout({ isOpen, onClose }) {
     const [isLoggingOut, setIsLoggingOut] = useState(false); // State to track logout operation
-    const { getConsoleWindowWidth, setIsUserLoggedIn, setCloudInventory } = useStore(); // Get the login status from your global state
+    const { getConsoleWindowWidth, setIsUserLoggedIn, setCloudInventory, setDeviceModels } = useStore(); // Get the login status from your global state
     const { showMessageBar } = useMessageBar();
 
     const handleLogoutItem = async () => {
@@ -27,9 +27,10 @@ function Logout({ isOpen, onClose }) {
             const data = await electronAPI.saLogoutUser();
             console.log('logout', data);
             if (data.logout) {
-                console.log('logout: ', data);
+                // console.log('logout: ', data);
                 setIsUserLoggedIn(false);
                 setCloudInventory([]);
+                setDeviceModels([]);
                 showMessageBar({
                     message: 'Logout successful!',
                     intent: 'success',

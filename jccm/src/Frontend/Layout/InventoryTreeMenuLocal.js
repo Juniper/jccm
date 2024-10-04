@@ -415,7 +415,8 @@ const convertToFlatTreeItems = (localInventory, deviceFacts) => {
 const InventoryTreeMenuLocal = () => {
     const { showContextMenu } = useContextMenu();
     const { notify } = useNotify();
-    const { isUserLoggedIn, orgs, settings } = useStore();
+    const { user, isUserLoggedIn, orgs, settings, supportedDeviceModels } =
+        useStore();
     const {
         tabs,
         addTab,
@@ -443,6 +444,17 @@ const InventoryTreeMenuLocal = () => {
 
     const ignoreCaseInName = settings.ignoreCase || false;
     const deviceFactsRef = useRef(deviceFacts);
+
+    const deviceModelsValidation = settings?.deviceModelsValidation || false;
+    const cloudDescription = user?.cloudDescription || 'Unknown';
+
+    const styles = tooltipStyles();
+
+    const validateDeviceModel = (deviceModel) => {
+        if (!deviceModelsValidation) return true;
+        if (!isUserLoggedIn) return true;
+        return deviceModel?.toUpperCase() in supportedDeviceModels;
+    };
 
     useEffect(() => {
         deviceFactsRef.current = deviceFacts;
@@ -616,8 +628,6 @@ const InventoryTreeMenuLocal = () => {
         );
 
         const getIcon = () => {
-            const styles = tooltipStyles();
-
             if (isAdopted) {
                 return (
                     <div
@@ -710,7 +720,6 @@ const InventoryTreeMenuLocal = () => {
 
         const { selectedTabValue } = useStore();
         const isSelected = path === selectedTabValue;
-        // const deviceFact = deviceFacts[path] ? useStore((state) => state.deviceFacts?.[path]) : null;
         const deviceFact = deviceFacts[path] || null;
 
         const vcMembers = deviceFact?.vc || [];
@@ -720,6 +729,10 @@ const InventoryTreeMenuLocal = () => {
                 : `${device.address}:${device.port}`;
         const cloudDevice =
             cloudDevices[deviceFact?.systemInformation?.serialNumber];
+
+        const IsValidDeviceModel = validateDeviceModel(
+            deviceFact?.systemInformation?.hardwareModel
+        );
 
         let facts = [];
         if (deviceFact) {
@@ -808,16 +821,49 @@ const InventoryTreeMenuLocal = () => {
                                     font='numeric'
                                     weight='semibold'
                                     style={{
-                                        color: tokens.colorPaletteLightGreenForeground1,
+                                        color: IsValidDeviceModel
+                                            ? tokens.colorPaletteLightGreenForeground1
+                                            : tokens.colorStatusDangerForeground3,
                                     }}
                                 >
                                     {deviceName}
                                 </Text>
                             </Tooltip>
+
+                            {IsValidDeviceModel ? (
+                                <Text
+                                    size={100}
+                                    font='numeric'
+                                    weight='regular'
+                                >
+                                    Virtual Chassis
+                                </Text>
+                            ) : (
+                                <Tooltip
+                                    content={{
+                                        className: styles.tooltipMaxWidthClass,
+                                        children: (
+                                            <Text size={100}>
+                                                {`The ${deviceFact.systemInformation?.hardwareModel?.toUpperCase()} is not valid for the ${cloudDescription}.`}
+                                            </Text>
+                                        ),
+                                    }}
+                                >
+                                    <Text
+                                        size={100}
+                                        font='numeric'
+                                        weight='regular'
+                                        strikethrough
+                                        style={{
+                                            color: tokens.colorStatusDangerForeground3,
+                                        }}
+                                    >
+                                        Virtual Chassis
+                                    </Text>
+                                </Tooltip>
+                            )}
+
                             <Text size={100} font='numeric' weight='regular'>
-                                Virtual Chassis
-                            </Text>
-                            <Text size={100} font='numeric' weight='normal'>
                                 {deviceFact.systemInformation?.hostName}
                             </Text>
                         </Label>
@@ -875,20 +921,58 @@ const InventoryTreeMenuLocal = () => {
                                     font='numeric'
                                     weight='semibold'
                                     style={{
-                                        color: tokens.colorPaletteLightGreenForeground1,
+                                        color: IsValidDeviceModel
+                                            ? tokens.colorPaletteLightGreenForeground1
+                                            : tokens.colorStatusDangerForeground3,
                                     }}
                                 >
                                     {deviceName}
                                 </Text>
                             </Tooltip>
-                            <Text size={100} font='monospace' weight='normal'>
-                                {deviceFact.systemInformation?.hardwareModel}
-                            </Text>
+                            {IsValidDeviceModel ? (
+                                <Text
+                                    size={100}
+                                    font='monospace'
+                                    weight='regular'
+                                >
+                                    {
+                                        deviceFact.systemInformation
+                                            ?.hardwareModel
+                                    }
+                                </Text>
+                            ) : (
+                                <Tooltip
+                                    content={{
+                                        className: styles.tooltipMaxWidthClass,
+                                        children: (
+                                            <Text size={100}>
+                                                {`The ${deviceFact.systemInformation?.hardwareModel?.toUpperCase()} is not valid for the ${cloudDescription}.`}
+                                            </Text>
+                                        ),
+                                    }}
+                                >
+                                    <Text
+                                        size={100}
+                                        font='monospace'
+                                        weight='regular'
+                                        strikethrough
+                                        style={{
+                                            color: tokens.colorStatusDangerForeground3,
+                                        }}
+                                    >
+                                        {
+                                            deviceFact.systemInformation
+                                                ?.hardwareModel
+                                        }
+                                    </Text>
+                                </Tooltip>
+                            )}
+
                             {cloudDevice?.is_vmac_enabled ? (
                                 <Text
                                     size={100}
                                     font='numeric'
-                                    weight='normal'
+                                    weight='regular'
                                     style={{
                                         color: tokens.colorPaletteLightGreenForeground1,
                                     }}
@@ -896,11 +980,15 @@ const InventoryTreeMenuLocal = () => {
                                     {cloudDevice.serial}
                                 </Text>
                             ) : (
-                                <Text size={100} font='numeric' weight='normal'>
+                                <Text
+                                    size={100}
+                                    font='numeric'
+                                    weight='regular'
+                                >
                                     {deviceFact.systemInformation?.serialNumber}
                                 </Text>
                             )}
-                            <Text size={100} font='numeric' weight='normal'>
+                            <Text size={100} font='numeric' weight='regular'>
                                 {deviceFact.systemInformation?.hostName}
                             </Text>
                         </Label>
@@ -916,7 +1004,7 @@ const InventoryTreeMenuLocal = () => {
                             alignItems: 'center',
                         }}
                     >
-                        <Text size={100} font='numeric' weight='normal'>
+                        <Text size={100} font='numeric' weight='regular'>
                             {deviceName}
                         </Text>
                     </Label>
@@ -1239,6 +1327,10 @@ const InventoryTreeMenuLocal = () => {
             if (!fact) return false;
 
             const serialNumber = fact.systemInformation?.serialNumber;
+            const IsValidDeviceModel = validateDeviceModel(
+                fact.systemInformation?.hardwareModel
+            );
+            if (!IsValidDeviceModel) return false;
 
             return (
                 siteExists &&
@@ -1266,7 +1358,7 @@ const InventoryTreeMenuLocal = () => {
                     await actionAdoptDevice(
                         device,
                         jsiTerm,
-                        settings.deleteOutboundSSHTerm
+                        false // settings.deleteOutboundSSHTerm,
                     );
                     resolve();
                 }).then(() => {
@@ -1315,7 +1407,11 @@ const InventoryTreeMenuLocal = () => {
         const serialNumber = cloudDevice?.serial;
         const organization = cloudDevice?.org_name;
 
-        const result = await releaseDevices({ organization, serialNumber, ignoreCaseInName });
+        const result = await releaseDevices({
+            organization,
+            serialNumber,
+            ignoreCaseInName,
+        });
         if (result.status) {
             console.log(`Device(${serialNumber}) released successfully`);
         } else {
@@ -1478,7 +1574,12 @@ const InventoryTreeMenuLocal = () => {
                         disabled={
                             !isUserLoggedIn ||
                             !isTargetDeviceAvailable() ||
-                            !isOrgSiteMatch()
+                            !isOrgSiteMatch() ||
+                            (node.type === 'device' &&
+                                !validateDeviceModel(
+                                    findFact(node.value)?.systemInformation
+                                        ?.hardwareModel
+                                ))
                         }
                         icon={<AdoptDeviceIcon style={{ fontSize: '14px' }} />}
                         onClick={async () => {
@@ -1495,7 +1596,12 @@ const InventoryTreeMenuLocal = () => {
                             disabled={
                                 !isUserLoggedIn ||
                                 !isTargetDeviceAvailable() ||
-                                !isOrgSiteMatch()
+                                !isOrgSiteMatch() ||
+                                (node.type === 'device' &&
+                                    !validateDeviceModel(
+                                        findFact(node.value)?.systemInformation
+                                            ?.hardwareModel
+                                    ))
                             }
                             icon={
                                 <JsiAdoptDeviceIcon
@@ -1783,7 +1889,36 @@ const InventoryTreeMenuLocal = () => {
                                 >
                                     Slot {rowData.content.slot}:
                                 </Text>
-                                <Text size={100}>{rowData.content.model}</Text>
+
+                                {validateDeviceModel(rowData.content.model) ? (
+                                    <Text size={100} weight='regular'>
+                                        {rowData.content.model}
+                                    </Text>
+                                ) : (
+                                    <Tooltip
+                                        content={{
+                                            className:
+                                                styles.tooltipMaxWidthClass,
+                                            children: (
+                                                <Text size={100}>
+                                                    {`The ${rowData.content.model?.toUpperCase()} is not valid for the ${cloudDescription}.`}
+                                                </Text>
+                                            ),
+                                        }}
+                                    >
+                                        <Text
+                                            size={100}
+                                            weight='regular'
+                                            strikethrough
+                                            style={{
+                                                color: tokens.colorStatusDangerForeground3,
+                                            }}
+                                        >
+                                            {rowData.content.model}
+                                        </Text>
+                                    </Tooltip>
+                                )}
+
                                 <Text size={100}>{rowData.content.serial}</Text>
                                 <Text size={100}>{rowData.content.role}</Text>
                             </div>

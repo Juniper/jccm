@@ -39,6 +39,7 @@ import {
     acRequest,
     acGetGoogleSSOAuthorizationUrl,
     acLoginUserGoogleSSO,
+    acDeviceModels,
 } from './ApiCalls';
 
 import { CloudInfo } from '../config';
@@ -619,6 +620,22 @@ export const setupApiHandlers = () => {
             return { logout: false, error };
         }
     });
+
+    ipcMain.handle('device-models', async (event) => {
+        console.log('main: device-models');
+        try {
+            const response = await acDeviceModels();
+            // console.log('main: device-models: response:', response);
+            if (response.status === 'error') {
+                return { deviceModels: [] };
+            }
+            return { deviceModels: response.deviceModels  };
+        } catch (error) {
+            console.log('main: device-models: error:', error);
+            return { deviceModels: [] };
+        }
+    });
+
 
     ipcMain.handle('saWhoamiUser', async (event) => {
         console.log('main: saWhoamiUser');

@@ -21,7 +21,7 @@ export const MainEventProcessor = () => {
         setIsInventoryLoading,
     } = useStore();
     const { inventory, setInventory } = useStore();
-    const { cloudInventory, setCloudInventory } = useStore();
+    const { cloudInventory, setCloudInventory,  } = useStore();
     const {
         deviceFacts,
         setDeviceFactsAll,
@@ -31,6 +31,7 @@ export const MainEventProcessor = () => {
     const { cloudInventoryFilterApplied, setCloudInventoryFilterApplied } =
         useStore();
     const { currentActiveThemeName, setCurrentActiveThemeName } = useStore();
+    const { deviceModels, supportedDeviceModels, setDeviceModels } = useStore();
 
     const userRef = useRef(user);
     const isUserLoggedInRef = useRef(isUserLoggedIn);
@@ -118,6 +119,7 @@ export const MainEventProcessor = () => {
                 } else {
                     setUser(null);
                     setCloudInventory([]);
+                    setDeviceModels([]);
                     setIsUserLoggedIn(false);
                     setCurrentActiveThemeName(data.theme);
                 }
@@ -233,6 +235,17 @@ export const MainEventProcessor = () => {
             cleanUpDeviceFacts();
         };
 
+        const handleDeviceModelsRefresh = async () => {
+            console.log('Event: "device-models-refresh"');
+            try {
+                const data = await electronAPI.saDeviceModels();
+                // console.log('Device models:', data.deviceModels);
+                setDeviceModels(data.deviceModels);
+            } catch (error) {
+                console.error('Device models refresh error:', error);
+            }
+        };
+
         eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
@@ -240,6 +253,7 @@ export const MainEventProcessor = () => {
         eventBus.on('reset-device-facts', handleResetDeviceFacts);
         eventBus.on('device-facts-refresh', handleDeviceFactsRefresh);
         eventBus.on('device-facts-cleanup', handleDeviceFactsCleanup);
+        eventBus.on('device-models-refresh', handleDeviceModelsRefresh);
 
         return () => {
             eventBus.off(
@@ -255,6 +269,7 @@ export const MainEventProcessor = () => {
             eventBus.off('reset-device-facts', handleResetDeviceFacts);
             eventBus.off('device-facts-refresh', handleDeviceFactsRefresh);
             eventBus.off('device-facts-cleanup', handleDeviceFactsCleanup);
+            eventBus.off('device-models-refresh', handleDeviceModelsRefresh);
         };
     }, []);
 

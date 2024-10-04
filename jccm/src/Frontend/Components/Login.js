@@ -301,6 +301,7 @@ export const Login = ({ isOpen, onClose }) => {
                 force: true,
                 ignoreCaseInName,
             });
+            await eventBus.emit('device-models-refresh');
 
             onClose();
         } else if (response.status === 'two_factor') {

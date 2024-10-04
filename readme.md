@@ -45,6 +45,9 @@ To configure a Linux machine as your bastion host proxy, ensure that the OpenSSH
 ## Bastion Host Proxy Demo
 ![Bastion Host Proxy Demo](./demo/jccm-bastionhost.gif)
 
+## Product Model Validation Demo
+![Product Model Validation Demo](./demo/jccm-product-model-validation.gif)
+
 ## Console Window for Debugging Demo
 ![Console Window for Debugging Demo](./demo/console-window.gif)
 
@@ -63,18 +66,6 @@ Choose the appropriate installer for your system from the options below. macOS u
 **DMG Installers**
 - [Download for Intel-based Macs (x64)](../../releases/latest/download/jccm-darwin-x64.dmg)
 - [Download for ARM-based Macs (arm64)](../../releases/latest/download/jccm-darwin-arm64.dmg)
-
-**Why PKG over DMG?**
-
-- **Seamless Integration**: PKGs allow system-level configurations during installation, ensuring optimal setup without manual tweaks.
-
-- **Script Execution**: They support pre and post-installation scripts, enabling automatic configuration and cleanups, crucial for streamlined updates.
-
-- **Automatic Updates**: PKG files can leverage macOS's native update mechanisms, facilitating automatic software updates without user intervention.
-
-- **Enterprise Friendly**: Ideal for managed environments where software needs remote deployment and specific configurations.
-
-- **Customizable Installation**: Offers users choices during installation, like selecting components and setting installation locations, enhancing flexibility.
 
 #### Windows
 

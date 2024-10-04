@@ -18,12 +18,11 @@ const useStore = create((set, get) => ({
     getConsoleWindowWidth: () => {
         if (get().consoleWindowOpen) {
             return get().consoleWindowWidth;
-        } 
+        }
         return 0;
     },
 
     settings: {},
-
     setSettings: (settings) =>
         set((state) => {
             if (!_.isEqual(state.settings, settings)) {
@@ -441,6 +440,30 @@ const useStore = create((set, get) => ({
         set((state) => {
             const { [path]: _, ...rest } = state.isReleasing;
             return { isReleasing: rest };
+        }),
+
+    deviceModels: [],
+    supportedDeviceModels: {},
+    setDeviceModels: (newDeviceModels) =>
+        set((state) => {
+            if (!_.isEqual(state.deviceModels, newDeviceModels)) {
+                const updatedSupportedDeviceModels = {};
+
+                newDeviceModels.forEach((device) => {
+                    if (device.oc_device === true) {
+                        const key = (
+                            device.alias || device.model
+                        ).toUpperCase(); // Use alias if available, otherwise use model
+                        updatedSupportedDeviceModels[key] = device;
+                    }
+                });
+
+                return {
+                    deviceModels: newDeviceModels,
+                    supportedDeviceModels: updatedSupportedDeviceModels,
+                };
+            }
+            return {};
         }),
 }));
 

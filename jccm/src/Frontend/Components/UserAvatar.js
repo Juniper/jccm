@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import _ from 'lodash';
 
-import { Tooltip, Persona, makeStyles, tokens } from '@fluentui/react-components';
+import {
+    Tooltip,
+    Persona,
+    Text,
+    makeStyles,
+    tokens,
+} from '@fluentui/react-components';
 
 import useStore from '../Common/StateStore';
 import Logout from './Logout';
@@ -17,12 +23,15 @@ const usePersonaStyles = makeStyles({
 
 const UserAvatar = () => {
     const { user } = useStore();
-    const [isUserLogoutCardVisible, setIsUserLogoutCardVisible] = useState(false);
+    const [isUserLogoutCardVisible, setIsUserLogoutCardVisible] =
+        useState(false);
     const styles = usePersonaStyles();
 
     useEffect(() => {
         const intervalId = setInterval(async () => {
-            await eventBus.emit('user-session-check', { message: 'Periodic user session aliveness check' });
+            await eventBus.emit('user-session-check', {
+                message: 'Periodic user session aliveness check',
+            });
         }, 30000);
         return () => clearInterval(intervalId);
     }, []);
@@ -41,7 +50,9 @@ const UserAvatar = () => {
         >
             <div className={styles.root}>
                 <Tooltip
-                    content={`${userName} is logged into the service '${user?.service}'`}
+                    content={
+                        <Text size={100}>{`${userName} is logged into the service "${user?.service}"`}</Text>
+                    }
                     relationship='label'
                     withArrow
                     positioning='above-end'

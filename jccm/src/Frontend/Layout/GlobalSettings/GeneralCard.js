@@ -83,6 +83,18 @@ export const GeneralCard = () => {
         saveFunction();
     };
 
+    const saveDeviceModelValidation = (newDeviceModelsValidation) => {
+        const saveFunction = async () => {
+            const newSettings = {
+                ...settings,
+                deviceModelsValidation: newDeviceModelsValidation,
+            };
+            setSettings(newSettings);
+            exportSettings(newSettings);
+        };
+        saveFunction();
+    };
+
     const onChangConsoleWindowButtonShow = async (event) => {
         const checked = event.currentTarget.checked;
         if (!checked) {
@@ -107,6 +119,10 @@ export const GeneralCard = () => {
         saveIgnoreCase(checked);
     };
 
+    const onChangeDeviceModelValidation = async (event) => {
+        const checked = event.currentTarget.checked;
+        saveDeviceModelValidation(checked);
+    };
 
     return (
         <div
@@ -119,6 +135,36 @@ export const GeneralCard = () => {
                 marginLeft: '10px',
             }}
         >
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    gap: '0px',
+                    width: '100%',
+                    marginLeft: '10px',
+                }}
+            >
+                <Text>Validate Product Models:</Text>
+
+                <div
+                    style={{
+                        transform: 'scale(0.6)',
+                        transformOrigin: 'right',
+                    }}
+                >
+                    <Switch
+                        checked={settings.deviceModelsValidation ? true : false}
+                        onChange={onChangeDeviceModelValidation}
+                    />
+                </div>
+                <Text>
+                    {settings.deviceModelsValidation ? 'Enabled' : 'Disabled'}
+                </Text>
+            </div>
+            
+                        
             <div
                 style={{
                     display: 'flex',
@@ -202,7 +248,8 @@ export const GeneralCard = () => {
                 <Text>{settings.ignoreCase ? 'Enabled' : 'Disabled'}</Text>
             </div>
 
-            <div
+
+            {/* <div
                 style={{
                     display: 'flex',
                     flexDirection: 'row',
@@ -229,7 +276,7 @@ export const GeneralCard = () => {
                 <Text>
                     {settings.deleteOutboundSSHTerm ? 'Enabled' : 'Disabled'}
                 </Text>
-            </div>
+            </div> */}
         </div>
     );
 };
