@@ -226,6 +226,7 @@ export default () => {
                                         flexDirection: 'row',
                                         gap: '50px',
                                         paddingLeft: '10px',
+                                        alignItems: 'center',
                                     }}
                                 >
                                     {Object.entries(deviceModelsInType).map(
@@ -235,7 +236,9 @@ export default () => {
                                                 style={{
                                                     flex: 1,
                                                     display: 'flex',
+                                                    flexDirection: 'row',
                                                     gap: '5px',
+                                                    alignItems: 'center',
                                                 }}
                                             >
                                                 <div
@@ -249,7 +252,6 @@ export default () => {
                                                         border: `0.5px solid ${tokens.colorNeutralStroke1}`,
                                                         borderRadius: '50px',
                                                         textAlign: 'center',
-                                                        marginBottom: '5px',
                                                         fontSize: '10px',
                                                     }}
                                                 >
