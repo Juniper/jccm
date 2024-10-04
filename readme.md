@@ -134,7 +134,7 @@ To ensure proper inventory management, the Excel file must include the following
 
 - **organization**: Name of the organization
 - **site**: Site location of the device
-- **address**: Address of the site
+- **address**: The device’s IP address
 - **port**: Port number for the SSH server in the device
 - **username**: Username for device access
 - **password**: Password for device access
