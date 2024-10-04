@@ -15,8 +15,11 @@ import eventBus from '../Common/eventBus';
 
 const usePersonaStyles = makeStyles({
     root: {
+        display: 'flex', // Enable flexbox for alignment
+        alignItems: 'center', // Vertically center the content
+        justifyContent: 'center', // Horizontally center the content (optional)
         '&:hover': {
-            cursor: 'pointer', // Optional: changes the cursor to a pointer to indicate it's clickable
+            cursor: 'pointer', // Changes the cursor to a pointer to indicate it's clickable
         },
     },
 });
@@ -51,7 +54,9 @@ const UserAvatar = () => {
             <div className={styles.root}>
                 <Tooltip
                     content={
-                        <Text size={100}>{`Logged into the service "${user?.service}"`}</Text>
+                        <Text
+                            size={100}
+                        >{`Logged into the service "${user?.service}"`}</Text>
                     }
                     relationship='label'
                     withArrow
