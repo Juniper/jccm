@@ -405,9 +405,9 @@ const useStore = create((set, get) => ({
             )
         );
 
-        console.log('inventoryPaths', inventoryPaths);
-        console.log('state.deviceFacts', state.deviceFacts);
-        console.log('cleanedDeviceFacts', cleanedDeviceFacts);
+        // console.log('inventoryPaths', inventoryPaths);
+        // console.log('state.deviceFacts', state.deviceFacts);
+        // console.log('cleanedDeviceFacts', cleanedDeviceFacts);
 
         await electronAPI.saSaveDeviceFacts({ facts: cleanedDeviceFacts });
 
