@@ -51,7 +51,7 @@ const UserAvatar = () => {
             <div className={styles.root}>
                 <Tooltip
                     content={
-                        <Text size={100}>{`${userName} is logged into the service "${user?.service}"`}</Text>
+                        <Text size={100}>{`Logged into the service "${user?.service}"`}</Text>
                     }
                     relationship='label'
                     withArrow

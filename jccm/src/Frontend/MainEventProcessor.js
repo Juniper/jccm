@@ -26,6 +26,7 @@ export const MainEventProcessor = () => {
         deviceFacts,
         setDeviceFactsAll,
         cleanUpDeviceFacts,
+        clearIsChecking,
         zeroDeviceFacts,
     } = useStore();
     const { cloudInventoryFilterApplied, setCloudInventoryFilterApplied } =
@@ -199,8 +200,9 @@ export const MainEventProcessor = () => {
         const handleResetDeviceFacts = async ({
             notification = false,
         } = {}) => {
-            // console.log('Event: "reset-device-facts"');
+            console.log('Event: "reset-device-facts"');
 
+            clearIsChecking();
             zeroDeviceFacts();
             await electronAPI.saSaveDeviceFacts({ facts: {} });
 
@@ -220,7 +222,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleDeviceFactsRefresh = async () => {
-            // console.log('Event: "device-facts-refresh"');
+            console.log('Event: "device-facts-refresh"');
             const data = await electronAPI.saLoadDeviceFacts();
 
             if (data.deviceFacts) {
@@ -231,7 +233,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleDeviceFactsCleanup = async () => {
-            // console.log('Event: "device-facts-cleanup"');
+            console.log('Event: "device-facts-cleanup"');
             cleanUpDeviceFacts();
         };
 

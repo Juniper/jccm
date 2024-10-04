@@ -369,6 +369,12 @@ const useStore = create((set, get) => ({
         set((state) => ({
             isChecking: { ...state.isChecking, [path]: value },
         })),
+
+    clearIsChecking: () =>
+        set(() => ({
+            isChecking: {},
+        })),
+
     resetIsChecking: (path) =>
         set((state) => {
             const { [path]: _, ...rest } = state.isChecking;
