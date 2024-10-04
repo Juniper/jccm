@@ -15,11 +15,11 @@ import eventBus from '../Common/eventBus';
 
 const usePersonaStyles = makeStyles({
     root: {
-        display: 'flex', // Enable flexbox for alignment
-        alignItems: 'center', // Vertically center the content
-        justifyContent: 'center', // Horizontally center the content (optional)
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         '&:hover': {
-            cursor: 'pointer', // Changes the cursor to a pointer to indicate it's clickable
+            cursor: 'pointer',
         },
     },
 });

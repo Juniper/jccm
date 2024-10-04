@@ -8,6 +8,7 @@ import {
     Popover,
     PopoverSurface,
     PopoverTrigger,
+    CounterBadge,
     makeStyles,
     tokens,
 } from '@fluentui/react-components';
@@ -36,6 +37,26 @@ const tooltipStyles = makeStyles({
     },
 });
 
+const RenderCounterBadge = ({ counterValue }) => {
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                columnGap: '5px',
+            }}
+        >
+            <CounterBadge
+                count={counterValue}
+                color='informative'
+                size='small'
+                overflowCount={90000}
+            />
+        </div>
+    );
+};
+
 export default () => {
     const { settings, exportSettings, setSettings } = useStore();
     const { user, isUserLoggedIn, supportedDeviceModels } = useStore();
@@ -61,6 +82,11 @@ export default () => {
     Object.keys(deviceModelsInType).forEach((type) => {
         deviceModelsInType[type].sort((a, b) => a.model.localeCompare(b.model));
     });
+
+    const totalDeviceModelCount = Object.values(deviceModelsInType).reduce(
+        (acc, devices) => acc + devices.length,
+        0
+    );
 
     const handleOnClickOfProductModelInfo = () => {
         const saveFunction = async () => {
@@ -162,13 +188,27 @@ export default () => {
                                     paddingBottom: '10px',
                                 }}
                             >
-                                <Text
+                                <div
                                     style={{
-                                        fontSize: '14px',
+                                        display: 'flex',
+                                        gap: '5px',
+                                        alignItems: 'center',
                                     }}
                                 >
-                                    Supported Product Model Information
-                                </Text>
+                                    <Text
+                                        style={{
+                                            fontSize: '14px',
+                                        }}
+                                    >
+                                        Supported Product Model Information
+                                    </Text>
+                                    <CounterBadge
+                                        count={totalDeviceModelCount}
+                                        color='informative'
+                                        size='small'
+                                        overflowCount={90000}
+                                    />
+                                </div>
 
                                 <div
                                     style={{
@@ -190,7 +230,14 @@ export default () => {
                                 >
                                     {Object.entries(deviceModelsInType).map(
                                         ([type, devices]) => (
-                                            <div key={type} style={{ flex: 1 }}>
+                                            <div
+                                                key={type}
+                                                style={{
+                                                    flex: 1,
+                                                    display: 'flex',
+                                                    gap: '5px',
+                                                }}
+                                            >
                                                 <div
                                                     style={{
                                                         display: 'flex',
@@ -203,16 +250,17 @@ export default () => {
                                                         borderRadius: '50px',
                                                         textAlign: 'center',
                                                         marginBottom: '5px',
+                                                        fontSize: '10px',
                                                     }}
                                                 >
-                                                    <span
-                                                        style={{
-                                                            fontSize: '10px',
-                                                        }}
-                                                    >
-                                                        {type.toUpperCase()}
-                                                    </span>
+                                                    {type.toUpperCase()}
                                                 </div>
+                                                <CounterBadge
+                                                    count={devices.length}
+                                                    color='informative'
+                                                    size='small'
+                                                    overflowCount={90000}
+                                                />
                                             </div>
                                         )
                                     )}
