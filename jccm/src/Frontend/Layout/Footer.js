@@ -5,6 +5,10 @@ import {
     Button,
     Tooltip,
     Text,
+    ToolbarDivider,
+    CounterBadge,
+    makeStyles,
+    Link,
     tokens,
 } from '@fluentui/react-components';
 import {
@@ -14,6 +18,8 @@ import {
     WindowDevToolsFilled,
     WrenchRegular,
     WrenchFilled,
+    CheckmarkCircleFilled,
+    FireFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
 
@@ -21,11 +27,20 @@ import useStore from '../Common/StateStore';
 import { BastionHostButton } from './BastionHostButton';
 import { CircleIcon } from './ChangeIcon';
 import DeviceModels from './DeviceModels';
+import eventBus from '../Common/eventBus';
 
 const { electronAPI } = window;
 const ConsoleWindowIcon = bundleIcon(WrenchRegular, WrenchFilled);
 
+const tooltipStyles = makeStyles({
+    tooltipMaxWidthClass: {
+        maxWidth: '800px',
+    },
+});
+
 export default () => {
+    const styles = tooltipStyles();
+
     const {
         settings,
         isUserLoggedIn,
@@ -35,6 +50,8 @@ export default () => {
         cloudInventory,
         consoleWindowOpen,
         setConsoleWindowOpen,
+        deviceNetworkCondition,
+        resetDeviceNetworkConditionAll,
     } = useStore();
 
     const [isBastionHostEmpty, setIsBastionHostEmpty] = useState(false);
@@ -52,6 +69,33 @@ export default () => {
 
         return cloudDevices[fact.systemInformation?.serialNumber];
     }).length;
+
+    const deviceConditions = Object.values(deviceNetworkCondition);
+    const countOfDeviceNetworkCondition = deviceConditions.length;
+
+    let countOfDnsIssue = 0;
+    let countOfRouteIssue = 0;
+    let countOfAccessIssue = 0;
+    let countOfNoIssue = 0;
+
+    deviceConditions.forEach((device) => {
+        if (device.dns === false) {
+            countOfDnsIssue++;
+        } else if (device.route === false) {
+            countOfRouteIssue++;
+        } else if (device.access === false) {
+            countOfAccessIssue++;
+        } else {
+            countOfNoIssue++;
+        }
+    });
+
+    const countOfUnknownIssue =
+        countOfDeviceNetworkCondition -
+        countOfDnsIssue -
+        countOfRouteIssue -
+        countOfAccessIssue -
+        countOfNoIssue;
 
     const doesSiteNameExist = (orgName, siteName) => {
         const org = cloudInventory.find((item) => item?.name === orgName);
@@ -98,6 +142,37 @@ export default () => {
         setConsoleWindowOpen(!consoleWindowOpen);
     };
 
+    const MessageAndCounter = ({
+        message,
+        color = tokens.colorNeutralForeground4,
+        backgroundColor = tokens.colorNeutralBackground1,
+        fontSize = '12px',
+        counterValue,
+    }) => {
+        return (
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    gap: '5px',
+                }}
+            >
+                <Text style={{ color, fontSize }}>{message}</Text>
+
+                <CounterBadge
+                    count={counterValue}
+                    // color='brand'
+                    size='small'
+                    showZero
+                    overflowCount={100000}
+                    style={{ fontSize, color, backgroundColor }}
+                />
+            </div>
+        );
+    };
+
     return (
         <div
             style={{
@@ -126,6 +201,7 @@ export default () => {
                         flexDirection: 'row',
                         gap: '20px',
                         paddingLeft: '5px',
+                        alignItems: 'center',
                     }}
                 >
                     <Label
@@ -156,6 +232,198 @@ export default () => {
                         </Label>
                     )}
                 </div>
+                {countOfDeviceNetworkCondition > 0 && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingLeft: '5px',
+                        }}
+                    >
+                        <ToolbarDivider />
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: '20px',
+                                paddingLeft: '5px',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Tooltip
+                                content={{
+                                    className: styles.tooltipMaxWidthClass,
+                                    children: (
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                            }}
+                                        >
+                                            {countOfNoIssue > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent:
+                                                            'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <CheckmarkCircleFilled
+                                                        style={{
+                                                            color: tokens.colorPaletteLightGreenForeground3,
+                                                            fontSize: '11px',
+                                                        }}
+                                                    />
+
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`Access to the service endpoint is ready: ${countOfNoIssue}`}{' '}
+                                                    </Text>
+                                                </div>
+                                            )}
+                                            {countOfDnsIssue > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent:
+                                                            'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <FireFilled
+                                                        style={{
+                                                            fontSize: '12px',
+                                                            color: tokens.colorPaletteRedForeground3,
+                                                        }}
+                                                    />
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`DNS lookup failure for the service endpoint: ${countOfDnsIssue}`}
+                                                    </Text>
+                                                </div>
+                                            )}
+                                            {countOfRouteIssue > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent:
+                                                            'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <FireFilled
+                                                        style={{
+                                                            fontSize: '12px',
+                                                            color: tokens.colorPaletteRedForeground3,
+                                                        }}
+                                                    />
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`No route to the service endpoint: ${countOfRouteIssue}`}
+                                                    </Text>
+                                                </div>
+                                            )}
+                                            {countOfAccessIssue > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent:
+                                                            'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <FireFilled
+                                                        style={{
+                                                            fontSize: '12px',
+                                                            color: tokens.colorPaletteRedForeground3,
+                                                        }}
+                                                    />
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`No access to the service endpoint: ${countOfAccessIssue}`}
+                                                    </Text>
+                                                </div>
+                                            )}
+                                            {countOfUnknownIssue > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent:
+                                                            'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <FireFilled
+                                                        style={{
+                                                            fontSize: '12px',
+                                                            color: tokens.colorPaletteRedForeground3,
+                                                        }}
+                                                    />
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`Unknown issue: ${countOfUnknownIssue}`}
+                                                    </Text>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ),
+                                }}
+                                relationship='description'
+                                withArrow
+                                positioning='above'
+                                appearance='normal'
+                            >
+                                <Link
+                                    appearance='subtle'
+                                    style={{
+                                        fontSize: '12px',
+                                        color: tokens.colorNeutralForeground4,
+                                    }}
+                                    onClick={() =>
+                                        eventBus.emit(
+                                            'device-network-access-check-reset'
+                                        )
+                                    }
+                                >
+                                    {`Reset Network Access Check: ${countOfDeviceNetworkCondition} Devices`}
+                                </Link>
+                            </Tooltip>
+                        </div>
+                    </div>
+                )}
             </div>
             <div
                 style={{

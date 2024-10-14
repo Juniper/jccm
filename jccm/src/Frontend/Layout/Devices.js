@@ -48,3 +48,15 @@ export const executeJunosCommand = async (device, command) => {
     }
 };
 
+export const getDeviceNetworkCondition = async (device, bastionHost = {}, termServer='oc-term.mistsys.net', termPort=2200) => {
+    const { address, port, username, password, timeout } = device;
+    const response = await electronAPI.saGetDeviceNetworkCondition({ address, port, username, password, timeout, bastionHost, termServer, termPort });
+
+    if (response.networkConditionCollect) {
+        return { status: true, result: response.reply };
+    } else {
+        return { status: false, result: response.reply  };
+    }
+};
+
+

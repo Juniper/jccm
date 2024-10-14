@@ -471,6 +471,87 @@ const useStore = create((set, get) => ({
             }
             return {};
         }),
+
+    deviceNetworkCondition: {},
+
+    setDeviceNetworkConditionAll: (networkCondition) =>
+        set(() => ({
+            deviceNetworkCondition: networkCondition,
+        })),
+
+    setDeviceNetworkCondition: (path, value) =>
+        set((state) => ({
+            deviceNetworkCondition: {
+                ...state.deviceNetworkCondition,
+                [path]: value,
+            },
+        })),
+
+    resetDeviceNetworkConditionAll: () =>
+        set(() => ({
+            deviceNetworkCondition: {},
+        })),
+
+    deleteDeviceNetworkCondition: (path) =>
+        set((state) => {
+            const { [path]: _, ...rest } = state.deviceNetworkCondition;
+            return { deviceNetworkCondition: rest };
+        }),
+
+    cleanUpDeviceNetworkCondition: () => {
+        const state = get();
+        const inventoryPaths = new Set(
+            state.inventory.map((item) => item._path)
+        );
+
+        // Filter `deviceNetworkCondition` by keys that exist in `inventoryPaths`
+        const cleanedDeviceNetworkCondition = Object.fromEntries(
+            Object.entries(state.deviceNetworkCondition).filter(([key]) =>
+                inventoryPaths.has(key)
+            )
+        );
+
+        // Update the state with the cleaned `deviceNetworkCondition` object
+        set(() => ({
+            deviceNetworkCondition: cleanedDeviceNetworkCondition,
+        }));
+    },
+
+    isTesting: {},
+    setIsTesting: (path, value) =>
+        set((state) => ({
+            isTesting: { ...state.isTesting, [path]: value },
+        })),
+
+    resetIsTestingAll: () =>
+        set(() => ({
+            isTesting: {},
+        })),
+
+    resetIsTesting: (path) =>
+        set((state) => {
+            const { [path]: _, ...rest } = state.isTesting;
+            return { isTesting: rest };
+        }),
+
+    cleanUpIsTesting: async () => {
+        const state = get();
+        const inventoryPaths = new Set(
+            state.inventory.map((item) => item._path)
+        );
+
+        // Filter `isTesting` by keys that exist in `inventoryPaths`
+        const cleanedIsTesting = Object.fromEntries(
+            Object.entries(state.isTesting).filter(([key]) =>
+                inventoryPaths.has(key)
+            )
+        );
+
+        // Update the state with the cleaned `isTesting` object
+        set(() => ({
+            isTesting: cleanedIsTesting,
+        }));
+    },
 }));
 
 export default useStore;

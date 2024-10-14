@@ -51,6 +51,9 @@ To configure a Linux machine as your bastion host proxy, ensure that the OpenSSH
 ## Console Window for Debugging Demo
 ![Console Window for Debugging Demo](./demo/console-window.gif)
 
+## Check Network Access Demo
+![Test Network Access Demo](./demo/check-network-access.gif)
+
 ## Installation
 
 ### Download

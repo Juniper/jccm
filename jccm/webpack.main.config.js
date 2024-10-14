@@ -29,4 +29,7 @@ module.exports = {
             Buffer: ['buffer', 'Buffer'],
         }),
     ],
+    externals: {
+        'electron-updater': 'commonjs2 electron-updater',
+    },
 };

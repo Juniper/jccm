@@ -190,6 +190,24 @@ import {
     PortUsbCRegular,
     TriangleRightRegular,
     ToggleRightRegular,
+    HeartPulseRegular,
+    PulseSquareRegular,
+    PulseRegular,
+    SubtractRegular,
+    LineFilled,
+    CloudCheckmarkRegular,
+    CloudDismissRegular,
+    ArrowExpandFilled,
+    MentionRegular,
+    MentionFilled,
+    DividerTallFilled,
+    CircleLineRegular,
+    AddFilled,
+    SubtractFilled,
+    PresenceBlockedRegular,
+    FireRegular,
+    FireFilled,
+    DismissCircleFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
 import _ from 'lodash';
@@ -206,6 +224,7 @@ import {
     adoptDevices,
     executeJunosCommand,
     getDeviceFacts,
+    getDeviceNetworkCondition,
     releaseDevices,
 } from './Devices';
 import { RotatingIcon, CircleIcon } from './ChangeIcon';
@@ -227,6 +246,7 @@ const CloudLink = bundleIcon(CloudLinkFilled, CloudLinkRegular);
 const GetFactsIcon = bundleIcon(SearchInfoRegular, SearchRegular);
 const CloudAdd = bundleIcon(CloudAddFilled, CloudAddRegular);
 const ReleaseDeviceIcon = bundleIcon(BoxDismissRegular, BoxRegular);
+const DeviceNetworkConditionIcon = bundleIcon(PulseSquareRegular, PulseRegular);
 
 const tooltipStyles = makeStyles({
     tooltipMaxWidthClass: {
@@ -437,6 +457,13 @@ const InventoryTreeMenuLocal = () => {
     const { isAdopting, setIsAdopting, resetIsAdopting } = useStore();
     const { isReleasing, setIsReleasing, resetIsReleasing } = useStore();
 
+    const { isTesting, setIsTesting, resetIsTesting } = useStore();
+    const {
+        deviceNetworkCondition,
+        setDeviceNetworkCondition,
+        deleteDeviceNetworkCondition,
+    } = useStore();
+
     const [flatTreeItems, setFlatTreeItems] = useState([]);
     const [expandedItems, setExpandedItems] = useState(() => {
         return new Set(flatTreeItems.map((item) => item.value));
@@ -474,6 +501,19 @@ const InventoryTreeMenuLocal = () => {
             setSelectedTabValue(path);
         } else {
             addTab({ path });
+        }
+    };
+
+    const convertErrorMessage = (message) => {
+        if (
+            message.includes('Permission denied') &&
+            (message.includes('publickey') ||
+                message.includes('password') ||
+                message.includes('keyboard-interactive'))
+        ) {
+            return 'SSH Authentication failed.';
+        } else {
+            return message;
         }
     };
 
@@ -757,6 +797,301 @@ const InventoryTreeMenuLocal = () => {
             ];
         }
 
+        const DisplayDeviceNetworkConditionTestResult = () => {
+            const isNetworkConditionTestResultAvailable =
+                !!deviceNetworkCondition[path];
+            if (!isNetworkConditionTestResultAvailable) return null;
+
+            const result = deviceNetworkCondition[path] || {};
+
+            const message =
+                result.message?.length > 0
+                    ? result.message
+                    : 'No network condition test result available';
+            const isConnectable = result.dns && result.route && result.access;
+
+            return (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                    }}
+                >
+                    {isConnectable ? (
+                        <Tooltip
+                            content={{
+                                className: styles.tooltipMaxWidthClass,
+                                children: (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Text size={200} weight='regular'>
+                                            {message}
+                                        </Text>
+                                    </div>
+                                ),
+                            }}
+                            relationship='description'
+                            withArrow
+                            positioning='above'
+                        >
+                            <CheckmarkCircleFilled
+                                style={{
+                                    color: tokens.colorPaletteLightGreenForeground3,
+                                    fontSize: '11px',
+                                }}
+                            />
+                        </Tooltip>
+                    ) : !result.dns ? (
+                        <Tooltip
+                            content={{
+                                className: styles.tooltipMaxWidthClass,
+                                children: (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Text
+                                            size={200}
+                                            weight='regular'
+                                            style={{
+                                                color: tokens.colorPaletteRedForeground3,
+                                            }}
+                                        >
+                                            {message}
+                                        </Text>
+                                    </div>
+                                ),
+                            }}
+                            relationship='description'
+                            withArrow
+                            positioning='above'
+                        >
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'flex-start',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                }}
+                            >
+                                <FireFilled
+                                    style={{
+                                        fontSize: '12px',
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                />
+                                <Text
+                                    size={100}
+                                    weight='regular'
+                                    style={{
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                >
+                                    DNS lookup failure
+                                </Text>
+                            </div>
+                        </Tooltip>
+                    ) : !result.route ? (
+                        <Tooltip
+                            content={{
+                                className: styles.tooltipMaxWidthClass,
+                                children: (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Text
+                                            size={200}
+                                            weight='regular'
+                                            style={{
+                                                color: tokens.colorPaletteRedForeground3,
+                                            }}
+                                        >
+                                            {message}
+                                        </Text>
+                                    </div>
+                                ),
+                            }}
+                            relationship='description'
+                            withArrow
+                            positioning='above'
+                        >
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'flex-start',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                }}
+                            >
+                                <FireFilled
+                                    style={{
+                                        fontSize: '12px',
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                />
+                                <Text
+                                    size={100}
+                                    weight='regular'
+                                    style={{
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                >
+                                    No Route available
+                                </Text>
+                            </div>
+                        </Tooltip>
+                    ) : !result.access ? (
+                        <Tooltip
+                            content={{
+                                className: styles.tooltipMaxWidthClass,
+                                children: (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'flex-start',
+                                        }}
+                                    >
+                                        <Text
+                                            size={200}
+                                            weight='regular'
+                                            style={{
+                                                color: tokens.colorPaletteRedForeground3,
+                                            }}
+                                        >
+                                            {message}
+                                        </Text>
+                                        <Text
+                                            size={200}
+                                            weight='regular'
+                                            style={{
+                                                color: tokens.colorPaletteRedForeground3,
+                                            }}
+                                        >
+                                            Possible firewall or ACL issue?
+                                        </Text>
+                                    </div>
+                                ),
+                            }}
+                            relationship='description'
+                            withArrow
+                            positioning='above'
+                        >
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'flex-start',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                }}
+                            >
+                                <FireFilled
+                                    style={{
+                                        fontSize: '12px',
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                />
+                                <Text
+                                    size={100}
+                                    weight='regular'
+                                    style={{
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                >
+                                    No Access available
+                                </Text>
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <Tooltip
+                            content={{
+                                className: styles.tooltipMaxWidthClass,
+                                children: (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'flex-start',
+                                        }}
+                                    >
+                                        <Text
+                                            size={200}
+                                            weight='regular'
+                                            style={{
+                                                color: tokens.colorPaletteRedForeground3,
+                                            }}
+                                        >
+                                            {message}
+                                        </Text>
+                                        <Text
+                                            size={200}
+                                            weight='regular'
+                                            style={{
+                                                color: tokens.colorPaletteRedForeground3,
+                                            }}
+                                        >
+                                            Possible firewall or ACL issue(?)
+                                        </Text>
+                                    </div>
+                                ),
+                            }}
+                            relationship='description'
+                            withArrow
+                            positioning='above'
+                        >
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'flex-start',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                }}
+                            >
+                                <FireFilled
+                                    style={{
+                                        fontSize: '12px',
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                />
+                                <Text
+                                    size={100}
+                                    weight='regular'
+                                    style={{
+                                        color: tokens.colorPaletteRedForeground3,
+                                    }}
+                                >
+                                    An unknown network access issue
+                                </Text>
+                            </div>
+                        </Tooltip>
+                    )}
+                </div>
+            );
+        };
+
         return (
             <div
                 style={{
@@ -866,6 +1201,9 @@ const InventoryTreeMenuLocal = () => {
                             <Text size={100} font='numeric' weight='regular'>
                                 {deviceFact.systemInformation?.hostName}
                             </Text>
+                            {!isTesting[path] && (
+                                <DisplayDeviceNetworkConditionTestResult />
+                            )}
                         </Label>
                     ) : (
                         <Label
@@ -929,11 +1267,13 @@ const InventoryTreeMenuLocal = () => {
                                     {deviceName}
                                 </Text>
                             </Tooltip>
+
                             {IsValidDeviceModel ? (
                                 <Text
                                     size={100}
                                     font='monospace'
                                     weight='regular'
+                                    style={{ paddingTop: '2px' }}
                                 >
                                     {
                                         deviceFact.systemInformation
@@ -958,6 +1298,7 @@ const InventoryTreeMenuLocal = () => {
                                         strikethrough
                                         style={{
                                             color: tokens.colorStatusDangerForeground3,
+                                            paddingTop: '2px',
                                         }}
                                     >
                                         {
@@ -991,6 +1332,9 @@ const InventoryTreeMenuLocal = () => {
                             <Text size={100} font='numeric' weight='regular'>
                                 {deviceFact.systemInformation?.hostName}
                             </Text>
+                            {!isTesting[path] && (
+                                <DisplayDeviceNetworkConditionTestResult />
+                            )}
                         </Label>
                     )
                 ) : (
@@ -1099,6 +1443,63 @@ const InventoryTreeMenuLocal = () => {
                         color={tokens.colorPaletteDarkOrangeBorder2}
                     />
                 )}
+
+                {isTesting[path]?.status ? (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            gap: '5px',
+                        }}
+                    >
+                        <RotatingIcon
+                            Icon={SubtractFilled}
+                            size='12px'
+                            rotationDuration='500ms'
+                            color={tokens.colorCompoundBrandBackground}
+                        />
+                        {isTesting[path]?.error && (
+                            <Text
+                                style={{
+                                    fontSize: '10px',
+                                    color: tokens.colorCompoundBrandBackground,
+                                }}
+                            >
+                                {isTesting[path]?.error &&
+                                    convertErrorMessage(isTesting[path]?.error)}
+                            </Text>
+                        )}
+                    </div>
+                ) : (
+                    isTesting[path]?.error && (
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                gap: '5px',
+                            }}
+                        >
+                            <DismissCircleFilled
+                                style={{
+                                    fontSize: '12px',
+                                    color: tokens.colorPaletteRedForeground3,
+                                }}
+                            />
+                            <Text
+                                style={{
+                                    fontSize: '10px',
+                                    color: tokens.colorCompoundBrandBackground,
+                                }}
+                            >
+                                {convertErrorMessage(isTesting[path].error)}
+                            </Text>
+                        </div>
+                    )
+                )}
             </div>
         );
     };
@@ -1110,6 +1511,9 @@ const InventoryTreeMenuLocal = () => {
 
         setIsChecking(device._path, { status: true, retry: 0 });
         resetIsAdopting(device._path);
+
+        deleteDeviceNetworkCondition(device._path);
+        resetIsTesting(device._path);
 
         const bastionHost = settings?.bastionHost || {};
 
@@ -1501,6 +1905,213 @@ const InventoryTreeMenuLocal = () => {
         }, 3000);
     };
 
+    const fetchDeviceNetworkCondition = async (
+        device,
+        termServer = 'oc-term.mistsys.net',
+        termPort = 2200
+    ) => {
+        const maxRetries = 2;
+        const retryInterval = 10000; // 10 seconds in milliseconds
+        let response;
+
+        setIsTesting(device._path, { status: true, retry: 0 });
+
+        const bastionHost = settings?.bastionHost || {};
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            response = await getDeviceNetworkCondition(
+                { ...device, timeout: 5000 },
+                bastionHost,
+                termServer,
+                termPort
+            );
+            if (response.status) {
+                console.log(
+                    `Network Condition: ${device._path}`,
+                    response.result
+                );
+                setDeviceNetworkCondition(device._path, response.result);
+                resetIsTesting(device._path);
+                return;
+            } else {
+                console.log(
+                    `${device.address}:${device.port} - Error retrieving network condition on attempt ${attempt}:`,
+                    response
+                );
+                if (
+                    response.result?.status
+                        ?.toLowerCase()
+                        .includes('authentication failed')
+                ) {
+                    deleteDeviceNetworkCondition(device._path);
+                    setIsTesting(device._path, {
+                        status: false,
+                        retry: -1,
+                        error: response.result?.message,
+                    });
+                    return;
+                } else if (
+                    response.result?.status
+                        ?.toLowerCase()
+                        .includes('ssh client error')
+                ) {
+                    deleteDeviceNetworkCondition(device._path);
+                    setIsTesting(device._path, {
+                        status: false,
+                        retry: -1,
+                        error: response.result?.message,
+                    });
+                    return;
+                }
+
+                setIsTesting(device._path, {
+                    status: true,
+                    retry: attempt,
+                    error: response.result?.message,
+                });
+                await new Promise((resolve) =>
+                    setTimeout(resolve, retryInterval)
+                );
+            }
+        }
+
+        deleteDeviceNetworkCondition(device._path);
+        setIsTesting(device._path, {
+            status: false,
+            retry: -1,
+            error: response.result?.message,
+        });
+
+        notify(
+            <Toast>
+                <ToastTitle>
+                    Device Network Condition Retrieval Failure
+                </ToastTitle>
+                <ToastBody subtitle='Error Details'>
+                    <Text>
+                        An error occurred while retrieving the device network
+                        condition information. Please check the device
+                        configuration and try again.
+                    </Text>
+                    <Text>Error Message: {response.result.message}</Text>
+                </ToastBody>
+            </Toast>,
+            { intent: 'error' }
+        );
+    };
+
+    const getNetworkCondition = async (node, rate = 10) => {
+        const targetDevices = inventory.filter((device) => {
+            const orgName = device.organization;
+            const siteName = device.site;
+
+            const siteExists = doesSiteNameExist(orgName, siteName);
+
+            const fact = findFact(device._path);
+            if (!fact) return false;
+
+            const IsValidDeviceModel = validateDeviceModel(
+                fact.systemInformation?.hardwareModel
+            );
+            if (!IsValidDeviceModel) return false;
+
+            return siteExists && device._path.startsWith(node.value);
+        });
+
+        if (targetDevices.length === 0) {
+            console.log(`No devices found for node: ${node.value}`);
+            return;
+        }
+
+        const organizationSet = new Set(
+            targetDevices.map((device) => device.organization)
+        );
+
+        const orgs = isUserLoggedIn
+            ? user?.privileges
+                  ?.filter((item) => item.scope === 'org')
+                  .reduce((acc, item) => {
+                      acc[item.name] = { id: item.org_id };
+                      return acc;
+                  }, {})
+            : {};
+
+        let defaultTermServer = 'oc-term.mistsys.net'; // default oc term service host
+        let defaultTermPort = 2200; // default oc term service port
+
+        for (const orgName of organizationSet) {
+            const orgId = orgs[orgName].id;
+
+            const data = await electronAPI.saProxyCall({
+                api: `orgs/${orgId}/ocdevices/outbound_ssh_cmd`,
+                method: 'GET',
+                body: null,
+            });
+
+            if (data.proxy) {
+                const setConfig = data.response.cmd;
+
+                const regex = /client \S+ (\S+) port (\d+)/;
+                const match = setConfig.match(regex);
+
+                if (match) {
+                    const hostName = match[1];
+                    const port = match[2];
+                    orgs[orgName].termServer = hostName;
+                    orgs[orgName].termPort = port;
+                } else {
+                    console.log('No match term service and port found');
+                }
+            } else {
+                console.error(
+                    'outbound_ssh_cmd api call for device network condition test error: ',
+                    data?.error
+                );
+            }
+        }
+
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const rateLimit = 1000 / rate; // Rate in calls per second
+        const maxConcurrentCalls = 100; // Maximum number of concurrent async calls
+
+        const fetchDeviceNetworkConditionWithRateLimit = async () => {
+            const promises = [];
+            let runningCalls = 0;
+
+            const executeCall = async (device) => {
+                const {
+                    termServer = defaultTermServer,
+                    termPort = defaultTermPort,
+                } = orgs[device.organization] || {};
+
+                const promise = fetchDeviceNetworkCondition(
+                    device,
+                    termServer,
+                    termPort
+                ).then(() => {
+                    runningCalls--;
+                    promises.splice(promises.indexOf(promise), 1); // Remove the resolved promise
+                });
+                promises.push(promise);
+                runningCalls++;
+
+                if (runningCalls >= maxConcurrentCalls) {
+                    await Promise.race(promises);
+                }
+
+                await delay(rateLimit);
+            };
+
+            for (const device of targetDevices) {
+                await executeCall(device);
+            }
+
+            await Promise.all(promises);
+        };
+
+        await fetchDeviceNetworkConditionWithRateLimit();
+    };
+
     const contextMenuContent = (event, node) => {
         const devices = inventory.filter(
             (device) =>
@@ -1631,6 +2242,32 @@ const InventoryTreeMenuLocal = () => {
                     >
                         <Text size={200} font='numeric'>
                             Release Device
+                        </Text>
+                    </MenuItem>
+
+                    <MenuDivider />
+                    <MenuItem
+                        disabled={
+                            !isUserLoggedIn ||
+                            !isTargetDeviceAvailable() ||
+                            !isOrgSiteMatch() ||
+                            (node.type === 'device' &&
+                                !validateDeviceModel(
+                                    findFact(node.value)?.systemInformation
+                                        ?.hardwareModel
+                                ))
+                        }
+                        icon={
+                            <DeviceNetworkConditionIcon
+                                style={{ fontSize: '14px' }}
+                            />
+                        }
+                        onClick={async () => {
+                            getNetworkCondition(node);
+                        }}
+                    >
+                        <Text size={200} font='numeric'>
+                            Check Network Access
                         </Text>
                     </MenuItem>
                 </MenuGroup>

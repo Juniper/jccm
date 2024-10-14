@@ -188,8 +188,9 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
         await electronAPI.saSetLocalInventory({ inventory: rowData });
         setTimeout(async () => {
             await eventBus.emit('device-facts-cleanup', { notification: false });
+            await eventBus.emit('device-network-access-check-refresh');
             onClose();
-        }, 300);
+        }, 1000);
     };
 
     const getRowStyle = (params) => {

@@ -25,7 +25,7 @@ export let mainWindow;
 // A function to send log messages from the main process to the renderer
 export const sendLogMessage = (type, ...args) => {
     // Send the log message to the renderer via IPC
-    mainWindow.webContents.send('onLogMessage', {type, args});
+    mainWindow.webContents.send('onLogMessage', { type, args });
 };
 
 const createWindow = () => {
@@ -49,6 +49,7 @@ const createWindow = () => {
     // mainWindow.webContents.openDevTools();
     console.log('Window Created');
 };
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

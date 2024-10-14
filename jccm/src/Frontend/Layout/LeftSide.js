@@ -55,13 +55,22 @@ import { RotatingIcon } from './ChangeIcon';
 
 const StackIcon = bundleIcon(StackFilled, StackRegular);
 const CloudIcon = bundleIcon(CloudFilled, CloudRegular);
-const ArrowClockwiseIcon = bundleIcon(ArrowClockwiseFilled, ArrowClockwiseRegular);
-const ArrowSyncCircleIcon = bundleIcon(ArrowSyncCircleFilled, ArrowSyncCircleRegular);
+const ArrowClockwiseIcon = bundleIcon(
+    ArrowClockwiseFilled,
+    ArrowClockwiseRegular
+);
+const ArrowSyncCircleIcon = bundleIcon(
+    ArrowSyncCircleFilled,
+    ArrowSyncCircleRegular
+);
 const CloudSyncIcon = bundleIcon(CloudSyncFilled, CloudSyncRegular);
 const FilterIcon = bundleIcon(FilterFilled, FilterRegular);
 const FilterAddIcon = bundleIcon(FilterAddFilled, FilterAddRegular);
 const MultiselectIcon = bundleIcon(MultiselectLtrFilled, MultiselectLtrRegular);
-const TextBulletListCheckmark = bundleIcon(TextBulletListCheckmarkFilled, TextBulletListCheckmarkRegular);
+const TextBulletListCheckmark = bundleIcon(
+    TextBulletListCheckmarkFilled,
+    TextBulletListCheckmarkRegular
+);
 const ResetFactsIcon = bundleIcon(BackspaceFilled, BackspaceRegular);
 
 const LeftSide = () => {
@@ -79,7 +88,7 @@ const LeftSide = () => {
     const [selectedTree, setSelectedTree] = useState('local');
     const [isOpenOrgFilterMenu, setIsOpenOrgFilterMenu] = useState(false);
     const [countOfDeviceWithFacts, setCountOfDeviceWithFacts] = useState(0);
-    
+
     const ignoreCaseInName = settings.ignoreCase || false;
 
     useEffect(() => {
@@ -124,7 +133,8 @@ const LeftSide = () => {
                             justifyContent: 'space-between',
                             width: '100%',
                             marginBottom: '10px',
-                            backgroundColor: tokens.colorNeutralBackground1Hover,
+                            backgroundColor:
+                                tokens.colorNeutralBackground1Hover,
                         }}
                     >
                         <div
@@ -171,9 +181,13 @@ const LeftSide = () => {
                                                 Icon={ArrowSyncCircleRegular}
                                                 size={12}
                                                 rotationDuration='1000ms'
-                                                color={tokens.colorNeutralForeground2BrandHover}
+                                                color={
+                                                    tokens.colorNeutralForeground2BrandHover
+                                                }
                                             />
-                                            <Text size={100}>Loading large cloud inventory...</Text>
+                                            <Text size={100}>
+                                                Loading large cloud inventory...
+                                            </Text>
                                         </div>
                                     )}
                                 </div>
@@ -195,7 +209,8 @@ const LeftSide = () => {
                         </div>
                         <div
                             style={{
-                                display: selectedTree === 'local' ? 'flex' : 'none',
+                                display:
+                                    selectedTree === 'local' ? 'flex' : 'none',
                                 flexDirection: 'row',
                                 justifyContent: 'center',
                                 alignItems: 'center',
@@ -208,11 +223,20 @@ const LeftSide = () => {
                                 relationship='label'
                             >
                                 <Button
-                                    disabled={countOfDeviceWithFacts === 0 && Object.keys(isChecking).length === 0}
+                                    disabled={
+                                        countOfDeviceWithFacts === 0 &&
+                                        Object.keys(isChecking).length === 0
+                                    }
                                     appearance='subtle'
                                     icon={<ResetFactsIcon fontSize='15px' />}
                                     onClick={async () => {
-                                        await eventBus.emit('reset-device-facts', { notification: true });
+                                        await eventBus.emit(
+                                            'reset-device-facts',
+                                            { notification: true }
+                                        );
+                                        await eventBus.emit(
+                                            'device-network-access-check-reset'
+                                        );
                                     }}
                                 />
                             </Tooltip>
@@ -224,16 +248,22 @@ const LeftSide = () => {
                                 <Button
                                     style={{ paddingRight: '15px' }}
                                     appearance='subtle'
-                                    icon={<ArrowSyncCircleIcon fontSize='15px' />}
+                                    icon={
+                                        <ArrowSyncCircleIcon fontSize='15px' />
+                                    }
                                     onClick={async () => {
-                                        await eventBus.emit('local-inventory-refresh', { notification: true });
+                                        await eventBus.emit(
+                                            'local-inventory-refresh',
+                                            { notification: true }
+                                        );
                                     }}
                                 />
                             </Tooltip>
                         </div>
                         <div
                             style={{
-                                display: selectedTree === 'cloud' ? 'flex' : 'none',
+                                display:
+                                    selectedTree === 'cloud' ? 'flex' : 'none',
                                 flexDirection: 'row',
                                 justifyContent: 'center',
                                 alignItems: 'center',
@@ -277,7 +307,13 @@ const LeftSide = () => {
                                         />
                                     }
                                     onClick={async () => {
-                                        await eventBus.emit('cloud-inventory-refresh', { notification: true, ignoreCaseInName });
+                                        await eventBus.emit(
+                                            'cloud-inventory-refresh',
+                                            {
+                                                notification: true,
+                                                ignoreCaseInName,
+                                            }
+                                        );
                                     }}
                                 />
                             </Tooltip>
@@ -303,10 +339,22 @@ const LeftSide = () => {
                     >
                         <InventoryTreeMenuLocal />
                     </div>
-                    <div style={{ display: selectedTree === 'cloud' ? 'flex' : 'none', flexDirection: 'column' }}>
-                        {cloudInventory.length > 0 && <InventoryTreeMenuCloud />}
+                    <div
+                        style={{
+                            display: selectedTree === 'cloud' ? 'flex' : 'none',
+                            flexDirection: 'column',
+                        }}
+                    >
+                        {cloudInventory.length > 0 && (
+                            <InventoryTreeMenuCloud />
+                        )}
                     </div>
-                    <div style={{ display: selectedTree === 'cloud' ? 'flex' : 'none', flexDirection: 'column' }}>
+                    <div
+                        style={{
+                            display: selectedTree === 'cloud' ? 'flex' : 'none',
+                            flexDirection: 'column',
+                        }}
+                    >
                         {isOpenOrgFilterMenu && (
                             <OrgFilterMenu
                                 isOpen={isOpenOrgFilterMenu}

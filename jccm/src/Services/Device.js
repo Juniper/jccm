@@ -1,4 +1,5 @@
 const { Client } = require('ssh2');
+import { net } from 'electron';
 import xml2js from 'xml2js';
 
 const StatusErrorMessages = {
@@ -192,7 +193,8 @@ function processCommandsStandalone(
                 stream.on('data', (data) => onDataReceived(data));
                 stream.stderr.on('data', (data) => onDataReceived(data, true));
                 stream.on('close', () => {
-                    const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
+                    // const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
+                    const regex = /^<rpc-reply[\s\S]*?<\/rpc-reply>$/gim;
                     let match;
                     while ((match = regex.exec(allCommandsOutput)) !== null) {
                         results.push(match[0]);
@@ -365,6 +367,7 @@ function processCommandsProxy(
                 const patterns = [
                     `^${config.username}@${config.host}: (.+)$`,
                     `^ssh: connect to host ${config.host} port ${config.port}: (.+)$`,
+                    `^kex_exchange_identification: read: (.+)$`,
                 ];
 
                 patterns.forEach((pattern) => {
@@ -413,6 +416,7 @@ function processCommandsProxy(
                                     ? `${cmd} | display xml | no-more\n`
                                     : `${cmd}\n`;
                             stream.write(currentCommand);
+                            // console.log('>>> currentCommand:', currentCommand);
                             return;
                     }
                 }
@@ -444,7 +448,9 @@ function processCommandsProxy(
                     if (!sshClientError) {
                         // console.log('>>> all commands output:', allCommandsOutput);
 
-                        const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
+                        // const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
+                        const regex = /^<rpc-reply[\s\S]*?<\/rpc-reply>$/gim;
+
                         let match;
                         while (
                             (match = regex.exec(allCommandsOutput)) !== null
@@ -710,6 +716,104 @@ export const commitJunosSetConfig = async (
     } catch (error) {
         console.error(
             `commitJunosSetConfig Error(${address}:${port}): ${JSON.stringify(
+                error
+            )}`
+        );
+        throw error;
+    }
+};
+
+export const getDeviceNetworkCondition = async (
+    address,
+    port,
+    username,
+    password,
+    timeout,
+    bastionHost = {},
+    termServer = 'oc-term.mistsys.net',
+    termPort = 2200
+) => {
+    const commands = [
+        `start shell sh command "printf '<rpc-reply>\\n<curl-output>\\n\\n'; printf '\\n' | curl -v telnet://${termServer}:${termPort} --connect-timeout 3 --max-time 3; printf '\\n\\n</curl-output>\\n</rpc-reply>\\n'"`,
+        'exit',
+    ];
+
+    if (username === 'root') commands.unshift('cli');
+
+    const sshConfig = {
+        host: address,
+        port,
+        username,
+        password,
+        readyTimeout: timeout,
+    };
+
+    try {
+        const results = await processCommands(
+            commands,
+            sshConfig,
+            bastionHost,
+            5000
+        );
+
+        if (results.status === 'success') {
+            const parser = new xml2js.Parser({ explicitArray: false }); // Consider setting explicitArray to false to simplify the structure
+            const networkCondition = {
+                dns: false,
+                access: false,
+                route: false,
+                message: '',
+            };
+            let rpcReply;
+
+            for (const result of results.data) {
+                rpcReply = getRpcReply('curl-output', result);
+
+                if (rpcReply !== null) {
+                    if (rpcReply.includes('* Connected to')) {
+                        networkCondition.message = `Connection to ${termServer}:${termPort} verified successfully.`;
+                        networkCondition.dns = true;
+                        networkCondition.access = true;
+                        networkCondition.route = true;
+                    } else if (rpcReply.includes('* Could not resolve host')) {
+                        networkCondition.message = `DNS resolution failed for ${termServer}.`;
+                        networkCondition.dns = false;
+                        networkCondition.access = false;
+                        networkCondition.route = false;
+                    } else if (rpcReply.includes('* Connection timed out')) {
+                        networkCondition.message = `Access to ${termServer}:${termPort} timed out.`;
+                        networkCondition.dns = true;
+                        networkCondition.access = false;
+                        networkCondition.route = true;
+                    } else if (rpcReply.includes('No route to host')) {
+                        networkCondition.message = `No route to host: ${termServer}.`;
+                        networkCondition.dns = true;
+                        networkCondition.access = false;
+                        networkCondition.route = false;
+                    } else if (rpcReply.includes('Operation not permitted')) {
+                        networkCondition.message = `Access to ${termServer}:${termPort} was refused.`;
+                        networkCondition.dns = true;
+                        networkCondition.access = false;
+                        networkCondition.route = true;
+                    } else {
+                        networkCondition.message = `Unknown network issue for ${termServer}:${termPort}.`;
+                        networkCondition.dns = true;
+                        networkCondition.access = false;
+                        networkCondition.route = true;
+                    }
+                }
+            }
+
+            return networkCondition;
+        } else {
+            console.error(
+                `getDeviceNetworkCondition Error(${address}:${port}) type 1: status: ${results.status} message: ${results.message}`
+            );
+            throw results;
+        }
+    } catch (error) {
+        console.error(
+            `getDeviceNetworkCondition Error(${address}:${port}): ${JSON.stringify(
                 error
             )}`
         );

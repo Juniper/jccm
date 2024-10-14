@@ -47,6 +47,7 @@ import {
     commitJunosSetConfig,
     executeJunosCommand,
     getDeviceFacts,
+    getDeviceNetworkCondition,
 } from './Device';
 const sshSessions = {};
 
@@ -629,13 +630,12 @@ export const setupApiHandlers = () => {
             if (response.status === 'error') {
                 return { deviceModels: [] };
             }
-            return { deviceModels: response.deviceModels  };
+            return { deviceModels: response.deviceModels };
         } catch (error) {
             console.log('main: device-models: error:', error);
             return { deviceModels: [] };
         }
     });
-
 
     ipcMain.handle('saWhoamiUser', async (event) => {
         console.log('main: saWhoamiUser');
@@ -1167,4 +1167,37 @@ export const setupApiHandlers = () => {
             electronBuildId: process.versions.electronBuildId || 'Unknown',
         };
     });
+
+    ipcMain.handle('get-device-network-condition', async (event, args) => {
+        console.log('main: saGetDeviceNetworkCondition');
+
+        try {
+            const {
+                address,
+                port,
+                username,
+                password,
+                timeout,
+                bastionHost,
+                termServer,
+                termPort,
+            } = args;
+
+            const reply = await getDeviceNetworkCondition(
+                address,
+                port,
+                username,
+                password,
+                timeout,
+                bastionHost,
+                termServer,
+                termPort,
+            );
+
+            return { networkConditionCollect: true, reply };
+        } catch (error) {
+            return { networkConditionCollect: false, reply: error };
+        }
+    });
+
 };

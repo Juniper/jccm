@@ -33,6 +33,8 @@ export const MainEventProcessor = () => {
         useStore();
     const { currentActiveThemeName, setCurrentActiveThemeName } = useStore();
     const { deviceModels, supportedDeviceModels, setDeviceModels } = useStore();
+    const { cleanUpIsTesting, cleanUpDeviceNetworkCondition } = useStore();
+    const { resetDeviceNetworkConditionAll, resetIsTestingAll } = useStore();
 
     const userRef = useRef(user);
     const isUserLoggedInRef = useRef(isUserLoggedIn);
@@ -248,6 +250,18 @@ export const MainEventProcessor = () => {
             }
         };
 
+        const handleDeviceNetworkConditionCheckRefresh = async () => {
+            console.log('Event: "device-network-access-check-refresh"');
+            cleanUpIsTesting();
+            cleanUpDeviceNetworkCondition();
+        };
+
+        const handleDeviceNetworkConditionCheckReset = async () => {
+            console.log('Event: "device-network-access-check-reset"');
+            resetIsTestingAll();
+            resetDeviceNetworkConditionAll();  
+        };
+
         eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
@@ -256,6 +270,8 @@ export const MainEventProcessor = () => {
         eventBus.on('device-facts-refresh', handleDeviceFactsRefresh);
         eventBus.on('device-facts-cleanup', handleDeviceFactsCleanup);
         eventBus.on('device-models-refresh', handleDeviceModelsRefresh);
+        eventBus.on('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
+        eventBus.on('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
 
         return () => {
             eventBus.off(
@@ -272,6 +288,8 @@ export const MainEventProcessor = () => {
             eventBus.off('device-facts-refresh', handleDeviceFactsRefresh);
             eventBus.off('device-facts-cleanup', handleDeviceFactsCleanup);
             eventBus.off('device-models-refresh', handleDeviceModelsRefresh);
+            eventBus.off('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
+            eventBus.off('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
         };
     }, []);
 
