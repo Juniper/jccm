@@ -42,6 +42,15 @@ module.exports = {
             },
         },
         {
+            name: '@electron-forge/maker-zip',
+            platforms: ['darwin'],
+            config: {
+                icon: path.join(__dirname, 'assets/icons/AppIcon.icns'), // Icon for macOS DMG
+                format: 'ULFO', // Optional: Customize DMG format
+                overwrite: true,
+            },
+        },        
+        {
             name: '@electron-forge/maker-squirrel',
             config: {
                 iconUrl: `file://${path.resolve(__dirname, 'assets/icons/AppIcon.ico')}`, // Local file URL for Windows
