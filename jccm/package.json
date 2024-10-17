@@ -3,15 +3,6 @@
     "productName": "Juniper Cloud Connection Manager",
     "description": "Juniper Cloud Connection Manager",
     "version": "1.2.3",
-    "build": {
-        "publish": [
-            {
-                "provider": "github",
-                "owner": "simonrho",
-                "repo": "juniper-jccm"
-            }
-        ]
-    },
     "main": ".webpack/main",
     "scripts": {
         "start": "pkill -9 node; nodemon --watch ./src --ext js,json --ignore ./src/Frontend/ --exec 'electron-forge start'",
@@ -92,6 +83,7 @@
         "socket.io-client": "^4.7.5",
         "ssh2": "^1.15.0",
         "tough-cookie": "^4.1.4",
+        "update-electron-app": "^3.0.0",
         "uuid": "^9.0.1",
         "validator": "^13.12.0",
         "xlsx": "^0.18.5",

@@ -10,6 +10,7 @@ let archOption;
 
 module.exports = {
     packagerConfig: {
+        appBundleId: 'net.juniper.juniper-cloud-connection-manager',
         asar: true,
         icon: './assets/icons/AppIcon', // Path without the extension
         osxSign: {
@@ -49,11 +50,14 @@ module.exports = {
                 format: 'ULFO', // Optional: Customize DMG format
                 overwrite: true,
             },
-        },        
+        },
         {
             name: '@electron-forge/maker-squirrel',
             config: {
-                iconUrl: `file://${path.resolve(__dirname, 'assets/icons/AppIcon.ico')}`, // Local file URL for Windows
+                iconUrl: `file://${path.resolve(
+                    __dirname,
+                    'assets/icons/AppIcon.ico'
+                )}`, // Local file URL for Windows
                 setupIcon: path.join(__dirname, 'assets/icons/AppIcon.ico'), // Path to the .ico file for Windows
                 overwrite: true,
                 out: path.join(__dirname, 'out/make/windows-x64'),
@@ -95,8 +99,12 @@ module.exports = {
             archOption = arch ? arch : process.arch;
         },
         preMake: async (config) => {
-            const makerPkg = config.makers.find((maker) => maker.name === '@electron-forge/maker-pkg');
-            const makerDmg = config.makers.find((maker) => maker.name === '@electron-forge/maker-dmg');
+            const makerPkg = config.makers.find(
+                (maker) => maker.name === '@electron-forge/maker-pkg'
+            );
+            const makerDmg = config.makers.find(
+                (maker) => maker.name === '@electron-forge/maker-dmg'
+            );
 
             const name = `jccm-darwin-${archOption}`;
 
