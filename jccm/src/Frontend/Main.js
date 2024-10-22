@@ -268,34 +268,33 @@ export const Main = () => {
                                     <MenuItem onClick={() => setIsOpenAbout(true)}>
                                         <Text style={{ fontSize: '12px' }}>About JCCM</Text>
                                     </MenuItem>
-
-                                    {isAutoUpdateSupport && <MenuDivider />}
-
-                                    {isAutoUpdateSupport && updateDownloaded ? (
-                                        <MenuItem onClick={async () => await eventBus.emit('quit-and-install')}>
-                                            <Text style={{ fontSize: '12px' }}>Restart to Apply Update</Text>
-                                        </MenuItem>
-                                    ) : checkingForUpdate ? (
-                                        <MenuItem disabled>
-                                            <Text style={{ fontSize: '12px' }}>Downloading Update...</Text>
-                                        </MenuItem>
-                                    ) : (
-                                        <MenuItem onClick={() => setIsOpenCheckUpdates(true)}>
-                                            <Text style={{ fontSize: '12px' }}>Check for Updates</Text>
-                                        </MenuItem>
+                                    {isAutoUpdateSupport && (
+                                        <>
+                                            <MenuDivider />
+                                            {updateDownloaded ? (
+                                                <MenuItem onClick={async () => await eventBus.emit('quit-and-install')}>
+                                                    <Text style={{ fontSize: 12 }}>Restart to Apply Update</Text>
+                                                </MenuItem>
+                                            ) : checkingForUpdate ? (
+                                                <MenuItem disabled>
+                                                    <Text style={{ fontSize: 12 }}>Downloading Update...</Text>
+                                                </MenuItem>
+                                            ) : (
+                                                <MenuItem onClick={() => setIsOpenCheckUpdates(true)}>
+                                                    <Text style={{ fontSize: 12 }}>Check for Updates</Text>
+                                                </MenuItem>
+                                            )}
+                                        </>
                                     )}
-
                                     <MenuDivider />
                                     <MenuItem onClick={() => setIsOpenResetAppData(true)}>
                                         <Tooltip content={'This will clear all data and restart the app.'}>
                                             <Text style={{ fontSize: 12 }}>Reset App Data</Text>
                                         </Tooltip>
                                     </MenuItem>
-
                                     <MenuItem onClick={() => setIsOpenRestartApp(true)}>
                                         <Text style={{ fontSize: '12px' }}>Restart</Text>
                                     </MenuItem>
-
                                     <MenuItem onClick={() => setIsOpenQuitApp(true)}>
                                         <Text style={{ fontSize: '12px' }}>Quit</Text>
                                     </MenuItem>
@@ -549,7 +548,7 @@ export const Main = () => {
                 <ConfirmWindow
                     isOpen={isOpenRestartApp}
                     onClose={() => setIsOpenRestartApp(false)}
-                    message="The application will be restarted. Do you want to continue?"
+                    message='The application will be restarted. Do you want to continue?'
                     onConfirm={async () => await eventBus.emit('restart-app')}
                 />
             )}
