@@ -185,19 +185,19 @@ jobs:
                   password: ${{ secrets.ES_PASSWORD }}
                   credential_id: ${{ secrets.ES_CREDENTIAL_ID }}
                   totp_secret: ${{ secrets.ES_TOTP_SECRET }}
-                  dir_path: jccm/out/make/squirrel.windows/x64/
+                  dir_path: ${GITHUB_WORKSPACE}/jccm/out/make/squirrel.windows/x64
                   malware_block: false
                   override: true
 
             - name: Recreate RELEASES File
               shell: cmd
               run: |
-                  del jccm/out/make/squirrel.windows/x64/RELEASES
-                  for %I in (jccm/out/make/squirrel.windows/x64/*.nupkg) do (
+                  del jccm\out\make/\squirrel.windows\x64\RELEASES
+                  for %I in (jccm\out\make\squirrel.windows\x64\*.nupkg) do (
                     set HASH=%~nI
                     certutil -hashfile "%I" SHA1 | findstr /v "hash" > hash.txt
                     set /p HASH=<hash.txt
-                    echo %HASH% %~nI %~zI >> jccm/out/make/squirrel.windows/x64/RELEASES
+                    echo %HASH% %~nI %~zI >> jccm\out\make\squirrel.windows\x64\RELEASES
                   )
 
             - name: Upload windows artifacts
