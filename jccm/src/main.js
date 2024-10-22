@@ -1,8 +1,9 @@
 import { app, BrowserWindow, screen, dialog } from 'electron';
-import { setupApiHandlers } from './Services/ApiServer'; // Import the API handlers
 import path from 'path';
 import os from 'os';
 
+import { setupApiHandlers } from './Services/ApiServer'; // Import the API handlers
+import { setupAutoUpdate } from './Services/AutoUpdate'; // Import the auto-update setup function
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -58,7 +59,8 @@ app.whenReady().then(() => {
     setupApiHandlers(); // Set up IPC handlers
     createWindow();
 
-
+    setupAutoUpdate(); // Set up auto-update
+    
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     app.on('activate', () => {

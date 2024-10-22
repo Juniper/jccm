@@ -5,8 +5,16 @@ import {
     Tooltip,
     Text,
     Portal,
+    Menu,
+    MenuTrigger,
+    MenuList,
+    MenuItem,
+    MenuPopover,
+    MenuItemRadio,
+    MenuGroup,
+    MenuGroupHeader,
+    MenuDivider,
     tokens,
-    useFluent,
 } from '@fluentui/react-components';
 import _ from 'lodash';
 
@@ -38,28 +46,19 @@ import TerminalLayout from './Components/Terminals/TerminalLayout';
 import eventBus from './Common/eventBus';
 import { ConsoleWindow } from './ConsoleWindow';
 import { AboutWindow } from './AboutWindow';
+import { VersionUpdateCheckNotification } from './VersionUpdateCheckNotification';
 
 const CloudAdd = bundleIcon(CloudAddFilled, CloudAddRegular);
-const ArrowCircleRight = bundleIcon(
-    ArrowCircleRightRegular,
-    ArrowCircleRightRegular
-);
+const ArrowCircleRight = bundleIcon(ArrowCircleRightRegular, ArrowCircleRightRegular);
 const LeafThree = bundleIcon(LeafThreeFilled, LeafThreeRegular);
-const PersonQuestionMark = bundleIcon(
-    PersonQuestionMarkFilled,
-    PersonQuestionMarkRegular
-);
+const PersonQuestionMark = bundleIcon(PersonQuestionMarkFilled, PersonQuestionMarkRegular);
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const Main = () => {
     const { isUserLoggedIn } = useStore();
-    const {
-        consoleWindowOpen,
-        consoleWindowWidth,
-        setConsoleWindowWidth,
-        getConsoleWindowWidth,
-    } = useStore();
+    const { consoleWindowOpen, consoleWindowWidth, setConsoleWindowWidth, getConsoleWindowWidth } = useStore();
+    const { checkingForUpdate, updateDownloaded } = useStore();
 
     const containerRef = useRef(null);
     const leftRef = useRef(null);
@@ -69,18 +68,16 @@ export const Main = () => {
 
     const [isLeftOpen, setIsLeftOpen] = useState(true);
     const [leftWidth, setLeftWidth] = useState(LeftSideSpaceWidth);
-    const [leftResizerColor, setLeftResizerColor] = useState(
-        tokens.colorNeutralBackground1Pressed
-    );
+    const [leftResizerColor, setLeftResizerColor] = useState(tokens.colorNeutralBackground1Pressed);
     const [isLeftResizerHovered, setIsLeftResizerHovered] = useState(false);
     const [isLeftResizerActive, setIsLeftResizerActive] = useState(false);
     const resizeColorTimeoutRef = useRef(null); // Ref to store the timeout ID
 
     const [isOpenAbout, setIsOpenAbout] = useState(false);
+    const [isOpenCheckUpdates, setIsOpenCheckUpdates] = useState(false);
 
-    const [centerWidth, setCenterWidth] = useState(
-        `calc(100% - ${LeftSideSpaceWidth}px)`
-    );
+    const [centerWidth, setCenterWidth] = useState(`calc(100% - ${LeftSideSpaceWidth}px)`);
+    const { isAutoUpdateSupport } = useStore();
 
     const leftMinWidth = 250;
     const leftMaxWidth = 900;
@@ -96,9 +93,21 @@ export const Main = () => {
             await eventBus.emit('local-inventory-refresh');
             await eventBus.emit('device-facts-refresh');
             await eventBus.emit('device-models-refresh');
+            await eventBus.emit('check-for-updates'); // Check for updates on startup
         };
 
         generateEvents();
+    }, []);
+
+    useEffect(() => {
+        // Set interval to check for updates every hour
+        const intervalId = setInterval(async () => {
+            await eventBus.emit('check-for-updates');
+        }, 60 * 60 * 1000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
     }, []);
 
     const handleLeftMouseMove = (e) => {
@@ -137,8 +146,7 @@ export const Main = () => {
 
     const handleMouseLeave = () => {
         setIsLeftResizerHovered(false);
-        if (!isLeftResizerActive)
-            setLeftResizerColor(tokens.colorNeutralBackground1Pressed);
+        if (!isLeftResizerActive) setLeftResizerColor(tokens.colorNeutralBackground1Pressed);
         clearTimeout(resizeColorTimeoutRef.current);
     };
 
@@ -246,14 +254,62 @@ export const Main = () => {
                             marginLeft: '10px',
                         }}
                     >
-                        <Button
-                            icon={<LeafThree />}
-                            appearance='transparent'
-                            shape='circular'
-                            size='large'
-                            onClick={() => setIsOpenAbout(true)}
-                        />
+                        <Menu>
+                            <MenuTrigger>
+                                <Button icon={<LeafThree />} appearance='transparent' shape='circular' size='large' />
+                            </MenuTrigger>
+                            <MenuPopover>
+                                <MenuList>
+                                    <MenuItem onClick={() => setIsOpenAbout(true)}>
+                                        <Text style={{ fontSize: '12px' }}>About JCCM</Text>
+                                    </MenuItem>
+
+                                    {isAutoUpdateSupport && updateDownloaded ? (
+                                        <MenuItem onClick={async () => await eventBus.emit('quit-and-install')}>
+                                            <Text style={{ fontSize: '12px' }}>Restart to Apply Update</Text>
+                                        </MenuItem>
+                                    ) : checkingForUpdate ? (
+                                        <MenuItem disabled>
+                                            <Text style={{ fontSize: '12px' }}>Downloading Update...</Text>
+                                        </MenuItem>
+                                    ) : (
+                                        <MenuItem onClick={() => setIsOpenCheckUpdates(true)}>
+                                            <Text style={{ fontSize: '12px' }}>Check for Updates</Text>
+                                        </MenuItem>
+                                    )}
+                                </MenuList>
+                            </MenuPopover>
+                        </Menu>
                     </div>
+                    {updateDownloaded && (
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                marginLeft: '10px',
+                                marginRight: '10px',
+                            }}
+                        >
+                            <Tooltip
+                                content='A new update is available. Click the button to restart and apply the latest version.'
+                                relationship='label'
+                                withArrow
+                                positioning='after'
+                            >
+                                <Button
+                                    shape='circular'
+                                    appearance='primary'
+                                    size='small'
+                                    onClick={async () => await eventBus.emit('quit-and-install')}
+                                    style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                >
+                                    Restart to Update
+                                </Button>
+                            </Tooltip>
+                        </div>
+                    )}
                     <div
                         style={{
                             display: 'flex',
@@ -311,9 +367,7 @@ export const Main = () => {
                                         <Login
                                             isOpen={isUserLoginCardVisible}
                                             onClose={() => {
-                                                setIsUserLoginCardVisible(
-                                                    false
-                                                );
+                                                setIsUserLoginCardVisible(false);
                                             }}
                                         />
                                     </div>
@@ -345,14 +399,7 @@ export const Main = () => {
                     >
                         <LeftSide />
                     </div>
-                    <Tooltip
-                        content={
-                            isLeftOpen
-                                ? 'Resize Left Sidebar'
-                                : 'Open Left Sidebar'
-                        }
-                        relationship='label'
-                    >
+                    <Tooltip content={isLeftOpen ? 'Resize Left Sidebar' : 'Open Left Sidebar'} relationship='label'>
                         {isLeftOpen ? (
                             <div
                                 onMouseDown={handleLeftMouseDown}
@@ -364,16 +411,11 @@ export const Main = () => {
                                     flexDirection: 'column',
                                     justifyContent: 'center',
                                     alignItems: 'center',
-                                    width: `${
-                                        isLeftOpen
-                                            ? resizeKnobWidthInOpen
-                                            : resizeKnobWidthInClose
-                                    }px`,
+                                    width: `${isLeftOpen ? resizeKnobWidthInOpen : resizeKnobWidthInClose}px`,
                                     height: '100%',
                                     cursor: 'ew-resize',
                                     backgroundColor:
-                                        isLeftResizerHovered ||
-                                        isLeftResizerActive
+                                        isLeftResizerHovered || isLeftResizerActive
                                             ? leftResizerColor
                                             : tokens.colorNeutralBackground1Pressed,
                                 }}
@@ -386,8 +428,7 @@ export const Main = () => {
                                     justifyContent: 'flex-start',
                                     alignItems: 'center',
                                     height: '100%',
-                                    backgroundColor:
-                                        tokens.colorNeutralBackground1Selected,
+                                    backgroundColor: tokens.colorNeutralBackground1Selected,
                                 }}
                             >
                                 <Button
@@ -397,9 +438,7 @@ export const Main = () => {
                                     icon={<ArrowCircleRight />}
                                     onClick={() => {
                                         setIsLeftOpen(true);
-                                        setCenterWidth(
-                                            `calc(100% - ${leftWidth}px)`
-                                        );
+                                        setCenterWidth(`calc(100% - ${leftWidth}px)`);
                                     }}
                                 />
                             </div>
@@ -467,10 +506,13 @@ export const Main = () => {
                     }}
                 />
             </div>
-            {isOpenAbout && (
-                <AboutWindow
-                    isOpen={isOpenAbout}
-                    onClose={() => setIsOpenAbout(false)}
+            {isOpenAbout && <AboutWindow isOpen={isOpenAbout} onClose={() => setIsOpenAbout(false)} />}
+            {isOpenCheckUpdates && (
+                <VersionUpdateCheckNotification
+                    isOpen={isOpenCheckUpdates}
+                    onClose={() => {
+                        setIsOpenCheckUpdates(false);
+                    }}
                 />
             )}
         </div>

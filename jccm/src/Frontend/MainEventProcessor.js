@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Text, Toast, ToastTitle, ToastBody } from '@fluentui/react-components';
-import _ from 'lodash';
+import _, { set } from 'lodash';
 
 import { useNotify } from './Common/NotificationContext';
 import eventBus from './Common/eventBus';
@@ -13,28 +13,17 @@ export const MainEventProcessor = () => {
 
     const { importSettings, settings } = useStore();
 
-    const {
-        isUserLoggedIn,
-        setIsUserLoggedIn,
-        user,
-        setUser,
-        setIsInventoryLoading,
-    } = useStore();
+    const { isUserLoggedIn, setIsUserLoggedIn, user, setUser, setIsInventoryLoading } = useStore();
     const { inventory, setInventory } = useStore();
-    const { cloudInventory, setCloudInventory,  } = useStore();
-    const {
-        deviceFacts,
-        setDeviceFactsAll,
-        cleanUpDeviceFacts,
-        clearIsChecking,
-        zeroDeviceFacts,
-    } = useStore();
-    const { cloudInventoryFilterApplied, setCloudInventoryFilterApplied } =
-        useStore();
+    const { cloudInventory, setCloudInventory } = useStore();
+    const { deviceFacts, setDeviceFactsAll, cleanUpDeviceFacts, clearIsChecking, zeroDeviceFacts } = useStore();
+    const { cloudInventoryFilterApplied, setCloudInventoryFilterApplied } = useStore();
     const { currentActiveThemeName, setCurrentActiveThemeName } = useStore();
     const { deviceModels, supportedDeviceModels, setDeviceModels } = useStore();
     const { cleanUpIsTesting, cleanUpDeviceNetworkCondition } = useStore();
     const { resetDeviceNetworkConditionAll, resetIsTestingAll } = useStore();
+    const { setCheckingForUpdate, setUpdateDownloaded } = useStore();
+    const { setIsAutoUpdateSupport } = useStore();
 
     const userRef = useRef(user);
     const isUserLoggedInRef = useRef(isUserLoggedIn);
@@ -72,9 +61,44 @@ export const MainEventProcessor = () => {
     }, [currentActiveThemeName]);
 
     useEffect(() => {
-        const handleLocalInventoryRefresh = async ({
-            notification = false,
-        } = {}) => {
+        const onCheckingForUpdate = () => {
+            console.log('Update check initiated: Downloading new update...');
+            setCheckingForUpdate(true);
+        };
+
+        const onUpdateDownloaded = () => {
+            console.log('update-downloaded');
+            setUpdateDownloaded(true);
+        };
+
+        const onAutoUpdateError = (data) => {
+            console.log('auto-update-error: ', data);
+            setCheckingForUpdate(false);
+            setUpdateDownloaded(false);
+            notify(
+                <Toast>
+                    <ToastTitle>Auto Update Failed</ToastTitle>
+                    <ToastBody subtitle='An error occurred during the update.'>
+                        <Text>{data?.error?.message || 'Please try again later.'}</Text>
+                    </ToastBody>
+                </Toast>,
+                { intent: 'error' }
+            );
+        };
+
+        window.electronAPI.checkingForUpdate(onCheckingForUpdate);
+        window.electronAPI.updateDownloaded(onUpdateDownloaded);
+        window.electronAPI.autoUpdateError(onAutoUpdateError);
+
+        return () => {
+            window.electronAPI.off('checking-for-update', onCheckingForUpdate);
+            window.electronAPI.off('update-downloaded', onUpdateDownloaded);
+            window.electronAPI.off('auto-update-error', onAutoUpdateError);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleLocalInventoryRefresh = async ({ notification = false } = {}) => {
             // console.log('Event: "local-inventory-refresh"');
             const response = await electronAPI.saGetLocalInventory();
             if (response.localInventory) {
@@ -87,10 +111,7 @@ export const MainEventProcessor = () => {
                         <Toast>
                             <ToastTitle>Local Inventory Refreshed</ToastTitle>
                             <ToastBody subtitle='Update Successful'>
-                                <Text>
-                                    The local inventory has been successfully
-                                    updated.
-                                </Text>
+                                <Text>The local inventory has been successfully updated.</Text>
                             </ToastBody>
                         </Toast>,
                         { intent: 'success' }
@@ -100,11 +121,7 @@ export const MainEventProcessor = () => {
         };
 
         const handleUserSessionCheck = async ({ message = '' } = {}) => {
-            console.log(
-                `Event: "user-session-check" ${
-                    message.length > 0 ? `-> "${message}"` : ''
-                }`
-            );
+            console.log(`Event: "user-session-check" ${message.length > 0 ? `-> "${message}"` : ''}`);
             try {
                 const data = await electronAPI.saWhoamiUser();
 
@@ -114,9 +131,7 @@ export const MainEventProcessor = () => {
                         setIsUserLoggedIn(true);
                         await handleCloudInventoryRefresh({ force: true });
                     }
-                    if (
-                        currentActiveThemeNameRef.current !== data?.user?.theme
-                    ) {
+                    if (currentActiveThemeNameRef.current !== data?.user?.theme) {
                         setCurrentActiveThemeName(data.user.theme);
                     }
                 } else {
@@ -167,10 +182,7 @@ export const MainEventProcessor = () => {
                         <Toast>
                             <ToastTitle>Cloud Inventory Refreshed</ToastTitle>
                             <ToastBody subtitle='Update Successful'>
-                                <Text>
-                                    The cloud inventory has been successfully
-                                    updated.
-                                </Text>
+                                <Text>The cloud inventory has been successfully updated.</Text>
                             </ToastBody>
                         </Toast>,
                         { intent: 'success' } // Changed from 'warning' to 'success' to match the positive nature of the message
@@ -180,13 +192,9 @@ export const MainEventProcessor = () => {
                 if (notification) {
                     notify(
                         <Toast>
-                            <ToastTitle>
-                                Cloud Inventory Refresh Failed
-                            </ToastTitle>
+                            <ToastTitle>Cloud Inventory Refresh Failed</ToastTitle>
                             <ToastBody subtitle='Update Error'>
-                                <Text>
-                                    The cloud inventory update was unsuccessful.
-                                </Text>
+                                <Text>The cloud inventory update was unsuccessful.</Text>
                             </ToastBody>
                         </Toast>,
                         { intent: 'error' }
@@ -199,9 +207,7 @@ export const MainEventProcessor = () => {
             setCloudInventory([]);
         };
 
-        const handleResetDeviceFacts = async ({
-            notification = false,
-        } = {}) => {
+        const handleResetDeviceFacts = async ({ notification = false } = {}) => {
             console.log('Event: "reset-device-facts"');
 
             clearIsChecking();
@@ -213,9 +219,7 @@ export const MainEventProcessor = () => {
                     <Toast>
                         <ToastTitle>Device facts Reset</ToastTitle>
                         <ToastBody subtitle='Device facts'>
-                            <Text>
-                                The Device facts has been successfully reset.
-                            </Text>
+                            <Text>The Device facts has been successfully reset.</Text>
                         </ToastBody>
                     </Toast>,
                     { intent: 'success' }
@@ -259,7 +263,39 @@ export const MainEventProcessor = () => {
         const handleDeviceNetworkConditionCheckReset = async () => {
             console.log('Event: "device-network-access-check-reset"');
             resetIsTestingAll();
-            resetDeviceNetworkConditionAll();  
+            resetDeviceNetworkConditionAll();
+        };
+
+        const handleCheckForUpdates = async () => {
+            console.log('Event: "check-for-updates"');
+
+            try {
+                const autoUpdateSupport = await window.electronAPI.checkForAutoUpdateSupport();
+                setIsAutoUpdateSupport(autoUpdateSupport);
+
+                if (!autoUpdateSupport) {
+                    console.warn('Auto-update not supported on this platform.');
+                    return;
+                }
+
+                const result = await window.electronAPI.checkForUpdates();
+                console.log('check-for-updates result:', result);
+                setCheckingForUpdate(result);
+            } catch (error) {
+                console.error('Error during update process:', error);
+                setCheckingForUpdate(false);
+                setUpdateDownloaded(false);
+                setIsAutoUpdateSupport(false);
+            }
+        };
+
+        const handleQuitAndInstall = async () => {
+            console.log('Event: "quit-and-install"');
+            try {
+                await electronAPI.quitAndInstall();
+            } catch (error) {
+                console.error('quit-and-install error:', error);
+            }
         };
 
         eventBus.on('user-session-check', handleUserSessionCheck);
@@ -272,16 +308,12 @@ export const MainEventProcessor = () => {
         eventBus.on('device-models-refresh', handleDeviceModelsRefresh);
         eventBus.on('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
         eventBus.on('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
+        eventBus.on('check-for-updates', handleCheckForUpdates);
+        eventBus.on('quit-and-install', handleQuitAndInstall);
 
         return () => {
-            eventBus.off(
-                'local-inventory-refresh',
-                handleLocalInventoryRefresh
-            );
-            eventBus.off(
-                'cloud-inventory-refresh',
-                handleCloudInventoryRefresh
-            );
+            eventBus.off('local-inventory-refresh', handleLocalInventoryRefresh);
+            eventBus.off('cloud-inventory-refresh', handleCloudInventoryRefresh);
             eventBus.off('user-session-check', handleUserSessionCheck);
             eventBus.off('cloud-inventory-reset', handleCloudInventoryReset);
             eventBus.off('reset-device-facts', handleResetDeviceFacts);
@@ -290,6 +322,8 @@ export const MainEventProcessor = () => {
             eventBus.off('device-models-refresh', handleDeviceModelsRefresh);
             eventBus.off('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
             eventBus.off('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
+            eventBus.off('check-for-updates', handleCheckForUpdates);
+            eventBus.off('quit-and-install', handleQuitAndInstall);
         };
     }, []);
 

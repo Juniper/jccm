@@ -71,5 +71,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('onLogMessage', (event, args) => callback(args)),
     getAppInfo: () => ipcRenderer.invoke('get-app-info'),
 
-    saGetDeviceNetworkCondition: (args) => ipcRenderer.invoke('get-device-network-condition', args),
+    saGetDeviceNetworkCondition: (args) =>
+        ipcRenderer.invoke('get-device-network-condition', args),
+
+    checkForAutoUpdateSupport: () => ipcRenderer.invoke('check-for-auto-update-support'), // renderer -> main -> renderer
+
+    checkForUpdates: () => ipcRenderer.invoke('check-for-updates'), // renderer -> main -> renderer
+    quitAndInstall: () => ipcRenderer.send('quit-and-install'), // renderer -> main
+
+    checkingForUpdate: (callback) =>
+        ipcRenderer.on('checking-for-update', (event) => callback()), // main -> renderer
+    updateDownloaded: (callback) =>
+        ipcRenderer.on('update-downloaded', (event) => callback()), // main -> renderer
+    autoUpdateError: (callback) =>
+        ipcRenderer.on('auto-update-error', (event, args) => callback(args)), // main -> renderer
 });
