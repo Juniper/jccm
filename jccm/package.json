@@ -28,8 +28,10 @@
         "concurrently": "^8.2.2",
         "css-loader": "^6.0.0",
         "electron": "30.0.1",
+        "electron-squirrel-startup": "^1.0.1",
         "node-loader": "^2.0.0",
         "nodemon": "^3.1.0",
+        "squirrel": "^1.0.0",
         "stream-browserify": "^3.0.0",
         "style-loader": "^3.0.0",
         "svg-inline-loader": "^0.8.2"
@@ -56,7 +58,6 @@
         "cookie": "^0.6.0",
         "date-fns": "^3.6.0",
         "electron-reload": "^2.0.0-alpha.1",
-        "electron-squirrel-startup": "^1.0.0",
         "electron-titlebar-windows": "^3.0.0",
         "electron-updater": "^6.3.9",
         "express": "^4.19.2",

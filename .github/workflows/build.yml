@@ -9,6 +9,7 @@ on:
 jobs:
     build-macos:
         runs-on: macos-latest
+        timeout-minutes: 20
         env:
             APPLE_ID: ${{ secrets.APPLE_ID }}
             APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
@@ -156,6 +157,7 @@ jobs:
 
     build-windows:
         runs-on: windows-latest
+        timeout-minutes: 20
         steps:
             - uses: actions/checkout@v3
 
@@ -169,7 +171,8 @@ jobs:
               working-directory: ./jccm
 
             - name: Build and package (x64)
-              run: npm run make -- --platform=win32 --arch=x64
+              run: |
+                npm run make -- --platform=win32 --arch=x64
               working-directory: ./jccm
 
             - name: Sign Artifact with CodeSignTool
@@ -186,15 +189,24 @@ jobs:
                   # Overrides the input file after signing, if this parameter is set and no -output_dir_path parameter
                   override: true
 
+            - name: Create Release file
+              shell: cmd
+              run: |
+                npx squirrel --releasify out\make\squirrel.windows\x64\jccm-windows-x64-setup.exe
+                dir out\make\squirrel.windows\x64\
+              working-directory: .\jccm
+    
             - name: Upload windows artifacts
               uses: actions/upload-artifact@v3
               with:
                   name: windows-installers
                   path: |
                       ./jccm/out/make/squirrel.windows/x64/*.exe
+                      ./jccm/out/make/squirrel.windows/x64/RELEASES
 
     build-deb:
         runs-on: ubuntu-latest
+        timeout-minutes: 20
         env:
             DEBUG: electron-installer*
 
@@ -231,6 +243,7 @@ jobs:
 
     build-rpm:
         runs-on: ubuntu-latest
+        timeout-minutes: 20
         env:
             DEBUG: electron-installer*
 
@@ -271,6 +284,7 @@ jobs:
         needs: [build-macos, build-windows, build-deb, build-rpm]
 
         runs-on: ubuntu-latest
+        timeout-minutes: 20
         steps:
             - name: Check out repository
               uses: actions/checkout@v3
