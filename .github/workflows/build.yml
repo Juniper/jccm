@@ -173,6 +173,9 @@ jobs:
             - name: Build and package (x64)
               run: |
                   npm run make -- --platform=win32 --arch=x64
+                  dir out\make\squirrel.windows\x64\
+                  type out\make\squirrel.windows\x64\RELEASES
+
               working-directory: ./jccm
 
             - name: Sign Artifact with CodeSignTool
@@ -188,20 +191,6 @@ jobs:
                   malware_block: false
                   # Overrides the input file after signing, if this parameter is set and no -output_dir_path parameter
                   override: true
-
-            - name: Create Release file
-              shell: cmd
-              run: |
-                  echo "Checking if setup file exists..."
-                  if not exist out\make\squirrel.windows\x64\jccm-windows-x64-setup.exe (
-                    echo "Error: Setup file not found!" & exit 1
-                  )
-                  echo "Setup file found. Proceeding..."
-                  dir out\make\squirrel.windows\x64\
-                  npx squirrel --releasify out\make\squirrel.windows\x64\jccm-windows-x64-setup.exe
-                  echo "Files after releasify:"
-                  dir out\make\squirrel.windows\x64\
-              working-directory: .\jccm
 
             - name: Upload windows artifacts
               uses: actions/upload-artifact@v3
