@@ -192,7 +192,8 @@ jobs:
             - name: Create Release file
               shell: cmd
               run: |
-                npx squirrel --releasify out\make\squirrel.windows\x64\jccm-windows-x64-setup.exe
+                npm install squirrel --save-dev              
+                .\node_modules\.bin\squirrel --releasify out\make\squirrel.windows\x64\jccm-windows-x64-setup.exe
                 dir out\make\squirrel.windows\x64\
               working-directory: .\jccm
     
