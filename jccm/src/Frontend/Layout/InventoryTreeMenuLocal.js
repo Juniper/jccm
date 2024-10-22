@@ -1920,7 +1920,7 @@ const InventoryTreeMenuLocal = () => {
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             response = await getDeviceNetworkCondition(
-                { ...device, timeout: 5000 },
+                { ...device, timeout: 10000 },
                 bastionHost,
                 termServer,
                 termPort

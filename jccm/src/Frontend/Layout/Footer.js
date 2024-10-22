@@ -52,11 +52,11 @@ export default () => {
         setConsoleWindowOpen,
         deviceNetworkCondition,
         resetDeviceNetworkConditionAll,
+        supportedDeviceModels,
     } = useStore();
 
     const [isBastionHostEmpty, setIsBastionHostEmpty] = useState(false);
-    const [countOfOrgOrSiteUnmatched, setCountOfOrgOrSiteUnmatched] =
-        useState(0);
+    const [countOfOrgOrSiteUnmatched, setCountOfOrgOrSiteUnmatched] = useState(0);
 
     const countOfDeviceFacts = Object.keys(deviceFacts).length;
     const countOfAdoptedDevices = Object.values(deviceFacts).filter((fact) => {
@@ -73,10 +73,29 @@ export default () => {
     const deviceConditions = Object.values(deviceNetworkCondition);
     const countOfDeviceNetworkCondition = deviceConditions.length;
 
+    const deviceModelsValidation = settings?.deviceModelsValidation || false;
+
+    const validateDeviceModel = (deviceModel) => {
+        if (!deviceModelsValidation) return true;
+        if (!isUserLoggedIn) return true;
+        return deviceModel?.toUpperCase() in supportedDeviceModels;
+    };
+
     let countOfDnsIssue = 0;
     let countOfRouteIssue = 0;
     let countOfAccessIssue = 0;
     let countOfNoIssue = 0;
+
+    const { countOfInvalidModel, unsupportedModels } = Object.values(deviceFacts).reduce(
+        (acc, { systemInformation: { hardwareModel } = {} }) => {
+            if (!validateDeviceModel(hardwareModel)) {
+                acc.countOfInvalidModel++;
+                if (hardwareModel) acc.unsupportedModels.add(hardwareModel);
+            }
+            return acc;
+        },
+        { countOfInvalidModel: 0, unsupportedModels: new Set() }
+    );
 
     deviceConditions.forEach((device) => {
         if (device.dns === false) {
@@ -91,11 +110,7 @@ export default () => {
     });
 
     const countOfUnknownIssue =
-        countOfDeviceNetworkCondition -
-        countOfDnsIssue -
-        countOfRouteIssue -
-        countOfAccessIssue -
-        countOfNoIssue;
+        countOfDeviceNetworkCondition - countOfDnsIssue - countOfRouteIssue - countOfAccessIssue - countOfNoIssue;
 
     const doesSiteNameExist = (orgName, siteName) => {
         const org = cloudInventory.find((item) => item?.name === orgName);
@@ -142,37 +157,6 @@ export default () => {
         setConsoleWindowOpen(!consoleWindowOpen);
     };
 
-    const MessageAndCounter = ({
-        message,
-        color = tokens.colorNeutralForeground4,
-        backgroundColor = tokens.colorNeutralBackground1,
-        fontSize = '12px',
-        counterValue,
-    }) => {
-        return (
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    gap: '5px',
-                }}
-            >
-                <Text style={{ color, fontSize }}>{message}</Text>
-
-                <CounterBadge
-                    count={counterValue}
-                    // color='brand'
-                    size='small'
-                    showZero
-                    overflowCount={100000}
-                    style={{ fontSize, color, backgroundColor }}
-                />
-            </div>
-        );
-    };
-
     return (
         <div
             style={{
@@ -204,32 +188,53 @@ export default () => {
                         alignItems: 'center',
                     }}
                 >
-                    <Label
-                        size='small'
-                        style={{ color: tokens.colorNeutralForeground4 }}
-                    >
-                        Total Local Inventory Devices: {inventory.length}
+                    <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
+                        Total Local Inventory Device{inventory.length > 1 ? 's' : ''}: {inventory.length}
                     </Label>
-                    <Label
-                        size='small'
-                        style={{ color: tokens.colorNeutralForeground4 }}
-                    >
-                        Local Devices with Facts: {countOfDeviceFacts}
+                    <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
+                        Local Device{countOfDeviceFacts > 1 ? 's' : ''} with Facts: {countOfDeviceFacts}
                     </Label>
-                    <Label
-                        size='small'
-                        style={{ color: tokens.colorNeutralForeground4 }}
-                    >
-                        Adopted Devices: {countOfAdoptedDevices}
+                    <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
+                        Adopted Device{countOfAdoptedDevices > 1 ? 's' : ''}: {countOfAdoptedDevices}
                     </Label>
-                    {isUserLoggedIn && countOfOrgOrSiteUnmatched > 0 && (
-                        <Label
-                            size='small'
-                            style={{ color: tokens.colorNeutralForeground4 }}
-                        >
-                            Devices with unmatched organization or site:{' '}
-                            {countOfOrgOrSiteUnmatched}
-                        </Label>
+                    {isUserLoggedIn && (
+                        <>
+                            {countOfInvalidModel > 0 && (
+                                <Tooltip
+                                    content={
+                                        <div
+                                            style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: `repeat(${Math.min(
+                                                    3,
+                                                    unsupportedModels.size
+                                                )}, 1fr)`, // Adjust columns based on size
+                                                gap: '8px',
+                                            }}
+                                        >
+                                            {Array.from(unsupportedModels).map((model, index) => (
+                                                <Text key={index} size={100}>
+                                                    {model}
+                                                </Text>
+                                            ))}
+                                        </div>
+                                    }
+                                    relationship='label'
+                                    withArrow='above'
+                                >
+                                    <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
+                                        Product Model{countOfInvalidModel > 1 ? 's' : ''} Unsupported :{' '}
+                                        {countOfInvalidModel}
+                                    </Label>
+                                </Tooltip>
+                            )}
+                            {countOfOrgOrSiteUnmatched > 0 && (
+                                <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
+                                    Device{countOfOrgOrSiteUnmatched > 1 ? 's' : ''} with unmatched organization or
+                                    site: {countOfOrgOrSiteUnmatched}
+                                </Label>
+                            )}
+                        </>
                     )}
                 </div>
                 {countOfDeviceNetworkCondition > 0 && (
@@ -268,8 +273,7 @@ export default () => {
                                                         display: 'flex',
                                                         flexDirection: 'row',
                                                         alignItems: 'center',
-                                                        justifyContent:
-                                                            'flex-start',
+                                                        justifyContent: 'flex-start',
                                                         gap: '5px',
                                                     }}
                                                 >
@@ -286,7 +290,7 @@ export default () => {
                                                             fontSize: '10px',
                                                         }}
                                                     >
-                                                        {`Access to the service endpoint is ready: ${countOfNoIssue}`}{' '}
+                                                        {`Access to the service endpoint is ready: ${countOfNoIssue}`}
                                                     </Text>
                                                 </div>
                                             )}
@@ -296,8 +300,7 @@ export default () => {
                                                         display: 'flex',
                                                         flexDirection: 'row',
                                                         alignItems: 'center',
-                                                        justifyContent:
-                                                            'flex-start',
+                                                        justifyContent: 'flex-start',
                                                         gap: '5px',
                                                     }}
                                                 >
@@ -323,8 +326,7 @@ export default () => {
                                                         display: 'flex',
                                                         flexDirection: 'row',
                                                         alignItems: 'center',
-                                                        justifyContent:
-                                                            'flex-start',
+                                                        justifyContent: 'flex-start',
                                                         gap: '5px',
                                                     }}
                                                 >
@@ -350,8 +352,7 @@ export default () => {
                                                         display: 'flex',
                                                         flexDirection: 'row',
                                                         alignItems: 'center',
-                                                        justifyContent:
-                                                            'flex-start',
+                                                        justifyContent: 'flex-start',
                                                         gap: '5px',
                                                     }}
                                                 >
@@ -377,8 +378,7 @@ export default () => {
                                                         display: 'flex',
                                                         flexDirection: 'row',
                                                         alignItems: 'center',
-                                                        justifyContent:
-                                                            'flex-start',
+                                                        justifyContent: 'flex-start',
                                                         gap: '5px',
                                                     }}
                                                 >
@@ -412,11 +412,7 @@ export default () => {
                                         fontSize: '12px',
                                         color: tokens.colorNeutralForeground4,
                                     }}
-                                    onClick={() =>
-                                        eventBus.emit(
-                                            'device-network-access-check-reset'
-                                        )
-                                    }
+                                    onClick={() => eventBus.emit('device-network-access-check-reset')}
                                 >
                                     {`Reset Network Access Check: ${countOfDeviceNetworkCondition} Devices`}
                                 </Link>
@@ -438,10 +434,7 @@ export default () => {
                 </div>
                 <div
                     style={{
-                        display:
-                            settings?.consoleWindowButtonShow || false
-                                ? 'flex'
-                                : 'none',
+                        display: settings?.consoleWindowButtonShow || false ? 'flex' : 'none',
                         flexDirection: 'row',
                         marginRight: '10px',
                         justifyContent: 'flex-end',
@@ -452,9 +445,7 @@ export default () => {
                     <Tooltip
                         content={
                             <Text size={100}>
-                                {!consoleWindowOpen
-                                    ? 'Open Console Window'
-                                    : 'Close Console Window'}
+                                {!consoleWindowOpen ? 'Open Console Window' : 'Close Console Window'}
                             </Text>
                         }
                         positioning='before'
@@ -466,9 +457,7 @@ export default () => {
                                     Icon={ConsoleWindowIcon}
                                     size='16px'
                                     iconSize='12px'
-                                    color={
-                                        tokens.colorNeutralForeground3BrandPressed
-                                    }
+                                    color={tokens.colorNeutralForeground3BrandPressed}
                                 />
                             }
                             size='small'
