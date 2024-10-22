@@ -38,7 +38,7 @@ jobs:
                   security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
                   echo "Preventing keychain from locking..."
-                  security set-keychain-settings -lut 0 $KEYCHAIN_NAME  # 0 means 'never lock'
+                  security set-keychain-settings -t 3600 $KEYCHAIN_NAME
 
                   echo "Importing certificate..."
                   security import signing_certificate.p12 -k $KEYCHAIN_NAME -P "${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
