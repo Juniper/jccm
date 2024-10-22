@@ -197,8 +197,7 @@ jobs:
               with:
                   name: windows-installers
                   path: |
-                      ./jccm/out/make/squirrel.windows/x64/*.exe
-                      ./jccm/out/make/squirrel.windows/x64/RELEASES
+                      ./jccm/out/make/squirrel.windows/x64/*
 
     build-deb:
         runs-on: ubuntu-latest
