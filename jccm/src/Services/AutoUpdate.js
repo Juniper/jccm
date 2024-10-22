@@ -23,9 +23,9 @@ export const setupAutoUpdate = () => {
         if (platform === 'darwin') {
             console.log('Auto-update is supported on macOS.');
             return true;
-        } else if (platform === 'win32') {
-            console.log('Auto-update is supported on Windows.');
-            return true;
+            // } else if (platform === 'win32') {
+            //     console.log('Auto-update is supported on Windows.');
+            //     return true;
         } else {
             console.log('Auto-update is not supported on this platform.');
             return false;
@@ -59,11 +59,6 @@ export const setupAutoUpdate = () => {
             // Initiate the update check
             autoUpdater.checkForUpdates();
         });
-    });
-
-    autoUpdater.on('checking-for-update', () => {
-        console.log('Checking for updates: Started downloading a new update...');
-        mainWindow.webContents.send('checking-for-update');
     });
 
     autoUpdater.on('update-downloaded', () => {

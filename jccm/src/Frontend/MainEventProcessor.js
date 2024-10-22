@@ -61,11 +61,6 @@ export const MainEventProcessor = () => {
     }, [currentActiveThemeName]);
 
     useEffect(() => {
-        const onCheckingForUpdate = () => {
-            console.log('Update check initiated: Downloading new update...');
-            setCheckingForUpdate(true);
-        };
-
         const onUpdateDownloaded = () => {
             console.log('update-downloaded');
             setUpdateDownloaded(true);
@@ -86,12 +81,10 @@ export const MainEventProcessor = () => {
             );
         };
 
-        window.electronAPI.checkingForUpdate(onCheckingForUpdate);
         window.electronAPI.updateDownloaded(onUpdateDownloaded);
         window.electronAPI.autoUpdateError(onAutoUpdateError);
 
         return () => {
-            window.electronAPI.off('checking-for-update', onCheckingForUpdate);
             window.electronAPI.off('update-downloaded', onUpdateDownloaded);
             window.electronAPI.off('auto-update-error', onAutoUpdateError);
         };
@@ -298,6 +291,34 @@ export const MainEventProcessor = () => {
             }
         };
 
+        const handleRestartApp = async () => {
+            console.log('Event: "restart-app"');
+            try {
+                await electronAPI.restartApp();
+            } catch (error) {
+                console.error('restart-app error:', error);
+            }
+        };
+
+        const handleClearDatabaseAndRestartApp = async () => {
+            console.log('Event: "clear-database-and-restart-app"');
+            try {
+                await electronAPI.clearDatabaseAndRestartApp();
+            } catch (error) {
+                console.error('clear-database-and-restart-app error:', error);
+            }
+        };
+
+        const handleQuitApp = async () => {
+            console.log('Event: "quit-app"');
+            try {
+                await electronAPI.quitApp();
+            } catch (error) {
+                console.error('quit-app error:', error);
+            }
+        };
+
+
         eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
@@ -310,6 +331,9 @@ export const MainEventProcessor = () => {
         eventBus.on('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
         eventBus.on('check-for-updates', handleCheckForUpdates);
         eventBus.on('quit-and-install', handleQuitAndInstall);
+        eventBus.on('restart-app', handleRestartApp);
+        eventBus.on('clear-database-and-restart-app', handleClearDatabaseAndRestartApp);
+        eventBus.on('quit-app', handleQuitApp);
 
         return () => {
             eventBus.off('local-inventory-refresh', handleLocalInventoryRefresh);
@@ -324,6 +348,9 @@ export const MainEventProcessor = () => {
             eventBus.off('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
             eventBus.off('check-for-updates', handleCheckForUpdates);
             eventBus.off('quit-and-install', handleQuitAndInstall);
+            eventBus.off('restart-app', handleRestartApp);
+            eventBus.off('clear-database-and-restart-app', handleClearDatabaseAndRestartApp);
+            eventBus.off('quit-app', handleQuitApp);
         };
     }, []);
 

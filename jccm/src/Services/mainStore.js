@@ -15,6 +15,40 @@ const deviceFactsKey = 'deviceFacts';
 const subnetsKey = 'subnets';
 const settingsKey = 'settings';
 
+/**
+ * Function to remove all data from the database and compact the datafile.
+ * @returns {Promise<void>} Resolves when the data is removed and the file is compacted.
+ */
+export const clearAndCompactDatabase = async () => {
+    try {
+        console.log('Removing all data from the database...');
+
+        // Remove all documents from the database
+        const numRemoved = await db.remove({}, { multi: true });
+        console.log(`${numRemoved} documents removed from the database.`);
+
+        // Compact the datafile
+        await compactDatabase();
+        console.log('Database compacted successfully.');
+    } catch (error) {
+        console.error('Error clearing and compacting the database:', error);
+    }
+};
+
+/**
+ * Function to compact the database file.
+ */
+const compactDatabase = () => {
+    return new Promise((resolve, reject) => {
+        try {
+            db.compactDatafile();
+            resolve();
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
 const encodeToBase64 = (obj) => {
     return Buffer.from(JSON.stringify(obj)).toString('base64');
 };

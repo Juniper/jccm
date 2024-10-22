@@ -16,7 +16,7 @@ import {
     MenuDivider,
     tokens,
 } from '@fluentui/react-components';
-import _ from 'lodash';
+import _, { set } from 'lodash';
 
 import {
     CloudAddFilled,
@@ -47,6 +47,8 @@ import eventBus from './Common/eventBus';
 import { ConsoleWindow } from './ConsoleWindow';
 import { AboutWindow } from './AboutWindow';
 import { VersionUpdateCheckNotification } from './VersionUpdateCheckNotification';
+import { ConfirmWindow } from './ConfirmWindow';
+import { is } from 'immutable';
 
 const CloudAdd = bundleIcon(CloudAddFilled, CloudAddRegular);
 const ArrowCircleRight = bundleIcon(ArrowCircleRightRegular, ArrowCircleRightRegular);
@@ -75,6 +77,9 @@ export const Main = () => {
 
     const [isOpenAbout, setIsOpenAbout] = useState(false);
     const [isOpenCheckUpdates, setIsOpenCheckUpdates] = useState(false);
+    const [isOpenResetAppData, setIsOpenResetAppData] = useState(false);
+    const [isOpenRestartApp, setIsOpenRestartApp] = useState(false);
+    const [isOpenQuitApp, setIsOpenQuitApp] = useState(false);
 
     const [centerWidth, setCenterWidth] = useState(`calc(100% - ${LeftSideSpaceWidth}px)`);
     const { isAutoUpdateSupport } = useStore();
@@ -264,6 +269,8 @@ export const Main = () => {
                                         <Text style={{ fontSize: '12px' }}>About JCCM</Text>
                                     </MenuItem>
 
+                                    {isAutoUpdateSupport && <MenuDivider />}
+
                                     {isAutoUpdateSupport && updateDownloaded ? (
                                         <MenuItem onClick={async () => await eventBus.emit('quit-and-install')}>
                                             <Text style={{ fontSize: '12px' }}>Restart to Apply Update</Text>
@@ -277,6 +284,21 @@ export const Main = () => {
                                             <Text style={{ fontSize: '12px' }}>Check for Updates</Text>
                                         </MenuItem>
                                     )}
+
+                                    <MenuDivider />
+                                    <MenuItem onClick={() => setIsOpenResetAppData(true)}>
+                                        <Tooltip content={'This will clear all data and restart the app.'}>
+                                            <Text style={{ fontSize: 12 }}>Reset App Data</Text>
+                                        </Tooltip>
+                                    </MenuItem>
+
+                                    <MenuItem onClick={() => setIsOpenRestartApp(true)}>
+                                        <Text style={{ fontSize: '12px' }}>Restart</Text>
+                                    </MenuItem>
+
+                                    <MenuItem onClick={() => setIsOpenQuitApp(true)}>
+                                        <Text style={{ fontSize: '12px' }}>Quit</Text>
+                                    </MenuItem>
                                 </MenuList>
                             </MenuPopover>
                         </Menu>
@@ -513,6 +535,30 @@ export const Main = () => {
                     onClose={() => {
                         setIsOpenCheckUpdates(false);
                     }}
+                />
+            )}
+            {isOpenResetAppData && (
+                <ConfirmWindow
+                    isOpen={isOpenResetAppData}
+                    onClose={() => setIsOpenResetAppData(false)}
+                    message='This will reset all app data to default settings. Are you sure you want to proceed?'
+                    onConfirm={async () => await eventBus.emit('clear-database-and-restart-app')}
+                />
+            )}
+            {isOpenRestartApp && (
+                <ConfirmWindow
+                    isOpen={isOpenRestartApp}
+                    onClose={() => setIsOpenRestartApp(false)}
+                    message="The application will be restarted. Do you want to continue?"
+                    onConfirm={async () => await eventBus.emit('restart-app')}
+                />
+            )}
+            {isOpenQuitApp && (
+                <ConfirmWindow
+                    isOpen={isOpenQuitApp}
+                    onClose={() => setIsOpenQuitApp(false)}
+                    message='Are you sure you want to quit the app?'
+                    onConfirm={async () => await eventBus.emit('quit-app')}
                 />
             )}
         </div>

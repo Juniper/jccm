@@ -79,10 +79,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     checkForUpdates: () => ipcRenderer.invoke('check-for-updates'), // renderer -> main -> renderer
     quitAndInstall: () => ipcRenderer.send('quit-and-install'), // renderer -> main
 
-    checkingForUpdate: (callback) =>
-        ipcRenderer.on('checking-for-update', (event) => callback()), // main -> renderer
     updateDownloaded: (callback) =>
         ipcRenderer.on('update-downloaded', (event) => callback()), // main -> renderer
     autoUpdateError: (callback) =>
         ipcRenderer.on('auto-update-error', (event, args) => callback(args)), // main -> renderer
+
+    restartApp: () => ipcRenderer.send('restart-app'), // renderer -> main
+    clearDatabaseAndRestartApp: () => ipcRenderer.send('clear-database-and-restart-app'), // renderer -> main
+    quitApp: () => ipcRenderer.send('quit-app'), // renderer -> main
 });
