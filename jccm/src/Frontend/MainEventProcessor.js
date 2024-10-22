@@ -66,19 +66,10 @@ export const MainEventProcessor = () => {
             setUpdateDownloaded(true);
         };
 
-        const onAutoUpdateError = (data) => {
-            console.log('auto-update-error: ', data);
+        const onAutoUpdateError = (error) => {
+            console.log('auto-update-error: ', error);
             setCheckingForUpdate(false);
             setUpdateDownloaded(false);
-            notify(
-                <Toast>
-                    <ToastTitle>Auto Update Failed</ToastTitle>
-                    <ToastBody subtitle='An error occurred during the update.'>
-                        <Text>{data?.error?.message || 'Please try again later.'}</Text>
-                    </ToastBody>
-                </Toast>,
-                { intent: 'error' }
-            );
         };
 
         window.electronAPI.updateDownloaded(onUpdateDownloaded);
