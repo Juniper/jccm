@@ -76,6 +76,7 @@ jobs:
 
                   echo "Preventing keychain from locking..."
                   security set-keychain-settings -lut 3600 $KEYCHAIN_NAME
+                  security show-keychain-info $KEYCHAIN_NAME
 
                   echo "Showing keychain info..."
                   security show-keychain-info $KEYCHAIN_NAME
@@ -95,6 +96,7 @@ jobs:
               run: |
                   echo "Unlocking keychain..."
                   security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                  security show-keychain-info $KEYCHAIN_NAME
 
                   source myenv/bin/activate
                   npm run make -- --platform=darwin --arch=arm64
@@ -104,6 +106,7 @@ jobs:
               run: |
                   echo "Unlocking keychain..."
                   security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                  security show-keychain-info $KEYCHAIN_NAME
 
                   source myenv/bin/activate
                   npm run make -- --platform=darwin --arch=x64
@@ -111,14 +114,16 @@ jobs:
 
             - name: Notarize and Staple Packages
               run: |
-                  echo "Unlocking keychain..."
-                  security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-
                   set -ex  # Exit on error and print commands
 
                   function notarize_and_verify() {
                       architecture=$1
                       pkg_path="./out/make/jccm-darwin-$architecture.pkg"
+
+                      echo "Unlocking keychain for ${architecture}..."
+                      security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                      security show-keychain-info $KEYCHAIN_NAME
+
 
                       echo "Submitting $pkg_path for Notarization..."
                       xcrun notarytool submit $pkg_path --keychain-profile jccm --wait
