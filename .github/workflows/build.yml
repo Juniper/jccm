@@ -52,6 +52,9 @@ jobs:
                 export KEYCHAIN_NAME="build.keychain"
                 export KEYCHAIN_PASSWORD=$(openssl rand -base64 12)
       
+                # Mask the password to hide it from logs
+                echo "::add-mask::$KEYCHAIN_PASSWORD"
+
                 # Store them in the GITHUB_ENV to use in later steps
                 echo "KEYCHAIN_NAME=$KEYCHAIN_NAME" >> $GITHUB_ENV
                 echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
