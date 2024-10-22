@@ -174,23 +174,31 @@ jobs:
               run: |
                   npm run make -- --platform=win32 --arch=x64
                   dir out\make\squirrel.windows\x64\
-                  type out\make\squirrel.windows\x64\RELEASES
-
               working-directory: ./jccm
 
             - name: Sign Artifact with CodeSignTool
               uses: sslcom/esigner-codesign@develop
               continue-on-error: true
               with:
-                  command: sign
-                  username: ${{secrets.ES_USERNAME}}
-                  password: ${{secrets.ES_PASSWORD}}
-                  credential_id: ${{secrets.ES_CREDENTIAL_ID}}
-                  totp_secret: ${{secrets.ES_TOTP_SECRET}}
-                  file_path: jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup.exe
+                  command: batch_sign
+                  username: ${{ secrets.ES_USERNAME }}
+                  password: ${{ secrets.ES_PASSWORD }}
+                  credential_id: ${{ secrets.ES_CREDENTIAL_ID }}
+                  totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+                  dir_path: jccm/out/make/squirrel.windows/x64/
                   malware_block: false
-                  # Overrides the input file after signing, if this parameter is set and no -output_dir_path parameter
                   override: true
+
+            - name: Recreate RELEASES File
+              shell: cmd
+              run: |
+                  del jccm/out/make/squirrel.windows/x64/RELEASES
+                  for %I in (jccm/out/make/squirrel.windows/x64/*.nupkg) do (
+                    set HASH=%~nI
+                    certutil -hashfile "%I" SHA1 | findstr /v "hash" > hash.txt
+                    set /p HASH=<hash.txt
+                    echo %HASH% %~nI %~zI >> jccm/out/make/squirrel.windows/x64/RELEASES
+                  )
 
             - name: Upload windows artifacts
               uses: actions/upload-artifact@v3
