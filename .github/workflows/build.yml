@@ -75,7 +75,7 @@ jobs:
                   security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
 
                   echo "Preventing keychain from locking..."
-                  security set-keychain-settings -lut 3600 $KEYCHAIN_NAME
+                  security set-keychain-settings -t 3600 $KEYCHAIN_NAME
                   security show-keychain-info $KEYCHAIN_NAME
 
                   echo "Showing keychain info..."
@@ -123,7 +123,6 @@ jobs:
                       echo "Unlocking keychain for ${architecture}..."
                       security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
                       security show-keychain-info $KEYCHAIN_NAME
-
 
                       echo "Submitting $pkg_path for Notarization..."
                       xcrun notarytool submit $pkg_path --keychain-profile jccm --wait
