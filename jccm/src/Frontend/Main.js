@@ -81,6 +81,8 @@ export const Main = () => {
     const [isOpenRestartApp, setIsOpenRestartApp] = useState(false);
     const [isOpenQuitApp, setIsOpenQuitApp] = useState(false);
 
+    const [isCheckUpdatesDisabled, setIsCheckUpdatesDisabled] = useState(true);
+
     const [centerWidth, setCenterWidth] = useState(`calc(100% - ${LeftSideSpaceWidth}px)`);
     const { isAutoUpdateSupport } = useStore();
 
@@ -93,12 +95,14 @@ export const Main = () => {
 
     useEffect(() => {
         const generateEvents = async () => {
+            await eventBus.emit('check-for-auto-update-support');
+
             await delay(1000); // Delay for 1 second
             await eventBus.emit('user-session-check');
             await eventBus.emit('local-inventory-refresh');
             await eventBus.emit('device-facts-refresh');
             await eventBus.emit('device-models-refresh');
-            await eventBus.emit('check-for-updates'); // Check for updates on startup
+            await eventBus.emit('check-for-updates');
         };
 
         generateEvents();
@@ -113,6 +117,14 @@ export const Main = () => {
         return () => {
             clearInterval(intervalId);
         };
+    }, []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsCheckUpdatesDisabled(false);
+        }, 15000); // 15-second delay
+
+        return () => clearTimeout(timer); // Cleanup timer on unmount
     }, []);
 
     const handleLeftMouseMove = (e) => {
@@ -280,8 +292,15 @@ export const Main = () => {
                                                     <Text style={{ fontSize: 12 }}>Downloading Update...</Text>
                                                 </MenuItem>
                                             ) : (
-                                                <MenuItem onClick={() => setIsOpenCheckUpdates(true)}>
-                                                    <Text style={{ fontSize: 12 }}>Check for Updates</Text>
+                                                <MenuItem
+                                                    disabled={isCheckUpdatesDisabled}
+                                                    onClick={() => setIsOpenCheckUpdates(true)}
+                                                >
+                                                    <Text style={{ fontSize: 12 }}>
+                                                        {isCheckUpdatesDisabled
+                                                            ? 'Preparing update service...'
+                                                            : 'Check for Updates'}
+                                                    </Text>
                                                 </MenuItem>
                                             )}
                                         </>

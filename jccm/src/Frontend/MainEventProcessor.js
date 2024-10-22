@@ -32,6 +32,19 @@ export const MainEventProcessor = () => {
     const cloudInventoryRef = useRef(cloudInventory);
     const currentActiveThemeNameRef = useRef(currentActiveThemeName);
 
+    const [isFirstCheckIgnored, setIsFirstCheckIgnored] = useState(true);
+
+    useEffect(() => {
+        // Set a 10-second timeout to allow update checks after the delay
+        const timer = setTimeout(() => {
+            console.log('10-second initial wait over. Update checks are now allowed.');
+            setIsFirstCheckIgnored(false); // Allow update checks after 10 seconds
+        }, 10000);
+
+        // Cleanup the timer on component unmount
+        return () => clearTimeout(timer);
+    }, []);
+
     useEffect(() => {
         importSettings();
     }, []);
@@ -253,11 +266,14 @@ export const MainEventProcessor = () => {
         const handleCheckForUpdates = async () => {
             console.log('Event: "check-for-updates"');
 
-            try {
-                const autoUpdateSupport = await window.electronAPI.checkForAutoUpdateSupport();
-                setIsAutoUpdateSupport(autoUpdateSupport);
+            // If this is the first call and within 10 seconds, ignore it
+            if (isFirstCheckIgnored) {
+                console.log('Skipping update check during initial 10 seconds.');
+                return;
+            }
 
-                if (!autoUpdateSupport) {
+            try {
+                if (!isAutoUpdateSupport) {
                     console.warn('Auto-update not supported on this platform.');
                     return;
                 }
@@ -271,6 +287,12 @@ export const MainEventProcessor = () => {
                 setUpdateDownloaded(false);
                 setIsAutoUpdateSupport(false);
             }
+        };
+
+        const handleCheckForAutoUpdateSupport = async () => {
+            console.log('Event: "check-for-auto-update-support"');
+            const autoUpdateSupport = await window.electronAPI.checkForAutoUpdateSupport();
+            setIsAutoUpdateSupport(autoUpdateSupport);
         };
 
         const handleQuitAndInstall = async () => {
@@ -309,7 +331,6 @@ export const MainEventProcessor = () => {
             }
         };
 
-
         eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
@@ -321,6 +342,7 @@ export const MainEventProcessor = () => {
         eventBus.on('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
         eventBus.on('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
         eventBus.on('check-for-updates', handleCheckForUpdates);
+        eventBus.on('check-for-auto-update-support', handleCheckForAutoUpdateSupport);
         eventBus.on('quit-and-install', handleQuitAndInstall);
         eventBus.on('restart-app', handleRestartApp);
         eventBus.on('clear-database-and-restart-app', handleClearDatabaseAndRestartApp);
@@ -338,6 +360,7 @@ export const MainEventProcessor = () => {
             eventBus.off('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
             eventBus.off('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
             eventBus.off('check-for-updates', handleCheckForUpdates);
+            eventBus.off('check-for-auto-update-support', handleCheckForAutoUpdateSupport);
             eventBus.off('quit-and-install', handleQuitAndInstall);
             eventBus.off('restart-app', handleRestartApp);
             eventBus.off('clear-database-and-restart-app', handleClearDatabaseAndRestartApp);

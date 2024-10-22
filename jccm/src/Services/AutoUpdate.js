@@ -31,41 +31,34 @@ export const setupAutoUpdate = () => {
             return false;
         }
     });
-    
-    let isFirstUpdateCheck = true; // Track if it's the first call
 
     ipcMain.handle('check-for-updates', (event) => {
         console.log('Checking for updates...');
 
         return new Promise((resolve, reject) => {
-            const delay = isFirstUpdateCheck ? 10000 : 0; // 10-second delay for the first call only because of https://www.electronjs.org/docs/latest/api/auto-updater#windows
-            isFirstUpdateCheck = false; // Reset after first call
+            let isUpdateAvailable = false;
 
-            setTimeout(() => {
-                let isUpdateAvailable = false;
+            autoUpdater.once('update-available', () => {
+                console.log('Update available.');
+                isUpdateAvailable = true;
+            });
 
-                autoUpdater.once('update-available', () => {
-                    console.log('Update available.');
-                    isUpdateAvailable = true;
-                });
+            autoUpdater.once('update-not-available', () => {
+                console.log('No update available.');
+                isUpdateAvailable = false;
+            });
 
-                autoUpdater.once('update-not-available', () => {
-                    console.log('No update available.');
-                    isUpdateAvailable = false;
-                });
+            // Timeout to finalize the check if listeners do not resolve quickly
+            const timeout = setTimeout(() => {
+                console.log('Update check will complete in 3 seconds. Please wait...');
+                autoUpdater.removeAllListeners('update-available');
+                autoUpdater.removeAllListeners('update-not-available');
+                console.log('Update check result:', isUpdateAvailable);
+                resolve(isUpdateAvailable);
+            }, 3000);
 
-                // Timeout to finalize the check if listeners do not resolve quickly
-                const timeout = setTimeout(() => {
-                    console.log('Update check will complete in 3 seconds. Please wait...');
-                    autoUpdater.removeAllListeners('update-available');
-                    autoUpdater.removeAllListeners('update-not-available');
-                    console.log('Update check result:', isUpdateAvailable);
-                    resolve(isUpdateAvailable);
-                }, 3000);
-
-                // Initiate the update check
-                autoUpdater.checkForUpdates();
-            }, delay); // Apply the delay if it's the first call
+            // Initiate the update check
+            autoUpdater.checkForUpdates();
         });
     });
 
