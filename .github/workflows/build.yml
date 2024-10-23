@@ -170,59 +170,43 @@ jobs:
               run: npm install
               working-directory: ./jccm
 
+            - name: Install jq with Chocolatey
+              run: choco install jq -y
+
+            - name: Get version from package.json
+              id: get_version
+              run: |
+                  version=$(jq -r '.version' jccm/package.json)
+                  echo "version=$version" >> $GITHUB_ENV
+                  echo "Version is $version"
+
             - name: Build and package (x64)
               run: |
                   npm run make -- --platform=win32 --arch=x64
                   dir out\make\squirrel.windows\x64\
-                  del out\make\squirrel.windows\x64\RELEASES
               working-directory: ./jccm
-
-            # - name: Sign Artifact with CodeSignTool
-            #   uses: sslcom/esigner-codesign@develop
-            #   continue-on-error: true
-            #   with:
-            #       command: batch_sign
-            #       username: ${{ secrets.ES_USERNAME }}
-            #       password: ${{ secrets.ES_PASSWORD }}
-            #       credential_id: ${{ secrets.ES_CREDENTIAL_ID }}
-            #       totp_secret: ${{ secrets.ES_TOTP_SECRET }}
-            #       dir_path: ${GITHUB_WORKSPACE}/jccm/out/make/squirrel.windows/x64
-            #       malware_block: false
-            #       override: true
 
             - name: Sign setup.exe with CodeSignTool
               uses: sslcom/esigner-codesign@develop
-              continue-on-error: true
               with:
                   command: sign
-                  username: ${{secrets.ES_USERNAME}}
-                  password: ${{secrets.ES_PASSWORD}}
-                  credential_id: ${{secrets.ES_CREDENTIAL_ID}}
-                  totp_secret: ${{secrets.ES_TOTP_SECRET}}
+                  username: ${{ secrets.ES_USERNAME }}
+                  password: ${{ secrets.ES_PASSWORD }}
+                  credential_id: ${{ secrets.ES_CREDENTIAL_ID }}
+                  totp_secret: ${{ secrets.ES_TOTP_SECRET }}
                   file_path: jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup.exe
                   malware_block: false
                   override: true
 
-            # - name: Get Nupkg Filename
-            #   id: get_nupkg
-            #   shell: cmd
-            #   run: |
-            #       @echo off
-            #       for /f "delims=" %%F in ('dir /b /o:-d jccm\out\make\squirrel.windows\x64\*.nupkg') do (
-            #         echo "nupkg_file=jccm\out\make\squirrel.windows\x64\%%F" >> $env:GITHUB_ENV
-            #         goto :EOF
-            #       )
-
-            - name: Sign Artifact with CodeSignTool
+            - name: Sign Artifact (.nupkg) with CodeSignTool
               uses: sslcom/esigner-codesign@develop
-              continue-on-error: true
               with:
                   command: sign
-                  username: ${{secrets.ES_USERNAME}}
-                  password: ${{secrets.ES_PASSWORD}}
-                  credential_id: ${{secrets.ES_CREDENTIAL_ID}}
-                  totp_secret: ${{secrets.ES_TOTP_SECRET}}
-                  file_path: jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup-1.2.6-full.nupkg
+                  username: ${{ secrets.ES_USERNAME }}
+                  password: ${{ secrets.ES_PASSWORD }}
+                  credential_id: ${{ secrets.ES_CREDENTIAL_ID }}
+                  totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+                  file_path: jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup-${{ env.version }}-full.nupkg
                   malware_block: false
                   override: true
 
@@ -230,7 +214,6 @@ jobs:
               shell: cmd
               run: |
                   @echo off
-                  setlocal enabledelayedexpansion
                   > jccm\out\make\squirrel.windows\x64\RELEASES (
                     for %%I in (jccm\out\make\squirrel.windows\x64\*.nupkg) do (
                       certutil -hashfile "%%I" SHA1 | findstr /v "hash" > hash.txt
@@ -243,8 +226,7 @@ jobs:
               uses: actions/upload-artifact@v3
               with:
                   name: windows-installers
-                  path: |
-                      ./jccm/out/make/squirrel.windows/x64/*
+                  path: ./jccm/out/make/squirrel.windows/x64/*
 
     build-deb:
         runs-on: ubuntu-latest
