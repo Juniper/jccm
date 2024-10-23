@@ -170,15 +170,11 @@ jobs:
               run: npm install
               working-directory: ./jccm
 
-            - name: Install jq with Chocolatey
-              run: choco install jq -y
-
             - name: Get version from package.json
-              id: get_version
+              shell: pwsh
               run: |
-                  version=$(jq -r '.version' jccm/package.json)
-                  echo "version=$version" >> $GITHUB_ENV
-                  echo "Version is $version"
+                  $version = (Get-Content jccm/package.json | ConvertFrom-Json).version
+                  echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
             - name: Build and package (x64)
               run: |
