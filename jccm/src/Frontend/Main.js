@@ -102,21 +102,27 @@ export const Main = () => {
             await eventBus.emit('local-inventory-refresh');
             await eventBus.emit('device-facts-refresh');
             await eventBus.emit('device-models-refresh');
-            await eventBus.emit('check-for-updates');
         };
 
         generateEvents();
     }, []);
 
     useEffect(() => {
-        // Set interval to check for updates every hour
-        const intervalId = setInterval(async () => {
-            await eventBus.emit('check-for-updates');
-        }, 60 * 60 * 1000);
+        const timer = setTimeout(() => {
+            console.log('30 seconds passed. Initial check for updates...');
+            eventBus.emit('check-for-updates'); // No need to `await` here. eventBus.emit() doesn’t return a promise, so await isn’t necessary.
+        }, 30000); // 30-second delay
 
-        return () => {
-            clearInterval(intervalId);
-        };
+        return () => clearTimeout(timer); // Cleanup timer on unmount
+    }, []);
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            console.log('An hour passed. Periodic check for updates...');
+            eventBus.emit('check-for-updates'); // No need for async/await
+        }, 60 * 60 * 1000); // Every an hour
+
+        return () => clearInterval(intervalId); // Cleanup on unmount
     }, []);
 
     useEffect(() => {
@@ -298,7 +304,7 @@ export const Main = () => {
                                                 >
                                                     <Text style={{ fontSize: 12 }}>
                                                         {isCheckUpdatesDisabled
-                                                            ? 'Preparing update service...'
+                                                            ? 'Waiting for update check permission…'
                                                             : 'Check for Updates'}
                                                     </Text>
                                                 </MenuItem>

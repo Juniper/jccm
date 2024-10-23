@@ -259,15 +259,21 @@ jobs:
               shell: pwsh
               run: |
                   $version = $env:version
-                  $nupkgPath = "jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup-$version-full.nupkg"
+                  $nupkgFile = "jccm-windows-x64-setup-$version-full.nupkg"
+                  $basePath = "jccm/out/make/squirrel.windows/x64"
+                  $nupkgPath = Join-Path $basePath $nupkgFile
+                  $releasesPath = Join-Path $basePath "RELEASES"
 
                   if (Test-Path $nupkgPath) {
-                    $hash = (Get-FileHash -Path $nupkgPath -Algorithm SHA1).Hash
-                    $size = (Get-Item $nupkgPath).Length
-                    "$hash jccm-windows-x64-setup-$version-full.nupkg $size" | Out-File -Encoding UTF8 jccm/out/make/squirrel.windows/x64/RELEASES
+                      $hash = (Get-FileHash -Path $nupkgPath -Algorithm SHA1).Hash
+                      $size = (Get-Item $nupkgPath).Length
+                      "$hash $nupkgFile $size" | Out-File -FilePath $releasesPath -Encoding UTF8
+
+                      # Display the contents of the RELEASES file
+                      Get-Content $releasesPath | ForEach-Object { Write-Host $_ }
                   } else {
-                    Write-Error "Nupkg file not found: $nupkgPath"
-                    exit 1
+                      Write-Error "Nupkg file not found: $nupkgPath"
+                      exit 1
                   }
 
             - name: Upload windows artifacts
