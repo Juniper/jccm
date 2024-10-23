@@ -95,22 +95,54 @@ jobs:
 
             - name: Build and package (arm64)
               run: |
-                  echo "Unlocking keychain..."
-                  security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-                  security show-keychain-info $KEYCHAIN_NAME
+                  attempts=0
+                  max_attempts=3
 
-                  source myenv/bin/activate
-                  npm run make -- --platform=darwin --arch=arm64
+                  while [ $attempts -lt $max_attempts ]; do
+                    echo "Attempting build and notarization for arm64 (Attempt $((attempts + 1)))..."
+                    security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                    security show-keychain-info $KEYCHAIN_NAME
+
+                    if source myenv/bin/activate && npm run make -- --platform=darwin --arch=arm64; then
+                      echo "Build and notarization succeeded for arm64."
+                      break
+                    else
+                      echo "Build and notarization failed. Retrying..."
+                      attempts=$((attempts + 1))
+                      sleep 30
+                    fi
+
+                    if [ $attempts -eq $max_attempts ]; then
+                      echo "Failed after $max_attempts attempts."
+                      exit 1
+                    fi
+                  done
               working-directory: ./jccm
 
             - name: Build and package (x64)
               run: |
-                  echo "Unlocking keychain..."
-                  security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-                  security show-keychain-info $KEYCHAIN_NAME
+                  attempts=0
+                  max_attempts=3
 
-                  source myenv/bin/activate
-                  npm run make -- --platform=darwin --arch=x64
+                  while [ $attempts -lt $max_attempts ]; do
+                    echo "Attempting build and notarization for x64 (Attempt $((attempts + 1)))..."
+                    security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                    security show-keychain-info $KEYCHAIN_NAME
+
+                    if source myenv/bin/activate && npm run make -- --platform=darwin --arch=x64; then
+                      echo "Build and notarization succeeded for x64."
+                      break
+                    else
+                      echo "Build and notarization failed. Retrying..."
+                      attempts=$((attempts + 1))
+                      sleep 30
+                    fi
+
+                    if [ $attempts -eq $max_attempts ]; then
+                      echo "Failed after $max_attempts attempts."
+                      exit 1
+                    fi
+                  done
               working-directory: ./jccm
 
             - name: Notarize and Staple Packages
@@ -120,13 +152,35 @@ jobs:
                   function notarize_and_verify() {
                       architecture=$1
                       pkg_path="./out/make/jccm-darwin-$architecture.pkg"
+                      attempts=0
+                      max_attempts=3
 
-                      echo "Unlocking keychain for ${architecture}..."
-                      security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
-                      security show-keychain-info $KEYCHAIN_NAME
+                      while (( $attempts < $max_attempts )); do
+                          echo "Attempting notarization ($((attempts + 1)) of $max_attempts) for $pkg_path..."
 
-                      echo "Submitting $pkg_path for Notarization..."
-                      xcrun notarytool submit $pkg_path --keychain-profile jccm --wait
+                          echo "Storing notary credentials..."
+                          xcrun notarytool store-credentials jccm \
+                              --apple-id $APPLE_ID \
+                              --team-id $APPLE_DEVELOPER_TEAM_ID \
+                              --password $APPLE_APP_SPECIFIC_PASSWORD
+
+                          security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+                          security show-keychain-info $KEYCHAIN_NAME
+
+                          if xcrun notarytool submit $pkg_path --keychain-profile jccm --wait; then
+                              echo "Notarization succeeded."
+                              break
+                          else
+                              echo "Notarization failed. Retrying..."
+                              attempts=$((attempts + 1))
+                              sleep 30  # Wait before retrying
+                          fi
+
+                          if (( $attempts == $max_attempts )); then
+                              echo "Failed after $max_attempts attempts."
+                              exit 1
+                          fi
+                      done
 
                       echo "Stapling the Notarization Ticket to $pkg_path..."
                       xcrun stapler staple $pkg_path
@@ -135,11 +189,6 @@ jobs:
                       spctl -a -t install -vv $pkg_path
                   }
 
-                  # Log in to Notarytool
-                  echo "Storing notary credentials..."
-                  xcrun notarytool store-credentials jccm --apple-id $APPLE_ID --team-id ${APPLE_DEVELOPER_TEAM_ID} --password ${APPLE_APP_SPECIFIC_PASSWORD}
-
-                  # Notarize and verify for both architectures
                   notarize_and_verify "arm64"
                   notarize_and_verify "x64"
 
@@ -220,7 +269,7 @@ jobs:
                     Write-Error "Nupkg file not found: $nupkgPath"
                     exit 1
                   }
-                    
+
             - name: Upload windows artifacts
               uses: actions/upload-artifact@v3
               with:
