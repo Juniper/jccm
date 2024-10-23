@@ -207,17 +207,20 @@ jobs:
                   override: true
 
             - name: Recreate RELEASES File
-              shell: cmd
+              shell: pwsh
               run: |
-                  @echo off
-                  > jccm\out\make\squirrel.windows\x64\RELEASES (
-                    for %%I in (jccm\out\make\squirrel.windows\x64\*.nupkg) do (
-                      certutil -hashfile "%%I" SHA1 | findstr /v "hash" > hash.txt
-                      set /p HASH=<hash.txt
-                      echo !HASH! %%~nxI %%~zI
-                    )
-                  )
+                  $version = $env:version
+                  $nupkgPath = "jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup-$version-full.nupkg"
 
+                  if (Test-Path $nupkgPath) {
+                    $hash = (Get-FileHash -Path $nupkgPath -Algorithm SHA1).Hash
+                    $size = (Get-Item $nupkgPath).Length
+                    "$hash jccm-windows-x64-setup-$version-full.nupkg $size" | Out-File -Encoding UTF8 jccm/out/make/squirrel.windows/x64/RELEASES
+                  } else {
+                    Write-Error "Nupkg file not found: $nupkgPath"
+                    exit 1
+                  }
+                    
             - name: Upload windows artifacts
               uses: actions/upload-artifact@v3
               with:
