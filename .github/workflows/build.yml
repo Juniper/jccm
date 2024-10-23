@@ -14,8 +14,9 @@ jobs:
             APPLE_ID: ${{ secrets.APPLE_ID }}
             APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
             APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
-            DEBUG: electron-osx-sign*,electron-notarize*
-
+            # DEBUG: electron-osx-sign*,electron-notarize*
+            DEBUG: electron-osx-sign:warn,electron-osx-sign:error,electron-notarize:warn,electron-notarize:error
+            
         steps:
             - name: Check out repository
               uses: actions/checkout@v3
@@ -147,7 +148,8 @@ jobs:
 
             - name: Notarize and Staple Packages
               run: |
-                  set -ex  # Exit on error and print commands
+                  # set -ex  # Exit on error and print commands
+                  set -e  # Exit on error
 
                   function notarize_and_verify() {
                       architecture=$1
