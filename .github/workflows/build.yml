@@ -233,7 +233,6 @@ jobs:
                   setlocal enabledelayedexpansion
                   > jccm\out\make\squirrel.windows\x64\RELEASES (
                     for %%I in (jccm\out\make\squirrel.windows\x64\*.nupkg) do (
-                      echo Processing: %%I
                       certutil -hashfile "%%I" SHA1 | findstr /v "hash" > hash.txt
                       set /p HASH=<hash.txt
                       echo !HASH! %%~nxI %%~zI
