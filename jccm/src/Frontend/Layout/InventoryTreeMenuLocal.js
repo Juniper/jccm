@@ -811,6 +811,19 @@ const InventoryTreeMenuLocal = () => {
                     : 'No network condition test result available';
             const isConnectable = result.dns && result.route && result.access;
 
+            const TooltipContent = ({ message, extraMessage = '' }) => (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <Text size={200} weight="regular" style={{ color: tokens.colorPaletteRedForeground3 }}>
+                        {message}
+                    </Text>
+                    {extraMessage && (
+                        <Text size={200} weight="regular" style={{ color: tokens.colorPaletteRedForeground3 }}>
+                            {extraMessage}
+                        </Text>
+                    )}
+                </div>
+            );
+            
             return (
                 <div
                     style={{

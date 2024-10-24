@@ -45,6 +45,9 @@ import {
 
 import { CloudInfo } from '../config';
 import { commitJunosSetConfig, executeJunosCommand, getDeviceFacts, getDeviceNetworkCondition } from './Device';
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const sshSessions = {};
 
 const serverGetCloudInventory = async (targetOrgs = null, ignoreCaseInName = false) => {
@@ -718,9 +721,10 @@ export const setupApiHandlers = () => {
     ipcMain.handle('saGetDeviceFacts', async (event, args) => {
         console.log('main: saGetDeviceFacts');
 
+        const { address, port, username, password, timeout, upperSerialNumber, bastionHost } = args;
+
         try {
-            const { address, port, username, password, timeout, upperSerialNumber, bastionHost } = args;
-            const reply = await getDeviceFacts(
+            let reply = await getDeviceFacts(
                 address,
                 port,
                 username,
@@ -730,8 +734,24 @@ export const setupApiHandlers = () => {
                 bastionHost
             );
 
+            if (reply?.message?.toLowerCase().includes('reset by peer')) {
+                console.log('Connection reset by peer, retrying in 3 seconds...');
+                await sleep(3000); // Wait for 3 seconds before retrying
+
+                reply = await getDeviceFacts(
+                    address,
+                    port,
+                    username,
+                    password,
+                    timeout,
+                    upperSerialNumber,
+                    bastionHost
+                );
+            }
+
             return { facts: true, reply };
         } catch (error) {
+            console.error('Error getting device facts:', error);
             return { facts: false, reply: error };
         }
     });
@@ -1037,10 +1057,10 @@ export const setupApiHandlers = () => {
     ipcMain.handle('get-device-network-condition', async (event, args) => {
         console.log('main: saGetDeviceNetworkCondition');
 
-        try {
-            const { address, port, username, password, timeout, bastionHost, termServer, termPort } = args;
+        const { address, port, username, password, timeout, bastionHost, termServer, termPort } = args;
 
-            const reply = await getDeviceNetworkCondition(
+        try {
+            let reply = await getDeviceNetworkCondition(
                 address,
                 port,
                 username,
@@ -1051,12 +1071,41 @@ export const setupApiHandlers = () => {
                 termPort
             );
 
+            if (reply?.message?.toLowerCase().includes('timed out')) {
+                console.log('Timeout detected, retrying in 3 seconds...');
+                await sleep(3000);
+                reply = await getDeviceNetworkCondition(
+                    address,
+                    port,
+                    username,
+                    password,
+                    timeout,
+                    bastionHost,
+                    termServer,
+                    termPort
+                );
+            } else if (reply?.message?.toLowerCase().includes('reset by peer')) {
+                console.log('Connection reset by peer detected, retrying in 3 seconds...');
+                await sleep(3000);
+                reply = await getDeviceNetworkCondition(
+                    address,
+                    port,
+                    username,
+                    password,
+                    timeout,
+                    bastionHost,
+                    termServer,
+                    termPort
+                );
+            }
+
             return { networkConditionCollect: true, reply };
         } catch (error) {
+            console.error('Network condition error:', error);
             return { networkConditionCollect: false, reply: error };
         }
     });
-
+    
     ipcMain.on('restart-app', () => {
         console.log('Received restart-app request...');
         app.relaunch(); // Relaunch the Electron app
