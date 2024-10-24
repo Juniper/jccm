@@ -14,7 +14,8 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
 - **User-Friendly Interface:** Intuitive UI designed to enhance user experience and simplify network cloud attachment tasks.
 - **Multi-Platform Support:** Available for both Intel-based and ARM-based macOS systems and Intel-based Windows systems.
 - **Network Search Support:** Network subnet search to generate an inventory file is in the tech preview stage.
-- **Bastion Host Proxy Support** 
+- **Bastion Host Proxy Support:** Enables secure access to remote devices through a bastion host acting as a proxy.
+- **Auto Update Support:** automatically checks for updates and applies them seamlessly.
 
 ## Bastion Host Proxy Support
 
