@@ -16,7 +16,7 @@ jobs:
             APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
             # DEBUG: electron-osx-sign*,electron-notarize*
             DEBUG: electron-osx-sign:warn,electron-osx-sign:error,electron-notarize:warn,electron-notarize:error
-            
+
         steps:
             - name: Check out repository
               uses: actions/checkout@v3
@@ -221,11 +221,31 @@ jobs:
               run: npm install
               working-directory: ./jccm
 
-            - name: Get version from package.json
+            - name: Get version and filenames from package.json and directory
               shell: pwsh
               run: |
+                  # Get version from package.json
                   $version = (Get-Content jccm/package.json | ConvertFrom-Json).version
                   echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+                  # Define the directory path
+                  $basePath = "jccm/out/make/squirrel.windows/x64"
+
+                  # Get the first .exe file
+                  $exeFile = Get-ChildItem $basePath -Filter *.exe | Select-Object -First 1
+                  if ($exeFile) {
+                    echo "exe_file=$($exeFile.Name)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+                  } else {
+                    Write-Error "No .exe file found in $basePath"
+                  }
+
+                  # Get the first .nupkg file
+                  $nupkgFile = Get-ChildItem $basePath -Filter *.nupkg | Select-Object -First 1
+                  if ($nupkgFile) {
+                    echo "nupkg_file=$($nupkgFile.Name)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+                  } else {
+                    Write-Error "No .nupkg file found in $basePath"
+                  }
 
             - name: Build and package (x64)
               run: |
@@ -241,7 +261,7 @@ jobs:
                   password: ${{ secrets.ES_PASSWORD }}
                   credential_id: ${{ secrets.ES_CREDENTIAL_ID }}
                   totp_secret: ${{ secrets.ES_TOTP_SECRET }}
-                  file_path: jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup.exe
+                  file_path: jccm/out/make/squirrel.windows/x64/${{ env.exe_file }}
                   malware_block: false
                   override: true
 
@@ -253,7 +273,7 @@ jobs:
                   password: ${{ secrets.ES_PASSWORD }}
                   credential_id: ${{ secrets.ES_CREDENTIAL_ID }}
                   totp_secret: ${{ secrets.ES_TOTP_SECRET }}
-                  file_path: jccm/out/make/squirrel.windows/x64/jccm-windows-x64-setup-${{ env.version }}-full.nupkg
+                  file_path: jccm/out/make/squirrel.windows/x64/${{ env.nupkg_file }}
                   malware_block: false
                   override: true
 
@@ -261,7 +281,7 @@ jobs:
               shell: pwsh
               run: |
                   $version = $env:version
-                  $nupkgFile = "jccm-windows-x64-setup-$version-full.nupkg"
+                  $nupkgFile = "${{ env.nupkg_file }}"
                   $basePath = "jccm/out/make/squirrel.windows/x64"
                   $nupkgPath = Join-Path $basePath $nupkgFile
                   $releasesPath = Join-Path $basePath "RELEASES"

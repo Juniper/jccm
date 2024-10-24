@@ -20,6 +20,7 @@ import {
     WrenchFilled,
     CheckmarkCircleFilled,
     FireFilled,
+    CircleHalfFillRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
 
@@ -28,15 +29,19 @@ import { BastionHostButton } from './BastionHostButton';
 import { CircleIcon } from './ChangeIcon';
 import DeviceModels from './DeviceModels';
 import eventBus from '../Common/eventBus';
+import { delay } from 'lodash';
 
 const { electronAPI } = window;
 const ConsoleWindowIcon = bundleIcon(WrenchRegular, WrenchFilled);
+const ResetNetworkAccessIcon = bundleIcon(CircleHalfFillRegular, CircleHalfFillRegular);
 
 const tooltipStyles = makeStyles({
     tooltipMaxWidthClass: {
         maxWidth: '800px',
     },
 });
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default () => {
     const styles = tooltipStyles();
@@ -78,6 +83,7 @@ export default () => {
     const validateDeviceModel = (deviceModel) => {
         if (!deviceModelsValidation) return true;
         if (!isUserLoggedIn) return true;
+        if (Object.keys(supportedDeviceModels) === 0) return true;
         return deviceModel?.toUpperCase() in supportedDeviceModels;
     };
 
@@ -126,8 +132,15 @@ export default () => {
         return siteExists;
     };
 
-    const countNonMatchingInventoryItems = () => {
+
+    const countNonMatchingInventoryItems = async () => {
         let nonMatchingCount = 0;
+
+        // if (cloudInventory.length === 0) {
+        //     console.log('Waiting for 3 seconds...');
+        //     await sleep(3000); // Proper delay
+        // }
+
         inventory.forEach((item) => {
             const existence = doesSiteNameExist(item.organization, item.site);
             if (!existence) {
@@ -223,15 +236,16 @@ export default () => {
                                     withArrow='above'
                                 >
                                     <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
-                                        Product Model{countOfInvalidModel > 1 ? 's' : ''} Unsupported :{' '}
-                                        {countOfInvalidModel}
+                                        Product Model{countOfInvalidModel > 1 ? 's ' : ' '}
+                                        {`Unsupported: ${countOfInvalidModel}`}
                                     </Label>
                                 </Tooltip>
                             )}
-                            {countOfOrgOrSiteUnmatched > 0 && (
+                            {cloudInventory.length > 0 && countOfOrgOrSiteUnmatched > 0 && (
                                 <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
-                                    Device{countOfOrgOrSiteUnmatched > 1 ? 's' : ''} with unmatched organization or
-                                    site: {countOfOrgOrSiteUnmatched}
+                                    {`Device${
+                                        countOfOrgOrSiteUnmatched !== 1 ? 's' : ''
+                                    } with unmatched organization or site: ${countOfOrgOrSiteUnmatched}`}
                                 </Label>
                             )}
                         </>
@@ -398,6 +412,38 @@ export default () => {
                                                     </Text>
                                                 </div>
                                             )}
+                                            <div
+                                                style={{
+                                                    width: '100%',
+                                                    paddingTop: '5px',
+                                                    paddingBottom: '5px',
+                                                }}
+                                            />
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'flex-start',
+                                                    gap: '5px',
+                                                }}
+                                            >
+                                                <ResetNetworkAccessIcon
+                                                    style={{
+                                                        fontSize: '12px',
+                                                        color: tokens.colorNeutralForeground4,
+                                                    }}
+                                                />
+                                                <Link
+                                                    style={{
+                                                        fontSize: '10px',
+                                                        color: tokens.colorNeutralForeground4,
+                                                    }}
+                                                    onClick={() => eventBus.emit('device-network-access-check-reset')}
+                                                >
+                                                    Reset
+                                                </Link>
+                                            </div>
                                         </div>
                                     ),
                                 }}
@@ -406,16 +452,14 @@ export default () => {
                                 positioning='above'
                                 appearance='normal'
                             >
-                                <Link
-                                    appearance='subtle'
+                                <Text
                                     style={{
                                         fontSize: '12px',
                                         color: tokens.colorNeutralForeground4,
                                     }}
-                                    onClick={() => eventBus.emit('device-network-access-check-reset')}
                                 >
                                     {`Reset Network Access Check: ${countOfDeviceNetworkCondition} Devices`}
-                                </Link>
+                                </Text>
                             </Tooltip>
                         </div>
                     </div>

@@ -480,6 +480,7 @@ const InventoryTreeMenuLocal = () => {
     const validateDeviceModel = (deviceModel) => {
         if (!deviceModelsValidation) return true;
         if (!isUserLoggedIn) return true;
+        if (Object.keys(supportedDeviceModels) === 0) return true;
         return deviceModel?.toUpperCase() in supportedDeviceModels;
     };
 
