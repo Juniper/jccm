@@ -4,7 +4,7 @@ import useStore from './Common/StateStore';
 
 export const VersionUpdateCheckNotification = ({ isOpen, onClose }) => {
     const aboutWindowWidth = 400;
-    const aboutWindowHeight = 100;
+    const aboutWindowHeight = 120;
 
     const { checkingForUpdate, setCheckingForUpdate } = useStore();
     const [isNotCheckingAvailable, setIsNotCheckingAvailable] = useState(false);
@@ -42,29 +42,29 @@ export const VersionUpdateCheckNotification = ({ isOpen, onClose }) => {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                paddingTop: '40px',
+                paddingTop: '50px',
                 paddingBottom: '40px',
                 gap: '20px',
             }}
         >
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <Text size={300} weight='regular' align='center'>
-                    {message}
-                </Text>
-            </div>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '20px',
-                }}
-            >
-                <Button appearance='secondary' shape='circular' onClick={onConfirm} size='small'>
-                    OK
-                </Button>
-            </div>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Text size={300} weight='regular' align='center'>
+                        {message}
+                    </Text>
+                </div>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '20px',
+                    }}
+                >
+                    <Button appearance='secondary' shape='circular' onClick={onConfirm} size='small'>
+                        OK
+                    </Button>
+                </div>
         </div>
     );
 

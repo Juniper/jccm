@@ -594,7 +594,7 @@ export const Main = () => {
                 <ConfirmWindow
                     isOpen={isOpenResetAppData}
                     onClose={() => setIsOpenResetAppData(false)}
-                    message='This will reset all app data to default settings. Are you sure you want to proceed?'
+                    message={'This will reset all app data to default settings.\nAre you sure you want to proceed?'}
                     onConfirm={async () => await eventBus.emit('clear-database-and-restart-app')}
                 />
             )}

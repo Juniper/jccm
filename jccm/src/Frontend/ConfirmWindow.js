@@ -3,7 +3,10 @@ import { Button, Text, Dialog, DialogSurface } from '@fluentui/react-components'
 
 export const ConfirmWindow = ({ isOpen, onClose, message, onConfirm }) => {
     const aboutWindowWidth = 400;
-    const aboutWindowHeight = 100;
+    const aboutWindowHeight = 120;
+
+    // Split the message by newlines
+    const messageLines = message.split('\n');
 
     return (
         <Dialog open={isOpen} onDismiss={onClose} modalType='modal'>
@@ -24,15 +27,17 @@ export const ConfirmWindow = ({ isOpen, onClose, message, onConfirm }) => {
                         flexDirection: 'column',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        paddingTop: '40px',
+                        paddingTop: '50px',
                         paddingBottom: '40px',
                         gap: '20px',
                     }}
                 >
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <Text size={200} weight='regular' align='center'>
-                            {message}
-                        </Text>
+                    <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column' }}>
+                        {messageLines.map((line, index) => (
+                            <Text key={index} size={200} weight='regular' align='center'>
+                                {line}
+                            </Text>
+                        ))}
                     </div>
                     <div
                         style={{
