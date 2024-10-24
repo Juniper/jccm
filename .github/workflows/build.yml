@@ -221,37 +221,38 @@ jobs:
               run: npm install
               working-directory: ./jccm
 
-            - name: Get version and filenames from package.json and directory
-              shell: pwsh
-              run: |
-                  # Get version from package.json
-                  $version = (Get-Content jccm/package.json | ConvertFrom-Json).version
-                  echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-
-                  # Define the directory path
-                  $basePath = "jccm/out/make/squirrel.windows/x64"
-
-                  # Get the first .exe file
-                  $exeFile = Get-ChildItem $basePath -Filter *.exe | Select-Object -First 1
-                  if ($exeFile) {
-                    echo "exe_file=$($exeFile.Name)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
-                  } else {
-                    Write-Error "No .exe file found in $basePath"
-                  }
-
-                  # Get the first .nupkg file
-                  $nupkgFile = Get-ChildItem $basePath -Filter *.nupkg | Select-Object -First 1
-                  if ($nupkgFile) {
-                    echo "nupkg_file=$($nupkgFile.Name)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
-                  } else {
-                    Write-Error "No .nupkg file found in $basePath"
-                  }
-
             - name: Build and package (x64)
               run: |
                   npm run make -- --platform=win32 --arch=x64
                   dir out\make\squirrel.windows\x64\
               working-directory: ./jccm
+
+            - name: Get version and filenames from package.json and .exe and .nupkg files
+              shell: pwsh
+              run: |
+                  $version = (Get-Content jccm/package.json | ConvertFrom-Json).version
+                  echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+                  $basePath = "jccm/out/make/squirrel.windows/x64"
+
+                  if (Test-Path $basePath) {
+                    $exeFile = Get-ChildItem $basePath -Filter *.exe | Select-Object -First 1
+                    if ($exeFile) {
+                      echo "exe_file=$($exeFile.Name)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+                    } else {
+                      Write-Error "No .exe file found."
+                    }
+
+                    $nupkgFile = Get-ChildItem $basePath -Filter *.nupkg | Select-Object -First 1
+                    if ($nupkgFile) {
+                      echo "nupkg_file=$($nupkgFile.Name)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+                    } else {
+                      Write-Error "No .nupkg file found."
+                    }
+                  } else {
+                    Write-Error "Directory not found: $basePath"
+                    exit 1
+                  }
 
             - name: Sign setup.exe with CodeSignTool
               uses: sslcom/esigner-codesign@develop
