@@ -23,7 +23,7 @@ export const MainEventProcessor = () => {
     const { cleanUpIsTesting, cleanUpDeviceNetworkCondition } = useStore();
     const { resetDeviceNetworkConditionAll, resetIsTestingAll } = useStore();
     const { setCheckingForUpdate, setUpdateDownloaded } = useStore();
-    const { setIsAutoUpdateSupport } = useStore();
+    const { isAutoUpdateSupport, setIsAutoUpdateSupport } = useStore();
 
     const userRef = useRef(user);
     const isUserLoggedInRef = useRef(isUserLoggedIn);
@@ -33,6 +33,11 @@ export const MainEventProcessor = () => {
     const currentActiveThemeNameRef = useRef(currentActiveThemeName);
 
     const [isFirstCheckIgnored, setIsFirstCheckIgnored] = useState(true);
+    const isFirstCheckIgnoredRef = useRef(isFirstCheckIgnored);
+
+    useEffect(() => {
+        isFirstCheckIgnoredRef.current = isFirstCheckIgnored;
+    }, [isFirstCheckIgnored]);
 
     useEffect(() => {
         // Set a 10-second timeout to allow update checks after the delay
@@ -266,18 +271,19 @@ export const MainEventProcessor = () => {
         const handleCheckForUpdates = async () => {
             console.log('Event: "check-for-updates"');
 
-            // If this is the first call and within 10 seconds, ignore it
-            if (isFirstCheckIgnored) {
+            if (isFirstCheckIgnoredRef.current) {
                 console.log('Skipping update check during initial 10 seconds.');
                 return;
             }
 
-            try {
-                if (!isAutoUpdateSupport) {
-                    console.warn('Auto-update not supported on this platform.');
-                    return;
-                }
+            const isAutoUpdateSupported = useStore.getState().isAutoUpdateSupport;
 
+            if (!isAutoUpdateSupported) {
+                console.warn('Auto-update not supported on this platform.');
+                return;
+            }
+
+            try {
                 const result = await window.electronAPI.checkForUpdates();
                 console.log('check-for-updates result:', result);
                 setCheckingForUpdate(result);

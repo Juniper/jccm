@@ -27,6 +27,17 @@ import {
     LeafThreeFilled,
     PersonQuestionMarkFilled,
     PersonQuestionMarkRegular,
+    QuestionCircleFilled,
+    QuestionCircleRegular,
+    InfoFilled,
+    InfoRegular,
+    BroomFilled,
+    BroomRegular,
+    ArrowClockwiseFilled,
+    ArrowClockwiseRegular,
+    NewFilled,
+    NewRegular,
+    ArrowResetFilled, ArrowResetRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
 
@@ -54,6 +65,10 @@ const CloudAdd = bundleIcon(CloudAddFilled, CloudAddRegular);
 const ArrowCircleRight = bundleIcon(ArrowCircleRightRegular, ArrowCircleRightRegular);
 const LeafThree = bundleIcon(LeafThreeFilled, LeafThreeRegular);
 const PersonQuestionMark = bundleIcon(PersonQuestionMarkFilled, PersonQuestionMarkRegular);
+const AboutIcon = bundleIcon(InfoFilled, InfoRegular);
+const ResetIcon = bundleIcon(ArrowResetFilled, ArrowResetRegular);
+const RestartIcon = bundleIcon(ArrowClockwiseFilled, ArrowClockwiseRegular);
+const CheckIcon = bundleIcon(NewFilled, NewRegular);
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -283,7 +298,10 @@ export const Main = () => {
                             </MenuTrigger>
                             <MenuPopover>
                                 <MenuList>
-                                    <MenuItem onClick={() => setIsOpenAbout(true)}>
+                                    <MenuItem
+                                        // icon={<AboutIcon style={{ fontSize: '16px' }} />}
+                                        onClick={() => setIsOpenAbout(true)}
+                                    >
                                         <Text style={{ fontSize: '12px' }}>About JCCM</Text>
                                     </MenuItem>
                                     {isAutoUpdateSupport && (
@@ -299,6 +317,11 @@ export const Main = () => {
                                                 </MenuItem>
                                             ) : (
                                                 <MenuItem
+                                                    // icon={
+                                                    //     isCheckUpdatesDisabled ? null : (
+                                                    //         <CheckIcon style={{ fontSize: '16px' }} />
+                                                    //     )
+                                                    // }
                                                     disabled={isCheckUpdatesDisabled}
                                                     onClick={() => setIsOpenCheckUpdates(true)}
                                                 >
@@ -312,12 +335,18 @@ export const Main = () => {
                                         </>
                                     )}
                                     <MenuDivider />
-                                    <MenuItem onClick={() => setIsOpenResetAppData(true)}>
+                                    <MenuItem
+                                        // icon={<ResetIcon style={{ fontSize: '16px' }} />}
+                                        onClick={() => setIsOpenResetAppData(true)}
+                                    >
                                         <Tooltip content={'This will clear all data and restart the app.'}>
                                             <Text style={{ fontSize: 12 }}>Reset App Data</Text>
                                         </Tooltip>
                                     </MenuItem>
-                                    <MenuItem onClick={() => setIsOpenRestartApp(true)}>
+                                    <MenuItem
+                                        // icon={<RestartIcon style={{ fontSize: '16px' }} />}
+                                        onClick={() => setIsOpenRestartApp(true)}
+                                    >
                                         <Text style={{ fontSize: '12px' }}>Restart</Text>
                                     </MenuItem>
                                     <MenuItem onClick={() => setIsOpenQuitApp(true)}>
