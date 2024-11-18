@@ -20,6 +20,8 @@ import {
     ArrowCircleRightRegular,
     PlayCircleHintRegular,
     PlayCircleHintFilled,
+    ErrorCircleSettingsRegular,
+    ErrorCircleSettingsFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
 
@@ -29,8 +31,9 @@ import { RWTable } from './RWTable';
 import { useNotify } from '../../Common/NotificationContext';
 
 const ExportButtonIcon = bundleIcon(PlayCircleHintFilled, PlayCircleHintRegular);
+const LogExportButtonIcon = bundleIcon(ErrorCircleSettingsFilled, ErrorCircleSettingsRegular);
 
-export const InventorySearchResult = ({ columns, items, rowHeight, disabled }) => {
+export const InventorySearchResult = ({ columns, items, rowHeight, disabled, undiscoveredList }) => {
     const { notify } = useNotify(); // Correctly use the hook here
 
     const aggregateByHardwareModel = (items) => {
@@ -115,14 +118,50 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled }) =
         writeFile(wb, fileName);
     };
 
+    const logExport = () => {
+        console.log('Exporting log data...');
+        console.log('Undiscovered list:', undiscoveredList);
+
+        // Define the column headers
+        const columnMapping = {
+            device: 'Device',
+            status: 'Status',
+            message: 'Message',
+        };
+
+        // Prepare the data for Excel
+        const orderedData = undiscoveredList.map((item) =>
+            Object.fromEntries(
+                Object.entries(columnMapping).map(([key, header]) => [
+                    header,
+                    item[key] !== undefined ? item[key] : 'N/A',
+                ])
+            )
+        );
+
+        // Generate the worksheet and set column headers
+        const ws = utils.json_to_sheet(orderedData, { header: Object.values(columnMapping) });
+
+        // Auto-adjust column widths
+        ws['!cols'] = Object.values(columnMapping).map((header) => ({
+            wch: Math.max(
+                header.length,
+                ...orderedData.map((row) => (row[header] ? row[header].toString().length : 0))
+            ),
+        }));
+
+        // Create a workbook and append the worksheet
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, ws, 'Log Data');
+
+        // Create the filename and export
+        const fileName = `log-data-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        writeFile(wb, fileName);
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', margin: 0, padding: 0 }}>
-            <RWTable
-                columns={columns}
-                items={items}
-                rowHeight={rowHeight}
-                size='extra-small'
-            />
+            <RWTable columns={columns} items={items} rowHeight={rowHeight} size='extra-small' />
 
             <div
                 style={{
@@ -173,16 +212,9 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled }) =
                                 width: '130px',
                             }}
                         >
-                            <Text
-                                size={100}
-                                font='numeric'
-                            >
+                            <Text size={100} font='numeric'>
                                 {'Total devices: '}
-                                <Text
-                                    size={100}
-                                    font='monospace'
-                                    weight='bold'
-                                >
+                                <Text size={100} font='monospace' weight='bold'>
                                     {items?.length}
                                 </Text>
                             </Text>
@@ -209,18 +241,9 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled }) =
                                         alignItems: 'center',
                                     }}
                                 >
-                                    <Text
-                                        size={100}
-                                        font='numeric'
-                                        wrap={false}
-                                    >
+                                    <Text size={100} font='numeric' wrap={false}>
                                         {`${model}: `}
-                                        <Text
-                                            size={100}
-                                            font='monospace'
-                                            weight='bold'
-                                            wrap={false}
-                                        >
+                                        <Text size={100} font='monospace' weight='bold' wrap={false}>
                                             {count}
                                         </Text>
                                     </Text>
@@ -237,6 +260,27 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled }) =
                             gap: '10px',
                         }}
                     >
+                        <Tooltip
+                            content={
+                                <Text align='center'>
+                                    Export the address list of devices that have not been discovered.
+                                </Text>
+                            }
+                            positioning='above'
+                        >
+                            <Button
+                                disabled={undiscoveredList?.length === 0 || disabled}
+                                icon={<LogExportButtonIcon />}
+                                shape='circular'
+                                appearance='subtle'
+                                size='small'
+                                style={{ whiteSpace: 'nowrap' }}
+                                onClick={logExport}
+                            >
+                                Log Export
+                            </Button>
+                        </Tooltip>
+
                         <Tooltip
                             content={
                                 <Text align='center'>

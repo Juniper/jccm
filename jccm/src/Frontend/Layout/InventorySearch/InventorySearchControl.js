@@ -41,7 +41,7 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 import { getDeviceFacts } from '../Devices';
 
-export const InventorySearchControl = ({ subnets, startCallback, endCallback, onAddFact }) => {
+export const InventorySearchControl = ({ subnets, startCallback, endCallback, onAddFact, onAddUndiscoveredList }) => {
     const { notify } = useNotify(); // Correctly use the hook here
     const { settings } = useStore();
 
@@ -118,7 +118,7 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
             if (response.status) {
                 // updateHostStatusCount(response.result.status);
                 updateCount(response.result);
-                
+
                 const { address, port, username, password } = device;
 
                 if (!!response.result.vc) {
@@ -170,6 +170,13 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
         }
 
         // updateHostStatusCount(response.result.status);
+
+        await onAddUndiscoveredList({
+            device: `${device.address}:${device.port}`,
+            status: response?.result?.status,
+            message: response?.result?.message,
+        });
+
         updateCount(response.result);
 
         return response;
@@ -336,11 +343,7 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
 
                 <Tooltip
                     content={
-                        <Text
-                            align='start'
-                            wrap
-                            size={100}
-                        >
+                        <Text align='start' wrap size={100}>
                             Select search rate ({minRate}-{maxRate} per second). Please ensure there are no security
                             issues when searching at a high rate.
                         </Text>

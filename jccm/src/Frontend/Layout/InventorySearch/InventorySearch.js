@@ -71,6 +71,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
     ];
 
     const [facts, setFacts] = useState([]);
+    const [undiscoveredList, setUndiscoveredList] = useState([]);
 
     const factsColumns = [
         { label: 'Address', name: 'address', width: 12 },
@@ -117,11 +118,11 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
     const handleLeftMouseMove = (e) => {
         if (!containerRef.current) return;
 
-        console.log('leftMouseMove', e.clientX, e.clientY);
+        // console.log('leftMouseMove', e.clientX, e.clientY);
         // Calculate new width based on mouse position
         const newWidth = e.clientX;
         if (newWidth >= leftMinWidth && newWidth <= leftMaxWidth) {
-            console.log('newWidth', newWidth);
+            // console.log('newWidth', newWidth);
 
             setLeftWidth(newWidth - 50);
         }
@@ -129,7 +130,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
 
     const handleLeftMouseUp = () => {
         setIsLeftResizerActive(false);
-        console.log('mouse up');
+        // console.log('mouse up');
 
         window.removeEventListener('mousemove', handleLeftMouseMove);
         window.removeEventListener('mouseup', handleLeftMouseUp);
@@ -137,7 +138,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
 
     const handleLeftMouseDown = (e) => {
         setIsLeftResizerActive(true);
-        console.log('mouse down');
+        // console.log('mouse down');
 
         window.addEventListener('mousemove', handleLeftMouseMove);
         window.addEventListener('mouseup', handleLeftMouseUp);
@@ -146,7 +147,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
 
     const handleMouseEnter = () => {
         setIsLeftResizerHovered(true);
-        console.log('mouse enter');
+        // console.log('mouse enter');
 
         clearTimeout(resizeColorTimeoutRef.current);
         resizeColorTimeoutRef.current = setTimeout(() => {
@@ -202,7 +203,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
     };
 
     const onDeleteSubnet = (index) => {
-        console.log('onDeleteSubnet: ', index);
+        // console.log('onDeleteSubnet: ', index);
         deleteSubnet(index);
         notify(
             <Toast>
@@ -244,6 +245,13 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
             return [...prevFacts, fact];
         });
     };
+
+    const onAddUndiscoveredList = async (undiscoveredList) => {
+        setUndiscoveredList((prevUndiscoveredList) => {
+            return [...prevUndiscoveredList, undiscoveredList];
+        });
+    };
+
 
     return (
         <Dialog
@@ -382,6 +390,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                                 startCallback={startCallback}
                                 endCallback={endCallback}
                                 onAddFact={onAddFact}
+                                onAddUndiscoveredList={onAddUndiscoveredList}
                             />
 
                             <div style={{ width: '100%', marginTop: '5px', marginBottom: '5px', padding: 0 }}>
@@ -395,6 +404,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                                     items={facts}
                                     rowHeight={30}
                                     disabled={isSearchRun}
+                                    undiscoveredList={undiscoveredList}
                                 />
                             </div>
                         </div>
