@@ -132,6 +132,9 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
 
                 const { address, port, username, password } = device;
 
+                const { routerId = null } = response.result?.routeSummaryInformation;
+                const { name = null } = response.result?.interface;
+
                 if (!!response.result.vc) {
                     const { osName, osVersion, hostName } = response.result.systemInformation;
 
@@ -156,6 +159,8 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                         osName,
                         osVersion,
                         hostName,
+                        routerId,
+                        interfaceName: name
                     });
                 } else {
                     const { hardwareModel, osName, osVersion, serialNumber, hostName } =
@@ -171,6 +176,8 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                         osVersion,
                         serialNumber,
                         hostName,
+                        routerId,
+                        interfaceName: name
                     });
                 }
 

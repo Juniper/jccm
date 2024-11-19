@@ -101,9 +101,7 @@ function processCommandsStandalone(
                 conn.end();
                 reject({
                     ...StatusErrorMessages.INACTIVITY_TIMEOUT,
-                    error: `CLI Inactivity timeout of ${
-                        timeout / 1000
-                    } seconds exceeded.`,
+                    error: `CLI Inactivity timeout of ${timeout / 1000} seconds exceeded.`,
                 });
             }, timeout);
         };
@@ -152,10 +150,7 @@ function processCommandsStandalone(
                             // console.log(`commitInactivityTimeout: ${commitInactivityTimeout} ms`);
                             continue;
                         } else {
-                            if (
-                                cmd.startsWith('show') ||
-                                cmd.startsWith('commit')
-                            ) {
+                            if (cmd.startsWith('show') || cmd.startsWith('commit')) {
                                 currentCommand = `${cmd} | display xml | no-more\n`;
                             } else {
                                 currentCommand = `${cmd}\n`;
@@ -336,18 +331,13 @@ function processCommandsProxy(
 
                 // Handle specific Junos errors
                 if (isJunosDeviceBastionHostFound) {
-                    const junosErrorPatterns = [
-                        'could not create child process',
-                        'no more processes',
-                    ];
+                    const junosErrorPatterns = ['could not create child process', 'no more processes'];
                     const isErrorPresent = junosErrorPatterns.some((pattern) =>
                         eachCommandOutput.toLowerCase().includes(pattern)
                     );
 
                     if (isErrorPresent) {
-                        terminateConnectionWithErrorMessage(
-                            'Failed to execute the SSH client'
-                        );
+                        terminateConnectionWithErrorMessage('Failed to execute the SSH client');
                         return; // Early exit to prevent further processing
                     }
                 }
@@ -376,9 +366,7 @@ function processCommandsProxy(
 
                     if (match && match[1]) {
                         const cleanedErrorMessage = match[1].replace(/\.$/, '');
-                        terminateConnectionWithErrorMessage(
-                            cleanedErrorMessage
-                        );
+                        terminateConnectionWithErrorMessage(cleanedErrorMessage);
                     }
                 });
             }
@@ -411,8 +399,7 @@ function processCommandsProxy(
                             break;
                         default:
                             currentCommand =
-                                cmd.startsWith('show') ||
-                                cmd.startsWith('commit')
+                                cmd.startsWith('show') || cmd.startsWith('commit')
                                     ? `${cmd} | display xml | no-more\n`
                                     : `${cmd}\n`;
                             stream.write(currentCommand);
@@ -452,9 +439,7 @@ function processCommandsProxy(
                         const regex = /^<rpc-reply[\s\S]*?<\/rpc-reply>$/gim;
 
                         let match;
-                        while (
-                            (match = regex.exec(allCommandsOutput)) !== null
-                        ) {
+                        while ((match = regex.exec(allCommandsOutput)) !== null) {
                             results.push(match[0]);
                         }
                         resolve({
@@ -494,10 +479,7 @@ const getRpcReply = (rpcName, result) => {
     const escapedRpcName = rpcName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     // Construct the regex pattern dynamically using the escaped rpcName variable
-    const regex = new RegExp(
-        `<${escapedRpcName}[\\s\\S]*?<\\/${escapedRpcName}>`,
-        'gi'
-    );
+    const regex = new RegExp(`<${escapedRpcName}[\\s\\S]*?<\\/${escapedRpcName}>`, 'gi');
 
     const match = regex.exec(result);
     if (match !== null) {
@@ -519,6 +501,8 @@ export const getDeviceFacts = async (
         'show system information',
         'show chassis hardware',
         'show virtual-chassis',
+        'show route summary',
+        `show route ${address}`,
         'exit',
     ];
 
@@ -548,9 +532,7 @@ export const getDeviceFacts = async (
                 if (rpcReply !== null) {
                     // console.log(`rpc system-information reply: ${JSON.stringify(rpcReply, null, 2)}`);
 
-                    const parsedData = await parser.parseStringPromise(
-                        rpcReply
-                    );
+                    const parsedData = await parser.parseStringPromise(rpcReply);
                     const info = parsedData['system-information'];
 
                     // console.log(`system-information: ${JSON.stringify(info, null, 2)}`);
@@ -559,9 +541,7 @@ export const getDeviceFacts = async (
                         hardwareModel: info['hardware-model'],
                         osName: info['os-name'],
                         osVersion: info['os-version'],
-                        serialNumber: upperSerialNumber
-                            ? info['serial-number'].toUpperCase()
-                            : info['serial-number'],
+                        serialNumber: upperSerialNumber ? info['serial-number'].toUpperCase() : info['serial-number'],
                         hostName: info['host-name'],
                     };
                 }
@@ -570,9 +550,7 @@ export const getDeviceFacts = async (
                 if (rpcReply !== null) {
                     // console.log(`rpc chassis-mac-addresses reply: ${JSON.stringify(rpcReply, null, 2)}`);
 
-                    const parsedData = await parser.parseStringPromise(
-                        rpcReply
-                    );
+                    const parsedData = await parser.parseStringPromise(rpcReply);
                     const info = parsedData['chassis-mac-addresses'];
 
                     // console.log(`chassis-mac-addresses: ${JSON.stringify(info, null, 2)}`);
@@ -584,9 +562,7 @@ export const getDeviceFacts = async (
                 if (rpcReply !== null) {
                     // console.log(`rpc chassis-inventory reply: ${JSON.stringify(rpcReply, null, 2)}`);
 
-                    const parsedData = await parser.parseStringPromise(
-                        rpcReply
-                    );
+                    const parsedData = await parser.parseStringPromise(rpcReply);
                     const info = parsedData['chassis-inventory'];
 
                     facts.chassisInventory = info;
@@ -596,10 +572,7 @@ export const getDeviceFacts = async (
                 if (rpcReply !== null) {
                     const v = await parser.parseStringPromise(rpcReply);
 
-                    let members =
-                        v['virtual-chassis-information']['member-list'][
-                            'member'
-                        ];
+                    let members = v['virtual-chassis-information']['member-list']['member'];
 
                     // console.log(
                     //     `rpc virtual-chassis-information reply: ${JSON.stringify(
@@ -623,13 +596,37 @@ export const getDeviceFacts = async (
 
                     facts.vc = vcMembers;
                 }
+
+                rpcReply = getRpcReply('route-summary-information', result);
+
+                if (rpcReply !== null) {
+                    const parsedData = await parser.parseStringPromise(rpcReply);
+                    const info = parsedData['route-summary-information'];
+
+                    facts.routeSummaryInformation = {
+                        routerId: info['router-id'],
+                    };
+                }
+
+                rpcReply = getRpcReply('route-information', result);
+
+                if (rpcReply !== null) {
+                    const parsedData = await parser.parseStringPromise(rpcReply);
+                    const info = parsedData['route-information'];
+
+                    const name =
+                        info['route-table']?.['rt']?.['rt-entry']?.['nh']?.['nh-local-interface'] ||
+                        info['route-table']?.['rt']?.['rt-entry']?.['nh']?.['via'] ||
+                        'Unknown';
+
+                    facts.interface = {
+                        name,
+                    };
+                }
             }
 
             // Validate gathered facts
-            const missingInfo = [
-                'systemInformation',
-                'chassisInventory',
-            ].filter((info) => !facts[info]);
+            const missingInfo = ['systemInformation', 'chassisInventory'].filter((info) => !facts[info]);
 
             if (missingInfo.length) {
                 console.error(`Missing data: ${missingInfo.join(', ')}`);
@@ -649,9 +646,7 @@ export const getDeviceFacts = async (
             throw results;
         }
     } catch (error) {
-        console.error(
-            `getDeviceFacts Error(${address}:${port}): ${JSON.stringify(error)}`
-        );
+        console.error(`getDeviceFacts Error(${address}:${port}): ${JSON.stringify(error)}`);
         throw error;
     }
 };
@@ -714,11 +709,7 @@ export const commitJunosSetConfig = async (
             throw results;
         }
     } catch (error) {
-        console.error(
-            `commitJunosSetConfig Error(${address}:${port}): ${JSON.stringify(
-                error
-            )}`
-        );
+        console.error(`commitJunosSetConfig Error(${address}:${port}): ${JSON.stringify(error)}`);
         throw error;
     }
 };
@@ -749,12 +740,7 @@ export const getDeviceNetworkCondition = async (
     };
 
     try {
-        const results = await processCommands(
-            commands,
-            sshConfig,
-            bastionHost,
-            5000
-        );
+        const results = await processCommands(commands, sshConfig, bastionHost, 5000);
 
         if (results.status === 'success') {
             const parser = new xml2js.Parser({ explicitArray: false }); // Consider setting explicitArray to false to simplify the structure
@@ -812,11 +798,7 @@ export const getDeviceNetworkCondition = async (
             throw results;
         }
     } catch (error) {
-        console.error(
-            `getDeviceNetworkCondition Error(${address}:${port}): ${JSON.stringify(
-                error
-            )}`
-        );
+        console.error(`getDeviceNetworkCondition Error(${address}:${port}): ${JSON.stringify(error)}`);
         throw error;
     }
 };

@@ -83,6 +83,8 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
         { label: 'Serial Number', name: 'serialNumber', width: 10 },
         { label: 'OS Name', name: 'osName', width: 10 },
         { label: 'OS Version', name: 'osVersion', width: 10 },
+        { label: 'Router Id', name: 'routerId', width: 10 },
+        { label: 'Interface', name: 'interfaceName', width: 10 },
     ];
 
     const containerRef = useRef(null);
