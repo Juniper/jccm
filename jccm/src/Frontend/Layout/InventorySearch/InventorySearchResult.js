@@ -201,7 +201,8 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled, und
                     // Join pruned addresses into a single string
                     orderedRow[columnMapping[key]] = item.prunedAddresses.join(', ') || 'N/A';
                 } else {
-                    const value = item[key] ?? 'N/A';
+                    const value = item[key] ?? `Your ${key}`;
+
                     orderedRow[columnMapping[key]] = value;
                 }
             });
