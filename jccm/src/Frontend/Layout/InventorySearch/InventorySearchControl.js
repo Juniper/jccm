@@ -17,6 +17,7 @@ import {
     Popover,
     PopoverSurface,
     PopoverTrigger,
+    Switch,
     tokens,
 } from '@fluentui/react-components';
 
@@ -43,13 +44,15 @@ import { getDeviceFacts } from '../Devices';
 
 export const InventorySearchControl = ({ subnets, startCallback, endCallback, onAddFact, onAddUndiscoveredList }) => {
     const { notify } = useNotify(); // Correctly use the hook here
-    const { settings } = useStore();
+    const { settings, inventory } = useStore();
 
     const [isStart, setIsStart] = useState(false);
     const [searchRate, setSearchRate] = useState(10);
     const [hostSeq, setHostSeq] = useState(0);
     const [hostStatusCount, setHostStatusCount] = useState({});
     const [sshClientErrorCount, setSshClientErrorCount] = useState({});
+    const [isSkipLocalInventory, setIsSkipLocalInventory] = useState(false);
+
     const isStartRef = useRef(null);
     const hostSeqRef = useRef(null);
     const hostStatusCountRef = useRef(null);
@@ -101,6 +104,14 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                 return updatedMessage;
             });
         }
+    };
+
+    const isDeviceInInventory = (device, inventory) => {
+        const isInInventory = inventory.some(
+            (invDevice) => invDevice.address === device.address && invDevice.port === device.port
+        );
+        // console.log(`${device.address}:${device.port} isDeviceInInventory: ${isInInventory}`);
+        return isInInventory;
     };
 
     const fetchDeviceFacts = async (device) => {
@@ -196,8 +207,26 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
         setSshClientErrorCount({});
 
         for (const device of getHostListMultiple(subnets)) {
+            if (isSkipLocalInventory && isDeviceInInventory(device, inventory)) {
+                // console.log(`>>>${device.address}:${device.port} isSkipLocalInventory: `, isSkipLocalInventory);
+
+                const status = 'Skipped';
+                const message = 'Device is already in the local inventory.';
+
+                updateCount({ status, message });
+
+                await onAddUndiscoveredList({
+                    device: `${device.address}:${device.port}`,
+                    status,
+                    message,
+                });
+
+                setHostSeq((seq) => seq + 1);
+                continue;
+            }
+
             promises.push(fetchDeviceFacts(device)); // Add the promise to the array
-            setHostSeq(n++);
+            setHostSeq((seq) => seq + 1);
 
             const expectedNextStart = startTime + n * interval;
             const currentTime = Date.now();
@@ -206,6 +235,8 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
             if (dynamicDelay > 0) {
                 await delay(dynamicDelay); // Adjust delay dynamically
             }
+
+            n++; // Increment `n` ONLY for processed devices
 
             if (isStartRef.current === false) return;
         }
@@ -272,6 +303,11 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
     const rotateColorIndex = Math.floor(((searchRate - minRate) / (maxRate - minRate)) * (rotateColors.length - 1));
     const rotateColor = rotateColors[rotateColorIndex];
 
+    const onChangeIsSkipLocalInventory = async (event) => {
+        const checked = event.currentTarget.checked;
+        setIsSkipLocalInventory(checked === true);
+    };
+
     return (
         <div
             style={{
@@ -289,21 +325,77 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                     justifyContent: 'space-between',
                     width: '100%',
                     // height: '24px',
-                    overflow: 'visible',
+                    // overflow: 'visible',
                     gap: '10px',
+                    position: 'relative', // Enable relative positioning for the parent container
                 }}
             >
-                {!isStart ? (
-                    <Button
-                        disabled={subnets?.length === 0}
-                        icon={<SearchPlayIcon />}
-                        shape='circular'
-                        appearance='subtle'
-                        size='small'
-                        onClick={onClickSearchStart}
+                {/* Overlay for the "Skip local inventory" switch */}
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: '-40px', // Adjust as needed to position above the search button
+                        left: '-25px',
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'flex-start', // Align to the left
+                        alignItems: 'center',
+                        zIndex: 10, // Ensure it appears above other elements
+                        pointerEvents: 'auto', // Allow interactions
+                        overflow: 'visible',
+                    }}
+                >
+                    <Tooltip
+                        content={
+                            <Text size={100} align='center'>
+                                Skips addresses in local inventory for faster searches. Merge new inventory instead of
+                                replacing it.
+                            </Text>
+                        }
+                        positioning='after'
                     >
-                        Search
-                    </Button>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: '5px',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    transform: 'scale(0.4)',
+                                    transformOrigin: 'right',
+                                }}
+                            >
+                                <Switch checked={isSkipLocalInventory} onChange={onChangeIsSkipLocalInventory} />
+                            </div>
+                            <Text size={100}>{isSkipLocalInventory ? 'Skip' : `Do not skip`} local inventory</Text>
+                        </div>
+                    </Tooltip>
+                </div>
+
+                {!isStart ? (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignContent: 'center',
+                            justifyContent: 'flex-start',
+                            gap: '5px',
+                        }}
+                    >
+                        <Button
+                            disabled={subnets?.length === 0}
+                            icon={<SearchPlayIcon />}
+                            shape='circular'
+                            appearance='subtle'
+                            size='small'
+                            onClick={onClickSearchStart}
+                        >
+                            Search
+                        </Button>
+                    </div>
                 ) : (
                     <Button
                         disabled={subnets?.length === 0}

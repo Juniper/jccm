@@ -20,8 +20,8 @@ import {
     ArrowCircleRightRegular,
     PlayCircleHintRegular,
     PlayCircleHintFilled,
-    ErrorCircleSettingsRegular,
-    ErrorCircleSettingsFilled,
+    ErrorCircleRegular,
+    ErrorCircleFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
 
@@ -31,7 +31,7 @@ import { RWTable } from './RWTable';
 import { useNotify } from '../../Common/NotificationContext';
 
 const ExportButtonIcon = bundleIcon(PlayCircleHintFilled, PlayCircleHintRegular);
-const LogExportButtonIcon = bundleIcon(ErrorCircleSettingsFilled, ErrorCircleSettingsRegular);
+const LogExportButtonIcon = bundleIcon(ErrorCircleFilled, ErrorCircleRegular);
 
 export const InventorySearchResult = ({ columns, items, rowHeight, disabled, undiscoveredList }) => {
     const { notify } = useNotify(); // Correctly use the hook here

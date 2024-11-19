@@ -381,7 +381,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                                 width: '100%',
                                 height: '100%',
                                 marginLeft: '10px',
-                                overflow: 'hidden',
+                                overflow: 'visible',
                             }}
                         >
                             {/* Search Control */}
