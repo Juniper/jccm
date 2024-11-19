@@ -133,20 +133,20 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled, und
     const handleExportNoDuplicatedDevices = () => {
         // Define a mapping from object keys to Excel column names
         const columnMapping = {
-            organization: 'Organization',
-            site: 'Site',
-            address: 'Address',
-            port: 'Port',
-            username: 'Username',
-            password: 'Password',
-            hardwareModel: 'Hardware Model',
-            osName: 'OS Name',
-            osVersion: 'OS Version',
-            serialNumber: 'Serial Number',
-            hostName: 'Host Name',
-            routerId: 'Router ID',
-            interfaceName: 'Interface Name',
-            prunedAddresses: 'Pruned Addresses', // New column for removed addresses
+            organization: 'organization',
+            site: 'site',
+            address: 'address',
+            port: 'port',
+            username: 'username',
+            password: 'password',
+            hardwareModel: 'hardware model',
+            osName: 'os name',
+            osVersion: 'os version',
+            serialNumber: 'serial number',
+            hostName: 'host name',
+            routerId: 'router id',
+            interfaceName: 'interface name',
+            prunedAddresses: 'pruned addresses', // New column for removed addresses
         };
 
         // Helper function to compare IPv4 addresses numerically
@@ -201,7 +201,11 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled, und
                     // Join pruned addresses into a single string
                     orderedRow[columnMapping[key]] = item.prunedAddresses.join(', ') || 'N/A';
                 } else {
-                    const value = item[key] ?? `Your ${key}`;
+                    let value = item[key] ?? `Your ${key}`;
+                    value =
+                        value !== null && typeof value === 'object' && !Array.isArray(value)
+                            ? value.values.join(', ')
+                            : value;
 
                     orderedRow[columnMapping[key]] = value;
                 }
