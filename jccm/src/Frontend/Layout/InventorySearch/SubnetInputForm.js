@@ -3,6 +3,7 @@ import { Button, Field, Input, SpinButton, Divider, Tooltip, Text } from '@fluen
 import { EyeRegular, EyeOffRegular, bundleIcon, AddCircleFilled, AddCircleRegular } from '@fluentui/react-icons';
 import validator from 'validator';
 import ip from 'ip';
+import { Vault } from '../Vault';
 
 const AdditionIcon = bundleIcon(AddCircleFilled, AddCircleRegular);
 
@@ -125,10 +126,7 @@ export const SubnetInputForm = ({ onAddSubnet, disabled }) => {
                     justifyContent: 'flex-start',
                 }}
             >
-                <Tooltip
-                    content='Add Subnet'
-                    positioning='above'
-                >
+                <Tooltip content='Add Subnet' positioning='above'>
                     <Button
                         appearance='subtle'
                         shape='circular'
@@ -242,54 +240,86 @@ export const SubnetInputForm = ({ onAddSubnet, disabled }) => {
                             onKeyDown={onKeyDownForSubnetAdd}
                         />
                     </Field>
-
-                    <Field
-                        label='Password'
-                        required
-                        validationMessage={passwordMessage}
-                        validationState={passwordValidationState}
-                        size='small'
+                    <div
                         style={{
                             display: 'flex',
-                            flexDirection: 'column',
+                            flexDirection: 'row',
+                            gap: '5px',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
                             width: '50%',
                             height: '65px',
                         }}
                     >
-                        <Input
-                            disabled={disabled}
-                            appearance='filled-darker'
-                            placeholder='Input password'
-                            type={passwordVisible ? 'text' : 'password'}
-                            ref={passwordInputRef}
-                            onChange={(e) => {
-                                const currPass = e.target.value;
-                                setPassword(currPass);
-                                const validation = validatePassword(currPass);
-                                setPasswordMessage(validation.message);
-                                setPasswordValidationState(validation.validationState);
+                        <div
+                            style={{
+                                transform: 'scale(0.8)',
+                                transformOrigin: 'left',
+                                marginRight: '-5px',
+                                padding: '0px',
+                                overflow: 'hidden',
                             }}
-                            contentAfter={
-                                <Button
-                                    shape='circular'
-                                    size='small'
-                                    appearance='transparent'
-                                    icon={
-                                        passwordVisible ? (
-                                            <EyeRegular style={{ fontSize: '15px' }} />
-                                        ) : (
-                                            <EyeOffRegular style={{ fontSize: '15px' }} />
-                                        )
-                                    }
-                                    onClick={togglePasswordVisibility}
-                                    tabIndex={-1}
-                                />
-                            }
-                            style={{ width: '100%' }}
+                        >
+                            <Vault
+                                onClick={(passwordTag) => {
+                                    console.log('Password Tag input: ' + passwordTag);
+                                    setPassword(passwordTag);
+                                    const validation = validatePassword(passwordTag);
+                                    setPasswordMessage(validation.message);
+                                    setPasswordValidationState(validation.validationState);
+                                }}
+                            />
+                        </div>
+
+                        <Field
+                            label='Password'
+                            required
+                            validationMessage={passwordMessage}
+                            validationState={passwordValidationState}
                             size='small'
-                            onKeyDown={onKeyDownForSubnetAdd}
-                        />
-                    </Field>
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                width: '100%',
+                                height: '65px',
+                            }}
+                        >
+                            <Input
+                                disabled={disabled}
+                                appearance='filled-darker'
+                                placeholder='Input password'
+                                type={passwordVisible ? 'text' : 'password'}
+                                ref={passwordInputRef}
+                                value={password} // Reflect the updated password state
+                                onChange={(e) => {
+                                    const currPass = e.target.value;
+                                    setPassword(currPass);
+                                    const validation = validatePassword(currPass);
+                                    setPasswordMessage(validation.message);
+                                    setPasswordValidationState(validation.validationState);
+                                }}
+                                contentAfter={
+                                    <Button
+                                        shape='circular'
+                                        size='small'
+                                        appearance='transparent'
+                                        icon={
+                                            passwordVisible ? (
+                                                <EyeRegular style={{ fontSize: '15px' }} />
+                                            ) : (
+                                                <EyeOffRegular style={{ fontSize: '15px' }} />
+                                            )
+                                        }
+                                        onClick={togglePasswordVisibility}
+                                        tabIndex={-1}
+                                    />
+                                }
+                                style={{ width: '100%' }}
+                                size='small'
+                                onKeyDown={onKeyDownForSubnetAdd}
+                            />
+                        </Field>
+                    </div>
                 </div>
             </div>
         </div>

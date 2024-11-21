@@ -15,7 +15,8 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
 - **Multi-Platform Support:** Available for both Intel-based and ARM-based macOS systems and Intel-based Windows systems.
 - **Network Search Support:** Network subnet search to generate an inventory file is in the tech preview stage.
 - **Bastion Host Proxy Support:** Enables secure access to remote devices through a bastion host acting as a proxy.
-- **Auto Update Support:** automatically checks for updates and applies them seamlessly.
+- **Auto Update Support:** Automatically checks for updates and applies them seamlessly.
+- **Password Vault:** Device access passwords can be securely stored in the vault and retrieved as needed without being exposed in the inventory file.
 
 ## Bastion Host Proxy Support
 
@@ -54,6 +55,9 @@ To configure a Linux machine as your bastion host proxy, ensure that the OpenSSH
 
 ## Check Network Access Demo
 ![Test Network Access Demo](./demo/check-network-access.gif)
+
+## Password Vault
+![Password Vault Demo](./demo/password-vault.gif)
 
 ## Installation
 

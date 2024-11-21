@@ -11,7 +11,7 @@ const { electronAPI } = window;
 export const MainEventProcessor = () => {
     const { notify } = useNotify();
 
-    const { importSettings, settings } = useStore();
+    const { importSettings, settings, setVault } = useStore();
 
     const { isUserLoggedIn, setIsUserLoggedIn, user, setUser, setIsInventoryLoading } = useStore();
     const { inventory, setInventory } = useStore();
@@ -22,7 +22,7 @@ export const MainEventProcessor = () => {
     const { deviceModels, supportedDeviceModels, setDeviceModels } = useStore();
     const { cleanUpIsTesting, cleanUpDeviceNetworkCondition } = useStore();
     const { resetDeviceNetworkConditionAll, resetIsTestingAll } = useStore();
-    const { setCheckingForUpdate, setUpdateDownloaded } = useStore();
+    const { checkingForUpdate, setCheckingForUpdate, updateDownloaded, setUpdateDownloaded } = useStore();
     const { isAutoUpdateSupport, setIsAutoUpdateSupport } = useStore();
 
     const userRef = useRef(user);
@@ -100,8 +100,24 @@ export const MainEventProcessor = () => {
     }, []);
 
     useEffect(() => {
+        const handleLoadVault = async () => {
+            console.log('Event: "load-vault"');
+            const response = await electronAPI.saLoadVault();
+            if (response.result) {
+                setVault(response.vault);
+            }
+        };
+
+        const handleSaveVault = async (vault) => {
+            console.log('Event: "store-vault"');
+            const response = await electronAPI.saStoreVault({ vault });
+            if (response.result) {
+                setVault(vault);
+            }
+        };
+
         const handleLocalInventoryRefresh = async ({ notification = false } = {}) => {
-            // console.log('Event: "local-inventory-refresh"');
+            console.log('Event: "local-inventory-refresh"');
             const response = await electronAPI.saGetLocalInventory();
             if (response.localInventory) {
                 if (!_.isEqual(inventoryRef.current, response.localInventory)) {
@@ -122,13 +138,27 @@ export const MainEventProcessor = () => {
             }
         };
 
+        const compareIgnoringFields = (obj1, obj2, fieldsToIgnore) => {
+            const obj1Filtered = _.omit(obj1, fieldsToIgnore);
+            const obj2Filtered = _.omit(obj2, fieldsToIgnore);
+            return _.isEqual(obj1Filtered, obj2Filtered);
+        };
+
         const handleUserSessionCheck = async ({ message = '' } = {}) => {
             console.log(`Event: "user-session-check" ${message.length > 0 ? `-> "${message}"` : ''}`);
             try {
                 const data = await electronAPI.saWhoamiUser();
 
                 if (data.sessionValid) {
-                    if (!_.isEqual(userRef.current, data.user)) {
+                    const currentUserState = useStore.getState().user;
+                    const newUserState = data.user;
+                    const areEqual = compareIgnoringFields(currentUserState, newUserState, ['tags']);
+
+                    if (!areEqual) {
+                        // console.log('userRef.current:', userRef.current);
+                        // console.log('data.user:', data.user);
+
+                        console.log('User session will be updated:', data.user);
                         setUser(data.user);
                         setIsUserLoggedIn(true);
                         await handleCloudInventoryRefresh({ force: true });
@@ -175,6 +205,10 @@ export const MainEventProcessor = () => {
 
             if (response.cloudInventory) {
                 if (!_.isEqual(cloudInventoryRef.current, response.inventory)) {
+                    // console.log('cloudInventoryRef.current:', cloudInventoryRef.current);
+                    // console.log('response.inventory:', response.inventory);
+
+                    console.log('Cloud inventory will be updated:', response.inventory);
                     setCloudInventory(response.inventory);
                     setCloudInventoryFilterApplied(response.isFilterApplied);
                 }
@@ -285,7 +319,6 @@ export const MainEventProcessor = () => {
 
             try {
                 const result = await window.electronAPI.checkForUpdates();
-                console.log('check-for-updates result:', result);
                 setCheckingForUpdate(result);
             } catch (error) {
                 console.error('Error during update process:', error);
@@ -337,6 +370,8 @@ export const MainEventProcessor = () => {
             }
         };
 
+        eventBus.on('load-vault', handleLoadVault);
+        eventBus.on('store-vault', handleSaveVault);
         eventBus.on('user-session-check', handleUserSessionCheck);
         eventBus.on('local-inventory-refresh', handleLocalInventoryRefresh);
         eventBus.on('cloud-inventory-refresh', handleCloudInventoryRefresh);
@@ -355,6 +390,8 @@ export const MainEventProcessor = () => {
         eventBus.on('quit-app', handleQuitApp);
 
         return () => {
+            eventBus.off('load-vault', handleLoadVault);
+            eventBus.off('store-vault', handleSaveVault);
             eventBus.off('local-inventory-refresh', handleLocalInventoryRefresh);
             eventBus.off('cloud-inventory-refresh', handleCloudInventoryRefresh);
             eventBus.off('user-session-check', handleUserSessionCheck);

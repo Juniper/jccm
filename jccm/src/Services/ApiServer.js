@@ -27,6 +27,8 @@ import {
     msLoadSettings,
     msSaveSettings,
     clearAndCompactDatabase,
+    msLoadVault,
+    msSaveVault,
 } from './mainStore';
 import {
     acLookupRegions,
@@ -688,6 +690,7 @@ export const setupApiHandlers = () => {
         console.log('main: startSSHConnection: id: ' + id);
         const inventory = await msGetLocalInventory();
         const settings = await msLoadSettings();
+
         const bastionHost = settings?.bastionHost || {};
 
         const found = inventory.filter(
@@ -697,7 +700,35 @@ export const setupApiHandlers = () => {
             console.error('No device found: path id: ', id);
             return;
         }
-        const device = found[0];
+        let device = found[0];
+
+        const vault = await msLoadVault();
+
+        
+        const getPasswordFromVault = (tag) => {
+            const vaultEntry = vault.find((item) => item.tag === tag);
+            return vaultEntry ? vaultEntry.password : null; // Return the password or null if not found
+        }
+
+        const isVaultFormat = (password) => {
+            if (typeof password !== 'string') {
+                return false; // Invalid input
+            }
+            // Check for the `${vault:tag_name}` format
+            return password.startsWith('${vault:') && password.endsWith('}') && password.split('${vault:')[1]?.slice(0, -1)?.trim() !== '';
+        };
+        
+        const getPassword = (password) => {
+            if (isVaultFormat(password)) {
+                const tagName = password.slice(8, -1).trim(); 
+                const v = getPasswordFromVault(tagName); 
+                return v; 
+            }
+            return password; 
+        };
+        
+        device.password = getPassword(device.password);
+
         if (bastionHost?.active) {
             startSSHConnectionProxy(event, device, bastionHost, {
                 id,
@@ -1105,7 +1136,7 @@ export const setupApiHandlers = () => {
             return { networkConditionCollect: false, reply: error };
         }
     });
-    
+
     ipcMain.on('restart-app', () => {
         console.log('Received restart-app request...');
         app.relaunch(); // Relaunch the Electron app
@@ -1129,5 +1160,20 @@ export const setupApiHandlers = () => {
     ipcMain.on('quit-app', async () => {
         console.log('Received quit-app request...');
         app.exit(0); // Exit the current instance
+    });
+
+    ipcMain.handle('saStoreVault', async (event, args) => {
+        console.log('main: saStoreVault');
+        const vault = args.vault;
+        await msSaveVault(vault);
+
+        return { result: true };
+    });
+
+    ipcMain.handle('saLoadVault', async (event) => {
+        console.log('main: saLoadVault');
+        const vault = await msLoadVault();
+
+        return { result: true, vault };
     });
 };

@@ -110,6 +110,7 @@ export const Main = () => {
 
     useEffect(() => {
         const generateEvents = async () => {
+            await eventBus.emit('load-vault');
             await eventBus.emit('check-for-auto-update-support');
 
             await delay(1000); // Delay for 1 second

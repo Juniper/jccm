@@ -55,6 +55,7 @@
         "babel-loader": "^9.1.3",
         "buffer": "^6.0.3",
         "cookie": "^0.6.0",
+        "crypto": "^1.0.1",
         "date-fns": "^3.6.0",
         "electron-reload": "^2.0.0-alpha.1",
         "electron-titlebar-windows": "^3.0.0",
@@ -89,6 +90,6 @@
         "xlsx": "^0.18.5",
         "xml2js": "^0.6.2",
         "xterm-addon-fit": "^0.8.0",
-        "zustand": "^4.5.2"
+        "zustand": "^4.5.5"
     }
 }

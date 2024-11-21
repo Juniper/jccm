@@ -3,6 +3,7 @@ import path from 'path';
 import Datastore from 'nedb-promises';
 import { getActiveThemeName } from '../Frontend/Common/CommonVariables';
 import { isBase64 } from 'validator'; // You might need to install the 'validator' package
+import crypto from 'crypto';
 
 // Define the path to the database file
 const dbPath = path.join(app.getPath('userData'), 'sessionDB.db');
@@ -14,6 +15,40 @@ const localInventoryKey = 'localInventory';
 const deviceFactsKey = 'deviceFacts';
 const subnetsKey = 'subnets';
 const settingsKey = 'settings';
+
+// Constants for encryption
+const uniqueIdentifier = 'jccm@juniper.net';
+const vaultKey = 'vault-data'; // Database key for the vault
+const salt = 'fixed-salt'; // Use a consistent salt
+const iterations = 1000;
+const keyLength = 32; // 256-bit key
+
+// Derive encryption key using PBKDF2
+const deriveKey = (identifier) => {
+    return crypto.pbkdf2Sync(identifier, salt, iterations, keyLength, 'sha256');
+};
+
+// Encrypt function
+const encrypt = (text) => {
+    const key = deriveKey(uniqueIdentifier);
+    const iv = crypto.randomBytes(16); // Random IV for each encryption
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    let encrypted = cipher.update(text, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    return {
+        encryptedData: encrypted,
+        iv: iv.toString('base64'), // Base64 encode the IV
+    };
+};
+
+// Decrypt function
+const decrypt = (encryptedData, ivBase64) => {
+    const key = deriveKey(uniqueIdentifier);
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(ivBase64, 'base64'));
+    let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+};
 
 /**
  * Function to remove all data from the database and compact the datafile.
@@ -275,4 +310,26 @@ export const msLoadSettings = async () => {
         return decodeFromBase64(doc.data);
     }
     return [];
+};
+
+// Save Vault
+export const msSaveVault = async (vault) => {
+    const vaultString = JSON.stringify(vault); // Serialize the vault
+    const { encryptedData, iv } = encrypt(vaultString); // Encrypt the vault data
+    const encodedVault = Buffer.from(JSON.stringify({ encryptedData, iv })).toString('base64'); // Base64 encode
+
+    await db.update({ _id: vaultKey }, { _id: vaultKey, data: encodedVault }, { upsert: true });
+};
+
+// Load Vault
+export const msLoadVault = async () => {
+    const doc = await db.findOne({ _id: vaultKey });
+
+    if (doc && typeof doc.data === 'string') {
+        const decodedData = JSON.parse(Buffer.from(doc.data, 'base64').toString('utf8')); // Decode from base64
+        const decryptedVault = decrypt(decodedData.encryptedData, decodedData.iv); // Decrypt the data
+        return JSON.parse(decryptedVault); // Parse the decrypted JSON
+    }
+
+    return []; // Return an empty array if no vault is found
 };

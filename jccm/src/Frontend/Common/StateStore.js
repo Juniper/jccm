@@ -19,6 +19,20 @@ const useStore = create((set, get) => ({
         return 0;
     },
 
+    vault: [],
+    setVault: (vault) =>
+        set((state) => {
+            if (!_.isEqual(state.vault, vault)) {
+                return { vault };
+            }
+            return state;
+        }),
+    getPasswordFromVault: (tag) => {
+        const state = get(); // Access the current state
+        const vaultEntry = state.vault.find((item) => item.tag === tag);
+        return vaultEntry ? vaultEntry.password : null; // Return the password or null if not found
+    },
+    
     settings: {},
     setSettings: (settings) =>
         set((state) => {
@@ -522,7 +536,7 @@ const useStore = create((set, get) => ({
 
     isAutoUpdateSupport: false,
     setIsAutoUpdateSupport: (isAutoUpdateSupport) => set(() => ({ isAutoUpdateSupport })),
-    
+
     checkingForUpdate: false,
     setCheckingForUpdate: (checkingForUpdate) => set(() => ({ checkingForUpdate })),
 

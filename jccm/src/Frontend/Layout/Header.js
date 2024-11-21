@@ -72,6 +72,7 @@ import {
     HexagonThreeFilled,
     MoreCircleFilled,
     MoreCircleRegular,
+    XboxConsoleFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
 
@@ -85,6 +86,7 @@ import InventoryLocalEditForm from './InventoryLocalEditForm';
 import InventoryLocalImportForm from './InventoryLocalImportForm';
 import InventorySearchCard from './InventorySearch/InventorySearch';
 import { GlobalSettings } from './GlobalSettings/GlobalSettings';
+import { Vault } from './Vault';
 
 const ColorIcon = bundleIcon(ColorFilled, ColorRegular);
 const LoginUserIcon = bundleIcon(PersonAvailableRegular, PersonCircleRegular);
@@ -100,12 +102,7 @@ const AdoptDeviceConfigIcon = bundleIcon(ClipboardCodeRegular, ClipboardRegular)
 const Organization = bundleIcon(OrganizationFilled, OrganizationRegular);
 const BastionIcon = bundleIcon(HexagonThreeFilled, HexagonThreeRegular);
 
-const RotatedDarkThemeFilled = (props) => (
-    <DarkThemeRegular
-        style={{ transform: 'rotate(180deg)' }}
-        {...props}
-    />
-);
+const RotatedDarkThemeFilled = (props) => <DarkThemeRegular style={{ transform: 'rotate(180deg)' }} {...props} />;
 const ThemeIcon = bundleIcon(RotatedDarkThemeFilled, DarkThemeRegular);
 const SettingsIcon = bundleIcon(MoreCircleFilled, MoreCircleRegular);
 const PersonQuestionMark = bundleIcon(PersonQuestionMarkFilled, PersonQuestionMarkRegular);
@@ -310,10 +307,7 @@ export default () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <TabList
-                selectedValue={selectedTab}
-                onTabSelect={onTabSelect}
-            >
+            <TabList selectedValue={selectedTab} onTabSelect={onTabSelect}>
                 <Menu>
                     <MenuTrigger>
                         <Tab
@@ -404,11 +398,12 @@ export default () => {
                         </MenuList>
                     </MenuPopover>
                 </Menu>
-
             </TabList>
+
             <Toolbar size='small'>
                 <ToolbarDivider />
-
+                <Vault editable={true} />
+                <ToolbarDivider />
                 <Menu>
                     <MenuTrigger disableButtonEnhancement>
                         <Tooltip
@@ -444,10 +439,7 @@ export default () => {
                         </MenuList>
                     </MenuPopover>
                 </Menu>
-                <Menu
-                    checkedValues={{ theme: [currentActiveThemeName] }}
-                    onCheckedValueChange={handleChangeTheme}
-                >
+                <Menu checkedValues={{ theme: [currentActiveThemeName] }} onCheckedValueChange={handleChangeTheme}>
                     <MenuTrigger disableButtonEnhancement>
                         <Tooltip
                             content='Change the theme settings'
@@ -455,10 +447,7 @@ export default () => {
                             withArrow
                             positioning='above-end'
                         >
-                            <ToolbarButton
-                                icon={<ThemeIcon style={{ fontSize: '20px' }} />}
-                                appearance='subtle'
-                            />
+                            <ToolbarButton icon={<ThemeIcon style={{ fontSize: '20px' }} />} appearance='subtle' />
                         </Tooltip>
                     </MenuTrigger>
                     <MenuPopover>
@@ -467,11 +456,7 @@ export default () => {
                                 <MenuGroupHeader>Select Theme</MenuGroupHeader>
                                 <MenuDivider />
                                 {Object.entries(Constants.Themes).map(([key, value]) => (
-                                    <MenuItemRadio
-                                        key={key}
-                                        name='theme'
-                                        value={key}
-                                    >
+                                    <MenuItemRadio key={key} name='theme' value={key}>
                                         {value.description}
                                     </MenuItemRadio>
                                 ))}
@@ -479,12 +464,7 @@ export default () => {
                         </MenuList>
                     </MenuPopover>
                 </Menu>
-                <Tooltip
-                    content='Change the global settings'
-                    relationship='label'
-                    withArrow
-                    positioning='above-end'
-                >
+                <Tooltip content='Change the global settings' relationship='label' withArrow positioning='above-end'>
                     <ToolbarButton
                         icon={<SettingsIcon style={{ fontSize: '20px' }} />}
                         appearance='subtle'
