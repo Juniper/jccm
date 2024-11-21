@@ -60,15 +60,19 @@ const PersonInfo = bundleIcon(PersonInfoFilled, PersonInfoRegular);
 const FilterIcon = bundleIcon(FilterFilled, FilterRegular);
 const ArrowSyncCircle = bundleIcon(ArrowSyncCircleFilled, ArrowSyncCircleRegular);
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const OrgFilterMenu = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
-    const { cloudInventory, setCloudInventory, setCloudInventoryFilterApplied } = useStore();
+    const { cloudInventory, setCloudInventory, setCloudInventoryFilterApplied, settings } = useStore();
     const [selectedRows, setSelectedRows] = useState(() => new Set([]));
     const [orgList, setOrgList] = useState([]);
     const [orgFilters, setOrgFilters] = useState([]);
 
     const { showMessageBar } = useMessageBar();
+
+    const ignoreCaseInName = settings?.ignoreCaseInName || false;
 
     useEffect(() => {
         const fetchOrgFilter = async () => {
@@ -132,6 +136,13 @@ export const OrgFilterMenu = ({ isOpen, onClose }) => {
 
     const refreshCloudInventory = async () => {
         await eventBus.emit('user-session-check');
+
+        await delay(1000);
+
+        await eventBus.emit('cloud-inventory-refresh', {
+            notification: false,
+            ignoreCaseInName,
+        });
     };
 
     const onSave = async () => {
@@ -217,12 +228,7 @@ export const OrgFilterMenu = ({ isOpen, onClose }) => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', marginTop: '40px' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <Button
-                                icon={<ArrowSyncCircle />}
-                                appearance='subtle'
-                                shape='circular'
-                                onClick={onSave}
-                            >
+                            <Button icon={<ArrowSyncCircle />} appearance='subtle' shape='circular' onClick={onSave}>
                                 Save
                             </Button>
                         </div>

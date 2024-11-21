@@ -30,7 +30,7 @@ const useStore = create((set, get) => ({
     getPasswordFromVault: (tag) => {
         const state = get(); // Access the current state
         const vaultEntry = state.vault.find((item) => item.tag === tag);
-        return vaultEntry ? vaultEntry.password : null; // Return the password or null if not found
+        return vaultEntry ? vaultEntry.password : tag; // Return the password or tag if not found
     },
     
     settings: {},

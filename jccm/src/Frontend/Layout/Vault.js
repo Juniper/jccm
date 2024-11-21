@@ -48,7 +48,11 @@ import VaultEdit from './VaultEdit';
 
 const PasswordVaultConfigIcon = bundleIcon(PhoneKeyRegular, PhoneKeyRegular);
 
-export const Vault = ({ editable = false, onClick = null }) => {
+export const Vault = ({
+    editable = false,
+    onClick = null,
+    help = 'Securely store and manage device access passwords in the Vault',
+}) => {
     const { notify } = useNotify(); // Correctly use the hook here
     const { vault, setVault } = useStore();
     const [isEdit, setIsEdit] = useState(false);
@@ -63,6 +67,14 @@ export const Vault = ({ editable = false, onClick = null }) => {
               navigator.clipboard.writeText(clipboardText).then(
                   () => {
                       console.log('Copied to clipboard:', clipboardText);
+                      notify(
+                          <Toast>
+                              <ToastTitle>
+                                 <Text size={200}>Password tag "{clipboardText}" copied from the vault successfully.</Text> 
+                              </ToastTitle>
+                          </Toast>,
+                          { intent: 'success' }
+                      );
                   },
                   (err) => {
                       console.error('Failed to copy to clipboard:', err);
@@ -74,12 +86,7 @@ export const Vault = ({ editable = false, onClick = null }) => {
         <div>
             <Menu>
                 <MenuTrigger disableButtonEnhancement>
-                    <Tooltip
-                        content='Vault to secure device access passwords'
-                        relationship='label'
-                        withArrow
-                        positioning='above-end'
-                    >
+                    <Tooltip content={help} relationship='label' withArrow positioning='above-end'>
                         <ToolbarButton
                             icon={<PasswordVaultConfigIcon style={{ fontSize: '20px' }} />}
                             appearance='subtle'

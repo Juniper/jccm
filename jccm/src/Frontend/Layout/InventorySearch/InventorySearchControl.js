@@ -160,7 +160,7 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                         osVersion,
                         hostName,
                         routerId,
-                        interfaceName: name
+                        interfaceName: name,
                     });
                 } else {
                     const { hardwareModel, osName, osVersion, serialNumber, hostName } =
@@ -177,7 +177,7 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                         serialNumber,
                         hostName,
                         routerId,
-                        interfaceName: name
+                        interfaceName: name,
                     });
                 }
 
@@ -258,12 +258,13 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
         notify(
             <Toast>
                 <ToastTitle>
-                    The local subnets processing has been successfully.
-                    <br />
-                    {hostSeqRef.current} hosts were processed.
+                    <Text size={200}>
+                        The local subnets processing has been successfully.
+                        {' ' + hostSeqRef.current} hosts were processed.
+                    </Text>
                 </ToastTitle>
             </Toast>,
-            { intent: 'success' }
+            { position: 'top-end', intent: 'success' }
         );
     };
 

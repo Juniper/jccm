@@ -707,7 +707,7 @@ export const setupApiHandlers = () => {
         
         const getPasswordFromVault = (tag) => {
             const vaultEntry = vault.find((item) => item.tag === tag);
-            return vaultEntry ? vaultEntry.password : null; // Return the password or null if not found
+            return vaultEntry ? vaultEntry.password : tag; // Return the password or null if not found
         }
 
         const isVaultFormat = (password) => {

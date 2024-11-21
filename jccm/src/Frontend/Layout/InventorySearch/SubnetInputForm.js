@@ -268,6 +268,7 @@ export const SubnetInputForm = ({ onAddSubnet, disabled }) => {
                                     setPasswordMessage(validation.message);
                                     setPasswordValidationState(validation.validationState);
                                 }}
+                                help='Select a password tag from the vault to securely populate the password field'
                             />
                         </div>
 
