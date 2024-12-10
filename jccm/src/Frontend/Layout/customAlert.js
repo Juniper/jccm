@@ -119,7 +119,7 @@ export const customAlert = (title, onConfirm, theme, onDisable) => {
                                         defaultChecked={checkboxRef.current} // Initialize with ref value
                                     />
                                 </div>
-                                <Text size={200}>Disable {title} Message Popup</Text>
+                                <Text size={200}>Disable the popup message for {title.toLowerCase()}</Text>
                             </div>
 
                             <div

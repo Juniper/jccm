@@ -97,7 +97,7 @@ export const MessageFilterCard = () => {
                     marginLeft: '10px',
                 }}
             >
-                <Text>Pre-cautious Message for Cloud Multi-homed Device adoption:</Text>
+                <Text>Precautionary Message for Cloud Multi-homed Device Adoption:</Text>
 
                 <div
                     style={{
@@ -124,7 +124,7 @@ export const MessageFilterCard = () => {
                     marginLeft: '10px',
                 }}
             >
-                <Text>Pre-cautious Message for Network Search Action:</Text>
+                <Text>Precautionary Message for Network Search Action:</Text>
 
                 <div
                     style={{
