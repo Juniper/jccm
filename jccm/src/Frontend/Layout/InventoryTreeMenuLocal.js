@@ -1,10 +1,4 @@
-import React, {
-    useEffect,
-    useState,
-    useRef,
-    useMemo,
-    useCallback,
-} from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { makeStyles, shorthands } from '@fluentui/react-components';
 import {
     FlatTree,
@@ -210,16 +204,13 @@ import {
     DismissCircleFilled,
     bundleIcon,
 } from '@fluentui/react-icons';
-import _ from 'lodash';
+import _, { set } from 'lodash';
 const { electronAPI } = window;
 
 import useStore from '../Common/StateStore';
 import { useNotify } from '../Common/NotificationContext';
 import { useContextMenu } from '../Common/ContextMenuContext';
-import {
-    copyToClipboard,
-    capitalizeFirstChar,
-} from '../Common/CommonVariables';
+import { copyToClipboard, capitalizeFirstChar } from '../Common/CommonVariables';
 import {
     adoptDevices,
     executeJunosCommand,
@@ -229,6 +220,8 @@ import {
 } from './Devices';
 import { RotatingIcon, CircleIcon } from './ChangeIcon';
 import eventBus from '../Common/eventBus';
+import { customAlert } from './customAlert';
+import { getActiveTheme } from '../Common/CommonVariables';
 
 const MapIcon = bundleIcon(MapFilled, MapRegular);
 const Rename = bundleIcon(RenameFilled, RenameRegular);
@@ -264,12 +257,7 @@ const RenderCounterBadge = ({ counterValue }) => {
                 columnGap: '5px',
             }}
         >
-            <CounterBadge
-                count={counterValue}
-                color='informative'
-                size='small'
-                overflowCount={90000}
-            />
+            <CounterBadge count={counterValue} color='informative' size='small' overflowCount={90000} />
         </div>
     );
 };
@@ -301,10 +289,7 @@ const AsideView = ({ path, device }) => {
                             onClick={handleMouseDown}
                         />
                     ) : (
-                        <DismissCircle16Regular
-                            color={tokens.colorNeutralForeground3Hover}
-                            onClick={handleMouseDown}
-                        />
+                        <DismissCircle16Regular color={tokens.colorNeutralForeground3Hover} onClick={handleMouseDown} />
                     )}
                 </>
             )}
@@ -313,12 +298,7 @@ const AsideView = ({ path, device }) => {
 };
 
 const convertToFlatTreeItems = (localInventory, deviceFacts) => {
-    if (
-        !localInventory ||
-        !Array.isArray(localInventory) ||
-        localInventory.length === 0
-    )
-        return [];
+    if (!localInventory || !Array.isArray(localInventory) || localInventory.length === 0) return [];
 
     const flatTreeItems = [];
     const organizationMap = new Map();
@@ -333,8 +313,7 @@ const convertToFlatTreeItems = (localInventory, deviceFacts) => {
     });
 
     localInventory.forEach((item) => {
-        const { organization, site, address, port, username, password, _path } =
-            item;
+        const { organization, site, address, port, username, password, _path } = item;
         const facts = deviceFacts[_path] || {};
 
         if (!organizationMap.has(organization)) {
@@ -424,10 +403,7 @@ const convertToFlatTreeItems = (localInventory, deviceFacts) => {
     });
 
     // Update root counter
-    flatTreeItems[0].counter = flatTreeItems.reduce(
-        (acc, item) => acc + (item.type === 'device' ? 1 : 0),
-        0
-    );
+    flatTreeItems[0].counter = flatTreeItems.reduce((acc, item) => acc + (item.type === 'device' ? 1 : 0), 0);
 
     return flatTreeItems;
 };
@@ -435,22 +411,10 @@ const convertToFlatTreeItems = (localInventory, deviceFacts) => {
 const InventoryTreeMenuLocal = () => {
     const { showContextMenu } = useContextMenu();
     const { notify } = useNotify();
-    const { user, isUserLoggedIn, orgs, settings, supportedDeviceModels } =
-        useStore();
-    const {
-        tabs,
-        addTab,
-        setSelectedTabValue,
-        adoptConfig,
-        inventory,
-        setInventory,
-    } = useStore();
-    const {
-        cloudInventory,
-        setCloudInventory,
-        setCloudInventoryFilterApplied,
-        cloudDevices,
-    } = useStore();
+    const { user, isUserLoggedIn, orgs, settings, setSettings, exportSettings, supportedDeviceModels } = useStore();
+    const { tabs, addTab, setSelectedTabValue, adoptConfig, inventory, setInventory } = useStore();
+    const { cloudInventory, setCloudInventory, setCloudInventoryFilterApplied, cloudDevices } = useStore();
+    const { currentActiveThemeName } = useStore();
 
     const { isChecking, setIsChecking, resetIsChecking } = useStore();
     const { deviceFacts, setDeviceFacts, deleteDeviceFacts } = useStore();
@@ -458,21 +422,21 @@ const InventoryTreeMenuLocal = () => {
     const { isReleasing, setIsReleasing, resetIsReleasing } = useStore();
 
     const { isTesting, setIsTesting, resetIsTesting } = useStore();
-    const {
-        deviceNetworkCondition,
-        setDeviceNetworkCondition,
-        deleteDeviceNetworkCondition,
-    } = useStore();
+    const { deviceNetworkCondition, setDeviceNetworkCondition, deleteDeviceNetworkCondition } = useStore();
 
     const [flatTreeItems, setFlatTreeItems] = useState([]);
     const [expandedItems, setExpandedItems] = useState(() => {
         return new Set(flatTreeItems.map((item) => item.value));
     });
 
-    const ignoreCaseInName = settings.ignoreCase || false;
+    const theme = getActiveTheme(currentActiveThemeName).theme;
+
+    const ignoreCaseInName = settings?.ignoreCase ?? false;
+    const deviceModelsValidation = settings?.deviceModelsValidation ?? false;
+    const settingWarningShowForAdoption = settings?.warningShowForAdoption ?? true;
+
     const deviceFactsRef = useRef(deviceFacts);
 
-    const deviceModelsValidation = settings?.deviceModelsValidation || false;
     const cloudDescription = user?.cloudDescription || 'Unknown';
 
     const styles = tooltipStyles();
@@ -508,9 +472,7 @@ const InventoryTreeMenuLocal = () => {
     const convertErrorMessage = (message) => {
         if (
             message.includes('Permission denied') &&
-            (message.includes('publickey') ||
-                message.includes('password') ||
-                message.includes('keyboard-interactive'))
+            (message.includes('publickey') || message.includes('password') || message.includes('keyboard-interactive'))
         ) {
             return 'SSH Authentication failed.';
         } else {
@@ -531,12 +493,7 @@ const InventoryTreeMenuLocal = () => {
                             width: '100%',
                         }}
                     >
-                        <Text
-                            weight='semibold'
-                            size={100}
-                            font='monospace'
-                            style={{ marginRight: '5px' }}
-                        >
+                        <Text weight='semibold' size={100} font='monospace' style={{ marginRight: '5px' }}>
                             {key}:
                         </Text>
                         <Text size={100} font='monospace'>
@@ -550,9 +507,7 @@ const InventoryTreeMenuLocal = () => {
     const findFact = (path) => {
         // Find the fact based on the path, considering case sensitivity
         const factKey = Object.keys(deviceFacts).find((key) =>
-            ignoreCaseInName
-                ? key.toLowerCase() === path.toLowerCase()
-                : key === path
+            ignoreCaseInName ? key.toLowerCase() === path.toLowerCase() : key === path
         );
 
         if (!factKey) return undefined; // Return an empty object if no match is found
@@ -597,14 +552,8 @@ const InventoryTreeMenuLocal = () => {
 
                 // Check org and site name with case sensitivity based on ignoreCaseInName
                 if (ignoreCaseInName) {
-                    setIsOrgMatch(
-                        cloudOrgName?.toLowerCase() ===
-                            deviceOrgName?.toLowerCase()
-                    );
-                    setIsSiteMatch(
-                        cloudSiteName?.toLowerCase() ===
-                            deviceSiteName?.toLowerCase()
-                    );
+                    setIsOrgMatch(cloudOrgName?.toLowerCase() === deviceOrgName?.toLowerCase());
+                    setIsSiteMatch(cloudSiteName?.toLowerCase() === deviceSiteName?.toLowerCase());
                 } else {
                     setIsOrgMatch(cloudOrgName === deviceOrgName);
                     setIsSiteMatch(cloudSiteName === deviceSiteName);
@@ -613,19 +562,8 @@ const InventoryTreeMenuLocal = () => {
             setIsAdopted(adopted);
         }, [cloudDevices, device]);
 
-        const IconWithTooltip = ({
-            content,
-            relationship,
-            Icon,
-            size,
-            color,
-        }) => (
-            <Tooltip
-                content={content}
-                relationship={relationship}
-                withArrow
-                positioning='above-end'
-            >
+        const IconWithTooltip = ({ content, relationship, Icon, size, color }) => (
+            <Tooltip content={content} relationship={relationship} withArrow positioning='above-end'>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Icon style={{ fontSize: size, color: color }} />
                 </div>
@@ -641,8 +579,7 @@ const InventoryTreeMenuLocal = () => {
                 }}
             >
                 <Text size={200}>
-                    The organization name (<i>{device.orgName}</i>) does not
-                    exist in your account:
+                    The organization name (<i>{device.orgName}</i>) does not exist in your account:
                 </Text>
                 <Text size={100} font='monospace'>
                     {`"${device.orgName}" ≠ "${foundCloudDevice?.org_name}"`}
@@ -659,8 +596,7 @@ const InventoryTreeMenuLocal = () => {
                 }}
             >
                 <Text size={200}>
-                    The site name (<i>{device.siteName}</i>) does not exist in
-                    your account:
+                    The site name (<i>{device.siteName}</i>) does not exist in your account:
                 </Text>
                 <Text size={100} font='monospace'>
                     {`"${device.siteName}" ≠ "${foundCloudDevice?.site_name}"`}
@@ -741,15 +677,9 @@ const InventoryTreeMenuLocal = () => {
                 );
             } else {
                 return isOpen ? (
-                    <PlugConnectedFilled
-                        fontSize='16px'
-                        color={tokens.colorNeutralForeground2BrandHover}
-                    />
+                    <PlugConnectedFilled fontSize='16px' color={tokens.colorNeutralForeground2BrandHover} />
                 ) : (
-                    <PlugConnectedRegular
-                        fontSize='16px'
-                        color={tokens.colorNeutralForeground3Hover}
-                    />
+                    <PlugConnectedRegular fontSize='16px' color={tokens.colorNeutralForeground3Hover} />
                 );
             }
         };
@@ -764,16 +694,10 @@ const InventoryTreeMenuLocal = () => {
         const deviceFact = deviceFacts[path] || null;
 
         const vcMembers = deviceFact?.vc || [];
-        const deviceName =
-            parseInt(device.port, 10) === 22
-                ? device.address
-                : `${device.address}:${device.port}`;
-        const cloudDevice =
-            cloudDevices[deviceFact?.systemInformation?.serialNumber];
+        const deviceName = parseInt(device.port, 10) === 22 ? device.address : `${device.address}:${device.port}`;
+        const cloudDevice = cloudDevices[deviceFact?.systemInformation?.serialNumber];
 
-        const IsValidDeviceModel = validateDeviceModel(
-            deviceFact?.systemInformation?.hardwareModel
-        );
+        const IsValidDeviceModel = validateDeviceModel(deviceFact?.systemInformation?.hardwareModel);
 
         let facts = [];
         if (deviceFact) {
@@ -799,31 +723,27 @@ const InventoryTreeMenuLocal = () => {
         }
 
         const DisplayDeviceNetworkConditionTestResult = () => {
-            const isNetworkConditionTestResultAvailable =
-                !!deviceNetworkCondition[path];
+            const isNetworkConditionTestResultAvailable = !!deviceNetworkCondition[path];
             if (!isNetworkConditionTestResultAvailable) return null;
 
             const result = deviceNetworkCondition[path] || {};
 
-            const message =
-                result.message?.length > 0
-                    ? result.message
-                    : 'No network condition test result available';
+            const message = result.message?.length > 0 ? result.message : 'No network condition test result available';
             const isConnectable = result.dns && result.route && result.access;
 
             const TooltipContent = ({ message, extraMessage = '' }) => (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <Text size={200} weight="regular" style={{ color: tokens.colorPaletteRedForeground3 }}>
+                    <Text size={200} weight='regular' style={{ color: tokens.colorPaletteRedForeground3 }}>
                         {message}
                     </Text>
                     {extraMessage && (
-                        <Text size={200} weight="regular" style={{ color: tokens.colorPaletteRedForeground3 }}>
+                        <Text size={200} weight='regular' style={{ color: tokens.colorPaletteRedForeground3 }}>
                             {extraMessage}
                         </Text>
                     )}
                 </div>
             );
-            
+
             return (
                 <div
                     style={{
@@ -1144,17 +1064,10 @@ const InventoryTreeMenuLocal = () => {
                                                     gap: '5px',
                                                 }}
                                             >
-                                                <Text
-                                                    weight='semibold'
-                                                    size={100}
-                                                    font='monospace'
-                                                >
+                                                <Text weight='semibold' size={100} font='monospace'>
                                                     {fact.key}:
                                                 </Text>
-                                                <Text
-                                                    size={100}
-                                                    font='monospace'
-                                                >
+                                                <Text size={100} font='monospace'>
                                                     {fact.value}
                                                 </Text>
                                             </div>
@@ -1180,11 +1093,7 @@ const InventoryTreeMenuLocal = () => {
                             </Tooltip>
 
                             {IsValidDeviceModel ? (
-                                <Text
-                                    size={100}
-                                    font='numeric'
-                                    weight='regular'
-                                >
+                                <Text size={100} font='numeric' weight='regular'>
                                     Virtual Chassis
                                 </Text>
                             ) : (
@@ -1215,9 +1124,7 @@ const InventoryTreeMenuLocal = () => {
                             <Text size={100} font='numeric' weight='regular'>
                                 {deviceFact.systemInformation?.hostName}
                             </Text>
-                            {!isTesting[path] && (
-                                <DisplayDeviceNetworkConditionTestResult />
-                            )}
+                            {!isTesting[path] && <DisplayDeviceNetworkConditionTestResult />}
                         </Label>
                     ) : (
                         <Label
@@ -1247,17 +1154,10 @@ const InventoryTreeMenuLocal = () => {
                                                     gap: '5px',
                                                 }}
                                             >
-                                                <Text
-                                                    weight='semibold'
-                                                    size={100}
-                                                    font='monospace'
-                                                >
+                                                <Text weight='semibold' size={100} font='monospace'>
                                                     {fact.key}:
                                                 </Text>
-                                                <Text
-                                                    size={100}
-                                                    font='monospace'
-                                                >
+                                                <Text size={100} font='monospace'>
                                                     {fact.value}
                                                 </Text>
                                             </div>
@@ -1283,16 +1183,8 @@ const InventoryTreeMenuLocal = () => {
                             </Tooltip>
 
                             {IsValidDeviceModel ? (
-                                <Text
-                                    size={100}
-                                    font='monospace'
-                                    weight='regular'
-                                    style={{ paddingTop: '2px' }}
-                                >
-                                    {
-                                        deviceFact.systemInformation
-                                            ?.hardwareModel
-                                    }
+                                <Text size={100} font='monospace' weight='regular' style={{ paddingTop: '2px' }}>
+                                    {deviceFact.systemInformation?.hardwareModel}
                                 </Text>
                             ) : (
                                 <Tooltip
@@ -1315,10 +1207,7 @@ const InventoryTreeMenuLocal = () => {
                                             paddingTop: '2px',
                                         }}
                                     >
-                                        {
-                                            deviceFact.systemInformation
-                                                ?.hardwareModel
-                                        }
+                                        {deviceFact.systemInformation?.hardwareModel}
                                     </Text>
                                 </Tooltip>
                             )}
@@ -1335,20 +1224,14 @@ const InventoryTreeMenuLocal = () => {
                                     {cloudDevice.serial}
                                 </Text>
                             ) : (
-                                <Text
-                                    size={100}
-                                    font='numeric'
-                                    weight='regular'
-                                >
+                                <Text size={100} font='numeric' weight='regular'>
                                     {deviceFact.systemInformation?.serialNumber}
                                 </Text>
                             )}
                             <Text size={100} font='numeric' weight='regular'>
                                 {deviceFact.systemInformation?.hostName}
                             </Text>
-                            {!isTesting[path] && (
-                                <DisplayDeviceNetworkConditionTestResult />
-                            )}
+                            {!isTesting[path] && <DisplayDeviceNetworkConditionTestResult />}
                         </Label>
                     )
                 ) : (
@@ -1377,11 +1260,7 @@ const InventoryTreeMenuLocal = () => {
                     >
                         <Spinner size='extra-tiny' />
                         {isChecking.retry > 0 && (
-                            <Text
-                                size={100}
-                                font='numeric'
-                                style={{ color: 'red' }}
-                            >
+                            <Text size={100} font='numeric' style={{ color: 'red' }}>
                                 {isChecking.error} - Retry {isChecking.retry}
                             </Text>
                         )}
@@ -1395,11 +1274,7 @@ const InventoryTreeMenuLocal = () => {
                         }}
                     >
                         {isChecking?.retry < 0 && (
-                            <Text
-                                size={100}
-                                font='numeric'
-                                style={{ color: 'purple' }}
-                            >
+                            <Text size={100} font='numeric' style={{ color: 'purple' }}>
                                 🐞 {isChecking.error}
                             </Text>
                         )}
@@ -1419,13 +1294,8 @@ const InventoryTreeMenuLocal = () => {
                             color={tokens.colorCompoundBrandBackground}
                         />
                         {isAdopting[path]?.retry > 0 && (
-                            <Text
-                                size={100}
-                                font='numeric'
-                                style={{ color: 'red' }}
-                            >
-                                {isAdopting[path]?.error} - Retry{' '}
-                                {isAdopting[path]?.retry}
+                            <Text size={100} font='numeric' style={{ color: 'red' }}>
+                                {isAdopting[path]?.error} - Retry {isAdopting[path]?.retry}
                             </Text>
                         )}
                     </div>
@@ -1438,11 +1308,7 @@ const InventoryTreeMenuLocal = () => {
                         }}
                     >
                         {isAdopting[path]?.retry < 0 && (
-                            <Text
-                                size={100}
-                                font='numeric'
-                                style={{ color: 'red' }}
-                            >
+                            <Text size={100} font='numeric' style={{ color: 'red' }}>
                                 🦋 {isAdopting[path]?.error}
                             </Text>
                         )}
@@ -1481,8 +1347,7 @@ const InventoryTreeMenuLocal = () => {
                                     color: tokens.colorCompoundBrandBackground,
                                 }}
                             >
-                                {isTesting[path]?.error &&
-                                    convertErrorMessage(isTesting[path]?.error)}
+                                {isTesting[path]?.error && convertErrorMessage(isTesting[path]?.error)}
                             </Text>
                         )}
                     </div>
@@ -1532,11 +1397,7 @@ const InventoryTreeMenuLocal = () => {
         const bastionHost = settings?.bastionHost || {};
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            response = await getDeviceFacts(
-                { ...device, timeout: 5000 },
-                true,
-                bastionHost
-            );
+            response = await getDeviceFacts({ ...device, timeout: 5000 }, true, bastionHost);
             if (response.status) {
                 setDeviceFacts(device._path, response.result);
                 resetIsChecking(device._path);
@@ -1546,11 +1407,7 @@ const InventoryTreeMenuLocal = () => {
                     `${device.address}:${device.port} - Error retrieving facts on attempt ${attempt}:`,
                     response
                 );
-                if (
-                    response.result?.status
-                        ?.toLowerCase()
-                        .includes('authentication failed')
-                ) {
+                if (response.result?.status?.toLowerCase().includes('authentication failed')) {
                     deleteDeviceFacts(device._path);
                     setIsChecking(device._path, {
                         status: false,
@@ -1558,11 +1415,7 @@ const InventoryTreeMenuLocal = () => {
                         error: response.result?.message,
                     });
                     return;
-                } else if (
-                    response.result?.status
-                        ?.toLowerCase()
-                        .includes('ssh client error')
-                ) {
+                } else if (response.result?.status?.toLowerCase().includes('ssh client error')) {
                     deleteDeviceFacts(device._path);
                     setIsChecking(device._path, {
                         status: false,
@@ -1577,9 +1430,7 @@ const InventoryTreeMenuLocal = () => {
                     retry: attempt,
                     error: response.result?.message,
                 });
-                await new Promise((resolve) =>
-                    setTimeout(resolve, retryInterval)
-                );
+                await new Promise((resolve) => setTimeout(resolve, retryInterval));
             }
         }
 
@@ -1595,8 +1446,8 @@ const InventoryTreeMenuLocal = () => {
                 <ToastTitle>Device Facts Retrieval Failure</ToastTitle>
                 <ToastBody subtitle='Error Details'>
                     <Text>
-                        An error occurred while retrieving the device facts.
-                        Please check the device configuration and try again.
+                        An error occurred while retrieving the device facts. Please check the device configuration and
+                        try again.
                     </Text>
                     <Text>Error Message: {response.result.message}</Text>
                 </ToastBody>
@@ -1606,9 +1457,7 @@ const InventoryTreeMenuLocal = () => {
     };
 
     const getFacts = async (node, rate = 10) => {
-        const targetDevices = inventory.filter((device) =>
-            device._path.startsWith(node.value)
-        );
+        const targetDevices = inventory.filter((device) => device._path.startsWith(node.value));
 
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const rateLimit = 1000 / rate; // Rate in calls per second
@@ -1645,11 +1494,7 @@ const InventoryTreeMenuLocal = () => {
         await electronAPI.saSaveDeviceFacts({ facts: deviceFactsRef.current });
     };
 
-    const actionAdoptDevice = async (
-        device,
-        jsiTerm = false,
-        deleteOutboundSSHTerm = false
-    ) => {
+    const actionAdoptDevice = async (device, jsiTerm = false, deleteOutboundSSHTerm = false) => {
         const maxRetries = 2;
         const retryInterval = 15000;
         let response;
@@ -1660,13 +1505,7 @@ const InventoryTreeMenuLocal = () => {
         const bastionHost = settings?.bastionHost || {};
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            response = await adoptDevices(
-                device,
-                jsiTerm,
-                deleteOutboundSSHTerm,
-                bastionHost,
-                ignoreCaseInName
-            );
+            response = await adoptDevices(device, jsiTerm, deleteOutboundSSHTerm, bastionHost, ignoreCaseInName);
 
             if (response?.status) {
                 resetIsAdopting(device.path, false);
@@ -1677,11 +1516,7 @@ const InventoryTreeMenuLocal = () => {
                     response
                 );
 
-                if (
-                    response?.result?.status
-                        ?.toLowerCase()
-                        .includes('authentication failed')
-                ) {
+                if (response?.result?.status?.toLowerCase().includes('authentication failed')) {
                     setIsAdopting(device._path, {
                         status: false,
                         retry: -1,
@@ -1695,9 +1530,7 @@ const InventoryTreeMenuLocal = () => {
                     error: response?.result?.message,
                 });
 
-                await new Promise((resolve) =>
-                    setTimeout(resolve, retryInterval)
-                ); // Wait before retrying
+                await new Promise((resolve) => setTimeout(resolve, retryInterval)); // Wait before retrying
             }
         }
 
@@ -1713,12 +1546,9 @@ const InventoryTreeMenuLocal = () => {
                 <ToastBody>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <Text size={200}>
-                            The device could not be adopted into the
-                            organization: "{device.organization}".
+                            The device could not be adopted into the organization: "{device.organization}".
                         </Text>
-                        <Text size={200}>
-                            Error Message: {response?.result.message}
-                        </Text>
+                        <Text size={200}>Error Message: {response?.result.message}</Text>
                     </div>
                 </ToastBody>
             </Toast>,
@@ -1745,16 +1575,10 @@ const InventoryTreeMenuLocal = () => {
             if (!fact) return false;
 
             const serialNumber = fact.systemInformation?.serialNumber;
-            const IsValidDeviceModel = validateDeviceModel(
-                fact.systemInformation?.hardwareModel
-            );
+            const IsValidDeviceModel = validateDeviceModel(fact.systemInformation?.hardwareModel);
             if (!IsValidDeviceModel) return false;
 
-            return (
-                siteExists &&
-                device.path.startsWith(node.value) &&
-                !!!cloudDevices[serialNumber]
-            );
+            return siteExists && device.path.startsWith(node.value) && !!!cloudDevices[serialNumber];
         });
 
         const targetOrgs = new Set();
@@ -1787,12 +1611,8 @@ const InventoryTreeMenuLocal = () => {
 
                 if (runningCalls >= maxConcurrentCalls) {
                     await Promise.race(promises);
-                    runningCalls -= promises.filter(
-                        (p) => p instanceof Promise
-                    ).length;
-                    promises.length = promises.filter(
-                        (p) => p instanceof Promise
-                    ).length;
+                    runningCalls -= promises.filter((p) => p instanceof Promise).length;
+                    promises.length = promises.filter((p) => p instanceof Promise).length;
                 }
 
                 await delay(rateLimit);
@@ -1837,10 +1657,7 @@ const InventoryTreeMenuLocal = () => {
                 <Toast>
                     <ToastTitle>Device Releasing Failure</ToastTitle>
                     <ToastBody subtitle='Device Releasing'>
-                        <Text>
-                            The device could not be released from the
-                            organization: "{device.organization}".
-                        </Text>
+                        <Text>The device could not be released from the organization: "{device.organization}".</Text>
                     </ToastBody>
                 </Toast>,
                 { intent: 'error' }
@@ -1890,12 +1707,8 @@ const InventoryTreeMenuLocal = () => {
 
                 if (runningCalls >= maxConcurrentCalls) {
                     await Promise.race(promises);
-                    runningCalls -= promises.filter(
-                        (p) => p instanceof Promise
-                    ).length;
-                    promises.length = promises.filter(
-                        (p) => p instanceof Promise
-                    ).length;
+                    runningCalls -= promises.filter((p) => p instanceof Promise).length;
+                    promises.length = promises.filter((p) => p instanceof Promise).length;
                 }
 
                 await delay(rateLimit);
@@ -1919,11 +1732,7 @@ const InventoryTreeMenuLocal = () => {
         }, 3000);
     };
 
-    const fetchDeviceNetworkCondition = async (
-        device,
-        termServer = 'oc-term.mistsys.net',
-        termPort = 2200
-    ) => {
+    const fetchDeviceNetworkCondition = async (device, termServer = 'oc-term.mistsys.net', termPort = 2200) => {
         const maxRetries = 2;
         const retryInterval = 10000; // 10 seconds in milliseconds
         let response;
@@ -1940,10 +1749,7 @@ const InventoryTreeMenuLocal = () => {
                 termPort
             );
             if (response.status) {
-                console.log(
-                    `Network Condition: ${device._path}`,
-                    response.result
-                );
+                console.log(`Network Condition: ${device._path}`, response.result);
                 setDeviceNetworkCondition(device._path, response.result);
                 resetIsTesting(device._path);
                 return;
@@ -1952,11 +1758,7 @@ const InventoryTreeMenuLocal = () => {
                     `${device.address}:${device.port} - Error retrieving network condition on attempt ${attempt}:`,
                     response
                 );
-                if (
-                    response.result?.status
-                        ?.toLowerCase()
-                        .includes('authentication failed')
-                ) {
+                if (response.result?.status?.toLowerCase().includes('authentication failed')) {
                     deleteDeviceNetworkCondition(device._path);
                     setIsTesting(device._path, {
                         status: false,
@@ -1964,11 +1766,7 @@ const InventoryTreeMenuLocal = () => {
                         error: response.result?.message,
                     });
                     return;
-                } else if (
-                    response.result?.status
-                        ?.toLowerCase()
-                        .includes('ssh client error')
-                ) {
+                } else if (response.result?.status?.toLowerCase().includes('ssh client error')) {
                     deleteDeviceNetworkCondition(device._path);
                     setIsTesting(device._path, {
                         status: false,
@@ -1983,9 +1781,7 @@ const InventoryTreeMenuLocal = () => {
                     retry: attempt,
                     error: response.result?.message,
                 });
-                await new Promise((resolve) =>
-                    setTimeout(resolve, retryInterval)
-                );
+                await new Promise((resolve) => setTimeout(resolve, retryInterval));
             }
         }
 
@@ -1998,14 +1794,11 @@ const InventoryTreeMenuLocal = () => {
 
         notify(
             <Toast>
-                <ToastTitle>
-                    Device Network Condition Retrieval Failure
-                </ToastTitle>
+                <ToastTitle>Device Network Condition Retrieval Failure</ToastTitle>
                 <ToastBody subtitle='Error Details'>
                     <Text>
-                        An error occurred while retrieving the device network
-                        condition information. Please check the device
-                        configuration and try again.
+                        An error occurred while retrieving the device network condition information. Please check the
+                        device configuration and try again.
                     </Text>
                     <Text>Error Message: {response.result.message}</Text>
                 </ToastBody>
@@ -2024,9 +1817,7 @@ const InventoryTreeMenuLocal = () => {
             const fact = findFact(device._path);
             if (!fact) return false;
 
-            const IsValidDeviceModel = validateDeviceModel(
-                fact.systemInformation?.hardwareModel
-            );
+            const IsValidDeviceModel = validateDeviceModel(fact.systemInformation?.hardwareModel);
             if (!IsValidDeviceModel) return false;
 
             return siteExists && device._path.startsWith(node.value);
@@ -2037,9 +1828,7 @@ const InventoryTreeMenuLocal = () => {
             return;
         }
 
-        const organizationSet = new Set(
-            targetDevices.map((device) => device.organization)
-        );
+        const organizationSet = new Set(targetDevices.map((device) => device.organization));
 
         const orgs = isUserLoggedIn
             ? user?.privileges
@@ -2077,10 +1866,7 @@ const InventoryTreeMenuLocal = () => {
                     console.log('No match term service and port found');
                 }
             } else {
-                console.error(
-                    'outbound_ssh_cmd api call for device network condition test error: ',
-                    data?.error
-                );
+                console.error('outbound_ssh_cmd api call for device network condition test error: ', data?.error);
             }
         }
 
@@ -2093,16 +1879,9 @@ const InventoryTreeMenuLocal = () => {
             let runningCalls = 0;
 
             const executeCall = async (device) => {
-                const {
-                    termServer = defaultTermServer,
-                    termPort = defaultTermPort,
-                } = orgs[device.organization] || {};
+                const { termServer = defaultTermServer, termPort = defaultTermPort } = orgs[device.organization] || {};
 
-                const promise = fetchDeviceNetworkCondition(
-                    device,
-                    termServer,
-                    termPort
-                ).then(() => {
+                const promise = fetchDeviceNetworkCondition(device, termServer, termPort).then(() => {
                     runningCalls--;
                     promises.splice(promises.indexOf(promise), 1); // Remove the resolved promise
                 });
@@ -2126,15 +1905,11 @@ const InventoryTreeMenuLocal = () => {
         await fetchDeviceNetworkConditionWithRateLimit();
     };
 
-    const contextMenuContent = (event, node) => {
+    const ContextMenuContent = (event, node) => {
         const devices = inventory.filter(
-            (device) =>
-                device._path.startsWith(node.value) &&
-                !!deviceFacts[device._path]
+            (device) => device._path.startsWith(node.value) && !!deviceFacts[device._path]
         );
-        const devicesAdopted = devices.filter(
-            (device) => !!findCloudDevice(device._path)
-        );
+        const devicesAdopted = devices.filter((device) => !!findCloudDevice(device._path));
 
         const isTargetDeviceAvailable = () => {
             return devices.length > 0;
@@ -2145,9 +1920,7 @@ const InventoryTreeMenuLocal = () => {
         };
 
         const isOrgSiteMatch = () => {
-            const splitParentValue = node.parentValue
-                ? node.parentValue.split('/')
-                : [];
+            const splitParentValue = node.parentValue ? node.parentValue.split('/') : [];
 
             switch (node.type) {
                 case 'root':
@@ -2155,10 +1928,7 @@ const InventoryTreeMenuLocal = () => {
                 case 'org':
                     return doesOrgNameExist(node.content);
                 case 'site':
-                    return doesSiteNameExist(
-                        splitParentValue.pop(),
-                        node.content
-                    );
+                    return doesSiteNameExist(splitParentValue.pop(), node.content);
                 case 'device':
                     return doesSiteNameExist(
                         splitParentValue[splitParentValue.length - 2],
@@ -2170,132 +1940,149 @@ const InventoryTreeMenuLocal = () => {
         };
 
         return (
-            <MenuList>
-                <MenuGroup>
-                    <MenuGroupHeader>
-                        {capitalizeFirstChar(node.type)} Actions
-                    </MenuGroupHeader>
-                    <MenuDivider />
-                    <MenuItem
-                        icon={<GetFactsIcon style={{ fontSize: '16px' }} />}
-                        onClick={() => {
-                            getFacts(node);
-                        }}
-                    >
-                        <Text size={200} font='numeric'>
-                            Get Facts
-                        </Text>
-                    </MenuItem>
-
-                    {!isUserLoggedIn && (
-                        <MenuGroupHeader>
-                            <Text size={100}>
-                                Please log in to perform following actions.
+            <div>
+                <MenuList>
+                    <MenuGroup>
+                        <MenuGroupHeader>{capitalizeFirstChar(node.type)} Actions</MenuGroupHeader>
+                        <MenuDivider />
+                        <MenuItem
+                            icon={<GetFactsIcon style={{ fontSize: '16px' }} />}
+                            onClick={() => {
+                                getFacts(node);
+                            }}
+                        >
+                            <Text size={200} font='numeric'>
+                                Get Facts
                             </Text>
-                        </MenuGroupHeader>
-                    )}
+                        </MenuItem>
 
-                    <MenuItem
-                        disabled={
-                            !isUserLoggedIn ||
-                            !isTargetDeviceAvailable() ||
-                            !isOrgSiteMatch() ||
-                            (node.type === 'device' &&
-                                !validateDeviceModel(
-                                    findFact(node.value)?.systemInformation
-                                        ?.hardwareModel
-                                ))
-                        }
-                        icon={<AdoptDeviceIcon style={{ fontSize: '14px' }} />}
-                        onClick={async () => {
-                            actionAdoptDevices(node);
-                        }}
-                    >
-                        <Text size={200} font='numeric'>
-                            Adopt Device
-                        </Text>
-                    </MenuItem>
-
-                    {settings.jsiTerm && (
+                        {!isUserLoggedIn && (
+                            <MenuGroupHeader>
+                                <Text size={100}>Please log in to perform following actions.</Text>
+                            </MenuGroupHeader>
+                        )}
                         <MenuItem
                             disabled={
                                 !isUserLoggedIn ||
                                 !isTargetDeviceAvailable() ||
                                 !isOrgSiteMatch() ||
                                 (node.type === 'device' &&
-                                    !validateDeviceModel(
-                                        findFact(node.value)?.systemInformation
-                                            ?.hardwareModel
-                                    ))
+                                    !validateDeviceModel(findFact(node.value)?.systemInformation?.hardwareModel))
                             }
-                            icon={
-                                <JsiAdoptDeviceIcon
-                                    style={{ fontSize: '14px' }}
-                                />
-                            }
+                            icon={<AdoptDeviceIcon style={{ fontSize: '14px' }} />}
                             onClick={async () => {
-                                actionAdoptDevices(node, true);
+                                if (settingWarningShowForAdoption) {
+
+                                    customAlert(
+                                        'Device Adoption',
+                                        () => {
+                                            actionAdoptDevices(node);
+                                        },
+                                        theme,
+                                        (newWarningShowForAdoption) => {
+                                            const saveFunction = async () => {
+                                                const newSettings = {
+                                                    ...settings,
+                                                    warningShowForAdoption: newWarningShowForAdoption,
+                                                };
+                                                setSettings(newSettings);
+                                                exportSettings(newSettings);
+                                            };
+                                            saveFunction();
+                                        },
+                                    );
+                                } else {
+                                    actionAdoptDevices(node);
+                                }
                             }}
                         >
                             <Text size={200} font='numeric'>
-                                JSI Adopt Device
+                                Adopt Device to Assurance
                             </Text>
                         </MenuItem>
-                    )}
+                        {settings.jsiTerm && (
+                            <MenuItem
+                                disabled={
+                                    !isUserLoggedIn ||
+                                    !isTargetDeviceAvailable() ||
+                                    !isOrgSiteMatch() ||
+                                    user?.service?.toLowerCase().includes('mist') ||
+                                    (node.type === 'device' &&
+                                        !validateDeviceModel(findFact(node.value)?.systemInformation?.hardwareModel))
+                                }
+                                icon={<JsiAdoptDeviceIcon style={{ fontSize: '14px' }} />}
+                                onClick={async () => {
+                                    if (settingWarningShowForAdoption) {
+                                        customAlert(
+                                            'Device Adoption',
+                                            () => {
+                                                actionAdoptDevices(node, true);
+                                            },
+                                            theme,
+                                            (newWarningShowForAdoption) => {
+                                                const saveFunction = async () => {
+                                                    const newSettings = {
+                                                        ...settings,
+                                                        warningShowForAdoption: newWarningShowForAdoption,
+                                                    };
+                                                    setSettings(newSettings);
+                                                    exportSettings(newSettings);
+                                                };
+                                                saveFunction();
+                                            },
+                                        );
+                                    } else {
+                                        actionAdoptDevices(node, true);
+                                    }
+                                }}
+                            >
+                                <Text size={200} font='numeric'>
+                                    {user?.service?.toLowerCase().includes('mist')
+                                        ? 'JSI-only adoption not available in Mist'
+                                        : 'Adopt Device to JSI-only'}
+                                </Text>
+                            </MenuItem>
+                        )}
 
-                    <MenuItem
-                        disabled={
-                            !isUserLoggedIn || !isDeviceAdoptedAvailable()
-                        }
-                        icon={
-                            <ReleaseDeviceIcon style={{ fontSize: '14px' }} />
-                        }
-                        onClick={async () => {
-                            actionReleaseDevices(node);
-                        }}
-                    >
-                        <Text size={200} font='numeric'>
-                            Release Device
-                        </Text>
-                    </MenuItem>
+                        <MenuItem
+                            disabled={!isUserLoggedIn || !isDeviceAdoptedAvailable()}
+                            icon={<ReleaseDeviceIcon style={{ fontSize: '14px' }} />}
+                            onClick={async () => {
+                                actionReleaseDevices(node);
+                            }}
+                        >
+                            <Text size={200} font='numeric'>
+                                Release Device
+                            </Text>
+                        </MenuItem>
 
-                    <MenuDivider />
-                    <MenuItem
-                        disabled={
-                            !isUserLoggedIn ||
-                            !isTargetDeviceAvailable() ||
-                            !isOrgSiteMatch() ||
-                            (node.type === 'device' &&
-                                !validateDeviceModel(
-                                    findFact(node.value)?.systemInformation
-                                        ?.hardwareModel
-                                ))
-                        }
-                        icon={
-                            <DeviceNetworkConditionIcon
-                                style={{ fontSize: '14px' }}
-                            />
-                        }
-                        onClick={async () => {
-                            getNetworkCondition(node);
-                        }}
-                    >
-                        <Text size={200} font='numeric'>
-                            Check Network Access
-                        </Text>
-                    </MenuItem>
-                </MenuGroup>
-            </MenuList>
+                        <MenuDivider />
+                        <MenuItem
+                            disabled={
+                                !isUserLoggedIn ||
+                                !isTargetDeviceAvailable() ||
+                                !isOrgSiteMatch() ||
+                                (node.type === 'device' &&
+                                    !validateDeviceModel(findFact(node.value)?.systemInformation?.hardwareModel))
+                            }
+                            icon={<DeviceNetworkConditionIcon style={{ fontSize: '14px' }} />}
+                            onClick={async () => {
+                                getNetworkCondition(node);
+                            }}
+                        >
+                            <Text size={200} font='numeric'>
+                                Check Network Access
+                            </Text>
+                        </MenuItem>
+                    </MenuGroup>
+                </MenuList>
+            </div>
         );
     };
 
     const onNodeRightClick = (event, node) => {
         event.preventDefault();
-        showContextMenu(
-            event.clientX,
-            event.clientY,
-            contextMenuContent(event, node)
-        );
+        showContextMenu(event.clientX, event.clientY, ContextMenuContent(event, node));
     };
 
     const handleToggleExpand = (itemValue) => {
@@ -2316,9 +2103,7 @@ const InventoryTreeMenuLocal = () => {
     const treeProps = flatTree.getTreeProps();
 
     const doesOrgNameExist = (orgName) => {
-        const orgNameToCompare = ignoreCaseInName
-            ? orgName?.toLowerCase()
-            : orgName;
+        const orgNameToCompare = ignoreCaseInName ? orgName?.toLowerCase() : orgName;
 
         return Object.values(orgs).some((name) => {
             const nameToCompare = ignoreCaseInName ? name.toLowerCase() : name;
@@ -2328,9 +2113,7 @@ const InventoryTreeMenuLocal = () => {
 
     const doesSiteNameExist = (orgName, siteName) => {
         const org = cloudInventory.find((item) =>
-            ignoreCaseInName
-                ? item?.name?.toLowerCase() === orgName?.toLowerCase()
-                : item?.name === orgName
+            ignoreCaseInName ? item?.name?.toLowerCase() === orgName?.toLowerCase() : item?.name === orgName
         );
 
         // If the organization is not found, return false
@@ -2340,9 +2123,7 @@ const InventoryTreeMenuLocal = () => {
 
         // Check if the site name exists within the organization's sites array
         const siteExists = org.sites?.some((site) =>
-            ignoreCaseInName
-                ? site?.name?.toLowerCase() === siteName?.toLowerCase()
-                : site?.name === siteName
+            ignoreCaseInName ? site?.name?.toLowerCase() === siteName?.toLowerCase() : site?.name === siteName
         );
 
         return siteExists;
@@ -2369,14 +2150,8 @@ const InventoryTreeMenuLocal = () => {
                         itemType='branch'
                     >
                         <TreeItemLayout
-                            aside={
-                                <RenderCounterBadge
-                                    counterValue={rowData.counter}
-                                />
-                            }
-                            onContextMenu={(event) =>
-                                onNodeRightClick(event, rowData)
-                            }
+                            aside={<RenderCounterBadge counterValue={rowData.counter} />}
+                            onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
                             <Text size={200}>{rowData.content}</Text>
                         </TreeItemLayout>
@@ -2389,18 +2164,11 @@ const InventoryTreeMenuLocal = () => {
                         itemType='branch'
                     >
                         <TreeItemLayout
-                            aside={
-                                <RenderCounterBadge
-                                    counterValue={rowData.counter}
-                                />
-                            }
+                            aside={<RenderCounterBadge counterValue={rowData.counter} />}
                             iconBefore={rowData.icon}
-                            onContextMenu={(event) =>
-                                onNodeRightClick(event, rowData)
-                            }
+                            onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
-                            {!isUserLoggedIn ||
-                            doesOrgNameExist(rowData.content) ? (
+                            {!isUserLoggedIn || doesOrgNameExist(rowData.content) ? (
                                 <Text size={100}>{rowData.content}</Text>
                             ) : (
                                 <Tooltip
@@ -2411,9 +2179,7 @@ const InventoryTreeMenuLocal = () => {
                                 >
                                     <Text
                                         size={100}
-                                        strikethrough={
-                                            cloudInventory.length > 0
-                                        }
+                                        strikethrough={cloudInventory.length > 0}
                                         style={
                                             cloudInventory.length > 0
                                                 ? {
@@ -2436,21 +2202,12 @@ const InventoryTreeMenuLocal = () => {
                         itemType='branch'
                     >
                         <TreeItemLayout
-                            aside={
-                                <RenderCounterBadge
-                                    counterValue={rowData.counter}
-                                />
-                            }
+                            aside={<RenderCounterBadge counterValue={rowData.counter} />}
                             iconBefore={rowData.icon}
-                            onContextMenu={(event) =>
-                                onNodeRightClick(event, rowData)
-                            }
+                            onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
                             {!isUserLoggedIn ||
-                            doesSiteNameExist(
-                                rowData.parentValue.split('/').pop(),
-                                rowData.content
-                            ) ? (
+                            doesSiteNameExist(rowData.parentValue.split('/').pop(), rowData.content) ? (
                                 <Text size={100}>{rowData.content}</Text>
                             ) : (
                                 <Tooltip
@@ -2461,9 +2218,7 @@ const InventoryTreeMenuLocal = () => {
                                 >
                                     <Text
                                         size={100}
-                                        strikethrough={
-                                            cloudInventory.length > 0
-                                        }
+                                        strikethrough={cloudInventory.length > 0}
                                         style={
                                             cloudInventory.length > 0
                                                 ? {
@@ -2483,33 +2238,16 @@ const InventoryTreeMenuLocal = () => {
                         {...rowData}
                         key={rowData.value}
                         onClick={() => {
-                            rowData?.data?.facts?.vc
-                                ? handleToggleExpand(rowData.value)
-                                : onClickDevice(rowData.value);
+                            rowData?.data?.facts?.vc ? handleToggleExpand(rowData.value) : onClickDevice(rowData.value);
                         }}
                         itemType={rowData?.data?.facts?.vc ? 'branch' : 'leaf'}
                     >
                         <TreeItemLayout
-                            iconBefore={
-                                <ProtocolIcon
-                                    path={rowData.value}
-                                    device={rowData.data}
-                                />
-                            }
-                            aside={
-                                <AsideView
-                                    path={rowData.value}
-                                    device={rowData.data}
-                                />
-                            }
-                            onContextMenu={(event) =>
-                                onNodeRightClick(event, rowData)
-                            }
+                            iconBefore={<ProtocolIcon path={rowData.value} device={rowData.data} />}
+                            aside={<AsideView path={rowData.value} device={rowData.data} />}
+                            onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
-                            <DeviceName
-                                path={rowData.value}
-                                device={rowData.data}
-                            />
+                            <DeviceName path={rowData.value} device={rowData.data} />
                         </TreeItemLayout>
                     </FlatTreeItem>
                 ) : rowData.type === 'vc-member' ? (
@@ -2522,9 +2260,7 @@ const InventoryTreeMenuLocal = () => {
                         }}
                         itemType='leaf'
                     >
-                        <TreeItemLayout
-                            iconBefore={<LayerDiagonalFilled fontSize='12px' />}
-                        >
+                        <TreeItemLayout iconBefore={<LayerDiagonalFilled fontSize='12px' />}>
                             <div
                                 style={{
                                     display: 'flex',
@@ -2533,11 +2269,7 @@ const InventoryTreeMenuLocal = () => {
                                     alignItems: 'center',
                                 }}
                             >
-                                <Text
-                                    size={100}
-                                    font='numeric'
-                                    style={{ width: '38px' }}
-                                >
+                                <Text size={100} font='numeric' style={{ width: '38px' }}>
                                     Slot {rowData.content.slot}:
                                 </Text>
 
@@ -2548,8 +2280,7 @@ const InventoryTreeMenuLocal = () => {
                                 ) : (
                                     <Tooltip
                                         content={{
-                                            className:
-                                                styles.tooltipMaxWidthClass,
+                                            className: styles.tooltipMaxWidthClass,
                                             children: (
                                                 <Text size={100}>
                                                     {`The ${rowData.content.model?.toUpperCase()} is not valid for the ${cloudDescription}.`}
@@ -2583,11 +2314,7 @@ const InventoryTreeMenuLocal = () => {
                         itemType='leaf'
                     >
                         <TreeItemLayout
-                            aside={
-                                <RenderCounterBadge
-                                    counterValue={rowData.counter}
-                                />
-                            }
+                            aside={<RenderCounterBadge counterValue={rowData.counter} />}
                             iconBefore={rowData.icon}
                         >
                             {rowData.content}

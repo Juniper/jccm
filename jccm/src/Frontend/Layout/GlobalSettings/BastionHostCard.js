@@ -186,7 +186,7 @@ export const BastionHostCard = () => {
         const saveFunction = async () => {
             if (isFormValid) {
                 setBastionHost(newBastionHost);
-                
+
                 const newSettings = { ...settings, bastionHost: newBastionHost };
                 setSettings(newSettings);
                 exportSettings(newSettings);
@@ -271,10 +271,7 @@ export const BastionHostCard = () => {
             }}
         >
             <div style={{ marginTop: '10px', marginBottom: '10px' }}>
-                <Divider
-                    alignContent='end'
-                    appearance='strong'
-                ></Divider>
+                <Divider alignContent='end' appearance='strong'></Divider>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', alignItems: 'flex-start' }}>
@@ -498,11 +495,7 @@ export const BastionHostCard = () => {
                                     transformOrigin: 'right',
                                 }}
                             >
-                                <Switch
-                                    checked={active}
-                                    disabled={!isFormValid}
-                                    onChange={handleActive}
-                                />
+                                <Switch checked={active} disabled={!isFormValid} onChange={handleActive} />
                             </div>
 
                             <Text size={200}>{active ? 'Active' : 'Inactive'}</Text>

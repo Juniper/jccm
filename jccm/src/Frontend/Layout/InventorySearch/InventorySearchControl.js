@@ -36,6 +36,8 @@ import { RotatingIcon } from '../ChangeIcon';
 import { CustomProgressBar } from './CustomProgressBar';
 import { getHostListMultiple, getHostCountMultiple } from './InventorySearchUtils';
 import { useNotify } from '../../Common/NotificationContext';
+import { customAlert } from '../customAlert'
+import { getActiveTheme } from '../../Common/CommonVariables';
 
 const SearchPlayIcon = bundleIcon(PlayCircleRegular, SearchRegular);
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -44,7 +46,7 @@ import { getDeviceFacts } from '../Devices';
 
 export const InventorySearchControl = ({ subnets, startCallback, endCallback, onAddFact, onAddUndiscoveredList }) => {
     const { notify } = useNotify(); // Correctly use the hook here
-    const { settings, inventory } = useStore();
+    const { settings, setSettings, exportSettings, inventory, currentActiveThemeName } = useStore();
 
     const [isStart, setIsStart] = useState(false);
     const [searchRate, setSearchRate] = useState(10);
@@ -53,14 +55,19 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
     const [sshClientErrorCount, setSshClientErrorCount] = useState({});
     const [isSkipLocalInventory, setIsSkipLocalInventory] = useState(false);
 
+    const theme = getActiveTheme(currentActiveThemeName).theme;
+
     const isStartRef = useRef(null);
     const hostSeqRef = useRef(null);
     const hostStatusCountRef = useRef(null);
+
 
     const minRate = 3;
     const maxRate = 30;
 
     const totalHostCount = getHostCountMultiple(subnets);
+
+    const settingWarningShowForNetworkSearch = settings?.warningShowForNetworkSearch ?? true;
 
     useEffect(() => {
         isStartRef.current = isStart;
@@ -399,7 +406,30 @@ export const InventorySearchControl = ({ subnets, startCallback, endCallback, on
                             shape='circular'
                             appearance='subtle'
                             size='small'
-                            onClick={onClickSearchStart}
+                            onClick={() => {
+                                if (settingWarningShowForNetworkSearch) {
+                                    customAlert(
+                                        'Network Search',
+                                        () => {
+                                            onClickSearchStart();
+                                        },
+                                        theme,
+                                        (newWarningShowForNetworkSearch) => {
+                                            const saveFunction = async () => {
+                                                const newSettings = {
+                                                    ...settings,
+                                                    warningShowForNetworkSearch: newWarningShowForNetworkSearch,
+                                                };
+                                                setSettings(newSettings);
+                                                exportSettings(newSettings);
+                                            };
+                                            saveFunction();
+                                        }
+                                    );
+                                } else {
+                                    onClickSearchStart();
+                                }
+                            }}
                         >
                             Search
                         </Button>

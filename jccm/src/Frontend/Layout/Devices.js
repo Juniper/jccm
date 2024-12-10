@@ -16,7 +16,6 @@ export const getPassword = (password) => {
         // Extract the tag name between `${vault:` and `}`
         const tagName = password.slice(8, -1).trim(); // Remove `${vault:` and trailing `}`
         const v = getPasswordFromVault(tagName); // Fetch from vault
-        console.log('vault password:', v);
         return v; // Return the retrieved password
     }
     return password; // Return plain password if not in vault format

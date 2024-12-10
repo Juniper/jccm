@@ -35,6 +35,7 @@ import { useNotify } from '../../Common/NotificationContext';
 import useStore from '../../Common/StateStore';
 import { GeneralCard } from './GeneralCard';
 import { BastionHostCard } from './BastionHostCard';
+import { MessageFilterCard } from './MessageFilterCard';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const DeleteIcon = bundleIcon(SubtractCircleFilled, SubtractCircleRegular);
@@ -126,6 +127,11 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
                         >
                             Bastion Host
                         </Tab>
+                        <Tab
+                            value='Cautionary'
+                        >
+                            Cautionary Message
+                        </Tab>
                     </TabList>
 
                     <div
@@ -147,6 +153,16 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
                         }}
                     >
                         <BastionHostCard />
+                    </div>
+                    <div
+                        style={{
+                            display: selectedTab === 'Cautionary' ? 'flex' : 'none',
+                            width: '100%',
+                            height: '100%',
+                            marginTop: '20px',
+                        }}
+                    >
+                        <MessageFilterCard />
                     </div>
                 </div>
             </DialogSurface>
