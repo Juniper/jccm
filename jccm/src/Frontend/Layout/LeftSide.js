@@ -151,8 +151,8 @@ const LeftSide = () => {
                     inventoryForExport.push({
                         orgName,
                         siteName,
-                        username: 'your username',
-                        password: 'your password',
+                        username: 'Your username',
+                        password: 'Your password',
                         port: 22,
                         ip: ip?.length > 0 ? ip : 'Not Available yet',
                         name,
