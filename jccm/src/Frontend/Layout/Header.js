@@ -246,11 +246,13 @@ export default () => {
             port: 'port',
             username: 'username',
             password: 'password',
-            'facts.hardwareModel': 'hardware model',
-            'facts.osName': 'os name',
-            'facts.osVersion': 'os version',
-            'facts.serialNumber': 'serial number',
-            'facts.hostName': 'host name',
+            'facts.systemInformation.hardwareModel': 'hardware model',
+            'facts.systemInformation.osName': 'os name',
+            'facts.systemInformation.osVersion': 'os version',
+            'facts.systemInformation.serialNumber': 'serial number',
+            'facts.systemInformation.hostName': 'host name',
+            'facts.routeSummaryInformation.routerId': 'router id',
+            'facts.interface.name': 'interface name',
         };
 
         // Create columnOrder for consistency and ordering in the Excel file
@@ -263,6 +265,8 @@ export default () => {
                 device.facts = deviceFacts[device._path];
             }
         });
+
+        console.log('>>>> inventoryWithFacts:', inventoryWithFacts);
 
         const orderedData = inventoryWithFacts.map((item) => {
             const orderedRow = {};
