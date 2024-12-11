@@ -395,7 +395,7 @@ export const acGetDeviceStatsType = async (siteId, type) => {
 
     try {
         const data = await acRequest(
-            `sites/${siteId}/stats/devices?type=switch`,
+            `sites/${siteId}/stats/devices?type=${type}`,
             'GET'
         );
         return { status: 'success', data };

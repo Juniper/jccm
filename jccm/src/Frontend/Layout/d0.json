@@ -1,0 +1,850 @@
+[
+        {
+            "module_stat": [
+                {
+                    "locating": false,
+                    "optics_cpld_version": "",
+                    "power_cpld_version": "",
+                    "memory_stat": {
+                        "usage": 38
+                    },
+                    "cpld_version": "",
+                    "vc_state": "present",
+                    "boot_partition": "junos",
+                    "poe": {
+                        "max_power": 124,
+                        "power_draw": 12.8,
+                        "status": ""
+                    },
+                    "backup_version": "22.4R3.25",
+                    "vc_mode": "HiGiG",
+                    "type": "fpc",
+                    "mac": "28b8294379b1",
+                    "_idx": 0,
+                    "temperatures": [
+                        {
+                            "name": "CPU Sensor",
+                            "status": "ok",
+                            "celsius": 45
+                        },
+                        {
+                            "name": "PSU Sensor",
+                            "status": "ok",
+                            "celsius": 48
+                        }
+                    ],
+                    "psus": [
+                        {
+                            "name": "Power Supply 0",
+                            "status": "ok"
+                        }
+                    ],
+                    "humidity": [],
+                    "model": "EX2300-C-12P",
+                    "private_mac": "",
+                    "pics": [
+                        {
+                            "port_groups": [
+                                {
+                                    "count": 12,
+                                    "type": "GE"
+                                }
+                            ],
+                            "index": 0,
+                            "model_number": "EX2300-C-12P"
+                        },
+                        {
+                            "port_groups": [
+                                {
+                                    "count": 2,
+                                    "type": "SFP/SFP+"
+                                }
+                            ],
+                            "index": 1,
+                            "model_number": "EX2300-C-12P"
+                        }
+                    ],
+                    "re_fpga_version": "",
+                    "recovery_version": "",
+                    "fpga_version": "",
+                    "pending_version": "",
+                    "uboot_version": "",
+                    "tmc_fpga_version": "",
+                    "cpu_stat": {
+                        "interrupt": 1,
+                        "idle": 73,
+                        "user": 14,
+                        "system": 11,
+                        "load_avg": [
+                            1.63,
+                            1.85,
+                            1.69
+                        ]
+                    },
+                    "bios_version": "",
+                    "version": "23.4R2-S2.1",
+                    "fpc_idx": 0,
+                    "fans": [],
+                    "uptime": 4413600,
+                    "vc_links": [],
+                    "serial": "HV3622470490",
+                    "poe_version": "",
+                    "vc_role": "master"
+                }
+            ],
+            "chassis_mac": "",
+            "config_timestamp": 1733863426,
+            "uptime": 4413568,
+            "vc_setup_info": {
+                "config_type": "nonprovisioned",
+                "err_missing_dev_id_fpc": false
+            },
+            "arp_table_stats": {
+                "arp_table_count": 1,
+                "max_entries_supported": 1500
+            },
+            "version": "23.4R2-S2.1",
+            "mac": "28b8294379b1",
+            "last_seen": 1733951707,
+            "hostname": "home-switch",
+            "memory_stat": {
+                "usage": 38
+            },
+            "fw_versions_outofsync": false,
+            "fpc0_mac": "28b8294379b1",
+            "ip": "192.168.0.130",
+            "master_mac": "28b8294379b1",
+            "ip_stat": {
+                "netmask": "255.255.255.255",
+                "ip": "192.168.0.130",
+                "ips": {
+                    "vlan1": "192.168.0.130"
+                },
+                "gateway": "192.168.0.1"
+            },
+            "dhcpd_stat": {},
+            "config_status": "NO_CHANGE",
+            "type": "switch",
+            "_ttl": 15549019,
+            "chassis_serial": "",
+            "site_id": "244aafbf-245c-485e-9707-22d7a8ccd9e0",
+            "if_stat": {
+                "vme.0": {
+                    "tx_pkts": 225462,
+                    "rx_pkts": 6923845,
+                    "rx_bytes": 0,
+                    "port_id": "vme",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "irb.0": {
+                    "tx_pkts": 765261,
+                    "vlan": 1,
+                    "rx_pkts": 857887,
+                    "rx_bytes": 0,
+                    "port_id": "irb",
+                    "up": true,
+                    "ips": [
+                        "192.168.0.130/24"
+                    ],
+                    "servp_info": {},
+                    "tx_bytes": 0
+                },
+                "ge-0/0/5.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/5",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/6.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/6",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/3.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/3",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/4.0": {
+                    "tx_pkts": 163252,
+                    "rx_pkts": 256919,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/4",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/9.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/9",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "me0.0": {
+                    "tx_pkts": 295238,
+                    "rx_pkts": 10260221,
+                    "rx_bytes": 0,
+                    "port_id": "me0",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/7.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/7",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/10.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/10",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/8.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/8",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/11.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/11",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/1.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/1",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/2.0": {
+                    "tx_pkts": 0,
+                    "rx_pkts": 0,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/2",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "lo0.16385": {
+                    "tx_pkts": 238470106,
+                    "rx_pkts": 238470106,
+                    "rx_bytes": 0,
+                    "port_id": "lo0",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/0.0": {
+                    "tx_pkts": 868116,
+                    "rx_pkts": 7083282,
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/0",
+                    "up": true,
+                    "tx_bytes": 0
+                }
+            },
+            "_id": "28b8294379b1",
+            "ext_ip": "24.63.47.62",
+            "model": "EX2300-C-12P",
+            "cpu_stat": {
+                "system": 11,
+                "idle": 73,
+                "interrupt": 1,
+                "user": 14,
+                "load_avg": [
+                    1.63,
+                    1.85,
+                    1.69
+                ]
+            },
+            "mac_table_stats": {
+                "mac_table_count": 16,
+                "max_mac_entries_supported": 16000
+            },
+            "serial": "HV3622470490",
+            "service_stat": {},
+            "fwupdate": {
+                "timestamp": 1733951655.4136035,
+                "status": "success",
+                "status_id": 3037,
+                "progress": 100,
+                "will_retry": false
+            },
+            "org_id": "039a327b-3927-48c3-9475-10d64a4cc753",
+            "has_pcap": true,
+            "clients_stats": {
+                "total": {
+                    "num_wired_clients": 2,
+                    "num_aps": [
+                        1
+                    ]
+                }
+            },
+            "route_summary_stats": {
+                "max_unicast_routes_supported": 4096,
+                "fib_routes": 3,
+                "rib_routes": 15,
+                "total_routes": 3
+            },
+            "master_serial": "HV3622470490",
+            "config_version": 1733863426,
+            "name": "home-switch",
+            "status": "disconnected",
+            "auto_upgrade_stat": {
+                "lastcheck": 1733949710
+            },
+            "ap_redundancy": {
+                "num_aps": 1,
+                "num_aps_with_switch_redundancy": 0
+            },
+            "notes": "",
+            "ip_config": {
+                "type": "dhcp",
+                "network": "default"
+            },
+            "id": "00000000-0000-0000-1000-28b8294379b1",
+            "created_time": 1707918243,
+            "modified_time": 1733950573,
+            "map_id": null,
+            "hw_rev": "C",
+            "tag_uuid": "039a327b-3927-48c3-9475-10d64a4cc753",
+            "tag_id": 3479168,
+            "evpntopo_id": null,
+            "deviceprofile_id": null
+        },
+        {
+            "dhcpd_stat": {
+                "lan": {
+                    "num_ips": 253,
+                    "num_leased": 0
+                }
+            },
+            "serial": "CV2517AF2438",
+            "mac": "4c16fcdb21f8",
+            "version": "21.2R3-S3.5",
+            "last_seen": 1725911996,
+            "hostname": "home-srx300",
+            "org_id": "039a327b-3927-48c3-9475-10d64a4cc753",
+            "arp_table_stats": {
+                "arp_table_count": 1,
+                "max_entries_supported": 64000
+            },
+            "site_id": "244aafbf-245c-485e-9707-22d7a8ccd9e0",
+            "name": "home-srx300",
+            "module_stat": [
+                {
+                    "locating": false,
+                    "optics_cpld_version": "",
+                    "power_cpld_version": "",
+                    "cpld_version": "",
+                    "last_seen": 1725911959,
+                    "vc_state": "",
+                    "backup_version": "15.1X49-D45",
+                    "poe": {},
+                    "vc_mode": "",
+                    "mac": "4c16fcdb21f8",
+                    "_idx": 0,
+                    "temperatures": [
+                        {
+                            "celsius": 44,
+                            "name": "Routing Engine",
+                            "status": "ok"
+                        },
+                        {
+                            "celsius": 58,
+                            "name": "Routing Engine CPU",
+                            "status": "ok"
+                        }
+                    ],
+                    "psus": [
+                        {
+                            "name": "Power Supply 0",
+                            "status": "ok"
+                        }
+                    ],
+                    "model": "SRX300",
+                    "re_fpga_version": "",
+                    "recovery_version": "15.1X49-D45-domestic",
+                    "fpga_version": "",
+                    "pending_version": "",
+                    "uboot_version": "",
+                    "tmc_fpga_version": "",
+                    "version": "21.2R3-S3.5",
+                    "bios_version": "",
+                    "uptime": 0,
+                    "fans": [],
+                    "serial": "CV2517AF2438",
+                    "poe_version": "",
+                    "vc_role": "",
+                    "status": "disconnected"
+                }
+            ],
+            "has_pcap": false,
+            "uptime": 7627,
+            "config_version": 1725909465,
+            "mac_table_stats": {
+                "mac_table_count": 0,
+                "max_mac_entries_supported": 160000
+            },
+            "type": "gateway",
+            "ip": "192.168.0.129",
+            "model": "SRX300",
+            "config_status": "COMMITED",
+            "ext_ip": "24.63.47.62",
+            "config_timestamp": 1725909465,
+            "_id": "4c16fcdb21f8",
+            "service_stat": {},
+            "service_status": {
+                "idp_status": "disabled",
+                "idp_policy": "",
+                "idp_install_timestamp": "",
+                "appid_status": "enabled",
+                "appid_install_result": "successful",
+                "ewf_status": "disabled",
+                "idp_update_timestamp": "",
+                "idp_install_result": "",
+                "appid_version": 3738,
+                "appid_install_timestamp": "2024-09-09T18:42:30.236080452Z"
+            },
+            "route_summary_stats": {
+                "max_unicast_routes_supported": 1240000,
+                "fib_routes": 0,
+                "rib_routes": 0,
+                "total_routes": 0
+            },
+            "_ttl": 7509308,
+            "ip_stat": {
+                "netmask": "255.255.255.255",
+                "ip": "192.168.0.129",
+                "ips": {
+                    "vlan1": "192.168.0.129,192.168.0.129"
+                },
+                "gateway": "192.168.0.1"
+            },
+            "spu_stat": [
+                {
+                    "spu_uptime": 7344,
+                    "spu_current_session": 7,
+                    "spu_memory": 32,
+                    "spu_pending_session": 0,
+                    "spu_cpu": 0,
+                    "spu_max_session": 65536,
+                    "spu_valid_session": 0
+                }
+            ],
+            "if_stat": {
+                "irb.0": {
+                    "rx_pkts": 0,
+                    "network_name": "",
+                    "port_usage": "",
+                    "ips": [
+                        "192.168.1.1/24"
+                    ],
+                    "tx_pkts": 0,
+                    "address_mode": "Unknown",
+                    "vlan": 1,
+                    "rx_bytes": 0,
+                    "port_id": "irb",
+                    "nat_addresses": [
+                        "0.0.0.0"
+                    ],
+                    "up": true,
+                    "servp_info": {},
+                    "tx_bytes": 0
+                },
+                "lo0.32768": {
+                    "tx_pkts": 0,
+                    "address_mode": "Unknown",
+                    "vlan": 0,
+                    "rx_pkts": 0,
+                    "network_name": "",
+                    "rx_bytes": 0,
+                    "port_id": "lo0",
+                    "nat_addresses": [],
+                    "port_usage": "",
+                    "up": true,
+                    "tx_bytes": 0
+                },
+                "lo0.0": {
+                    "rx_pkts": 168,
+                    "network_name": "",
+                    "port_usage": "",
+                    "ips": [
+                        "100.100.0.1/0"
+                    ],
+                    "tx_pkts": 168,
+                    "address_mode": "Unknown",
+                    "vlan": 0,
+                    "rx_bytes": 35024,
+                    "port_id": "lo0",
+                    "nat_addresses": [
+                        "0.0.0.0"
+                    ],
+                    "up": true,
+                    "servp_info": {},
+                    "tx_bytes": 35024
+                },
+                "ge-0/0/5.0": {
+                    "tx_pkts": 106,
+                    "address_mode": "Unknown",
+                    "vlan": 1,
+                    "rx_pkts": 1584,
+                    "network_name": "",
+                    "rx_bytes": 130743,
+                    "port_id": "ge-0/0/5",
+                    "nat_addresses": [],
+                    "port_usage": "lan",
+                    "up": true,
+                    "tx_bytes": 35192
+                },
+                "ge-0/0/6.0": {
+                    "tx_pkts": 0,
+                    "address_mode": "Unknown",
+                    "vlan": 1,
+                    "rx_pkts": 0,
+                    "network_name": "",
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/6",
+                    "nat_addresses": [],
+                    "port_usage": "lan",
+                    "up": false,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/3.0": {
+                    "tx_pkts": 0,
+                    "address_mode": "Unknown",
+                    "vlan": 1,
+                    "rx_pkts": 0,
+                    "network_name": "",
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/3",
+                    "nat_addresses": [],
+                    "port_usage": "lan",
+                    "up": false,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/4.0": {
+                    "tx_pkts": 0,
+                    "address_mode": "Unknown",
+                    "vlan": 1,
+                    "rx_pkts": 0,
+                    "network_name": "",
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/4",
+                    "nat_addresses": [],
+                    "port_usage": "lan",
+                    "up": false,
+                    "tx_bytes": 0
+                },
+                "ge-0/0/7.0": {
+                    "tx_pkts": 0,
+                    "address_mode": "Unknown",
+                    "vlan": 0,
+                    "rx_pkts": 0,
+                    "network_name": "",
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/7",
+                    "nat_addresses": [],
+                    "port_usage": "wan",
+                    "up": false,
+                    "wan_name": "",
+                    "tx_bytes": 0
+                },
+                "ge-0/0/1.0": {
+                    "tx_pkts": 19,
+                    "address_mode": "Unknown",
+                    "vlan": 1,
+                    "rx_pkts": 267,
+                    "network_name": "",
+                    "rx_bytes": 22866,
+                    "port_id": "ge-0/0/1",
+                    "nat_addresses": [],
+                    "port_usage": "lan",
+                    "up": false,
+                    "tx_bytes": 6308
+                },
+                "ge-0/0/2.0": {
+                    "tx_pkts": 0,
+                    "address_mode": "Unknown",
+                    "vlan": 1,
+                    "rx_pkts": 0,
+                    "network_name": "",
+                    "rx_bytes": 0,
+                    "port_id": "ge-0/0/2",
+                    "nat_addresses": [],
+                    "port_usage": "lan",
+                    "up": false,
+                    "tx_bytes": 0
+                },
+                "lo0.16385": {
+                    "rx_pkts": 132442,
+                    "network_name": "",
+                    "port_usage": "",
+                    "ips": [
+                        "10.0.0.1/0",
+                        "10.0.0.16/0",
+                        "128.0.0.4/0",
+                        "128.0.1.16/0"
+                    ],
+                    "tx_pkts": 132442,
+                    "address_mode": "Unknown",
+                    "vlan": 0,
+                    "rx_bytes": 7693649,
+                    "port_id": "lo0",
+                    "nat_addresses": [
+                        "0.0.0.0",
+                        "0.0.0.0",
+                        "0.0.0.0",
+                        "0.0.0.0",
+                        "0.0.0.0"
+                    ],
+                    "up": true,
+                    "servp_info": {},
+                    "tx_bytes": 7693649
+                },
+                "lo0.16384": {
+                    "rx_pkts": 220,
+                    "network_name": "",
+                    "port_usage": "",
+                    "ips": [
+                        "127.0.0.1/0"
+                    ],
+                    "tx_pkts": 220,
+                    "address_mode": "Unknown",
+                    "vlan": 0,
+                    "rx_bytes": 72640,
+                    "port_id": "lo0",
+                    "nat_addresses": [
+                        "0.0.0.0"
+                    ],
+                    "up": true,
+                    "servp_info": {},
+                    "tx_bytes": 72640
+                },
+                "ge-0/0/0.0": {
+                    "rx_pkts": 36724,
+                    "network_name": "",
+                    "port_usage": "wan",
+                    "ips": [
+                        "192.168.0.129/24"
+                    ],
+                    "wan_name": "",
+                    "tx_pkts": 18736,
+                    "address_mode": "Unknown",
+                    "vlan": 0,
+                    "rx_bytes": 11303016,
+                    "port_id": "ge-0/0/0",
+                    "nat_addresses": [
+                        "0.0.0.0"
+                    ],
+                    "up": true,
+                    "servp_info": {},
+                    "tx_bytes": 5003756
+                }
+            },
+            "cert_expiry": 1757442042,
+            "status": "disconnected",
+            "auto_upgrade_stat": {},
+            "id": "00000000-0000-0000-1000-4c16fcdb21f8",
+            "created_time": 1725905854,
+            "modified_time": 1725909463,
+            "map_id": null,
+            "hw_rev": "",
+            "tag_uuid": "039a327b-3927-48c3-9475-10d64a4cc753",
+            "tag_id": 3803138,
+            "evpntopo_id": null,
+            "deviceprofile_id": null
+        },
+        {
+            "l2tp_stat": {},
+            "uptime": 2938363,
+            "cpu_system": 33529129,
+            "config_reverted": false,
+            "env_stat": {
+                "cpu_temp": 52,
+                "ambient_temp": 44,
+                "humidity": 3,
+                "attitude": 0,
+                "pressure": 995,
+                "accel_x": 0.004,
+                "accel_y": 0.256,
+                "accel_z": -0.984,
+                "magne_x": 0,
+                "magne_y": 0,
+                "magne_z": 0,
+                "vcore_voltage": 978
+            },
+            "num_wlans": 2,
+            "power_constrained": false,
+            "mac": "a8537d897f4a",
+            "ble_stat": {
+                "tx_pkts": 59806,
+                "tx_bytes": 356872,
+                "rx_pkts": 2056005,
+                "rx_bytes": 78454486,
+                "tx_resets": 0,
+                "power": 8,
+                "beacon_enabled": true,
+                "beacon_rate": 4,
+                "uuid": "039a327b-3927-48c3-9475-10d64a4cc753",
+                "major": 727,
+                "minors": [
+                    52208,
+                    52209,
+                    52210,
+                    52211,
+                    52212,
+                    52213,
+                    52214,
+                    52215,
+                    -1
+                ],
+                "ibeacon_enabled": false,
+                "ibeacon_uuid": "039a327b-3927-48c3-9475-10d64a4cc753",
+                "ibeacon_major": 727,
+                "ibeacon_minor": 52208,
+                "ibeacon_freq_msec": 1000,
+                "eddystone_uid_enabled": false,
+                "eddystone_uid_freq_msec": 1000,
+                "eddystone_uid_namespace": "039a327b392748c39475",
+                "eddystone_uid_instance": "a8537d897f4a",
+                "eddystone_url_enabled": false,
+                "eddystone_url_freq_msec": 1000,
+                "eddystone_url_url": ""
+            },
+            "port_stat": {
+                "eth0": {
+                    "up": true,
+                    "speed": 1000,
+                    "full_duplex": true,
+                    "tx_bytes": 3410340001,
+                    "tx_pkts": 10532811,
+                    "rx_bytes": 19699314688,
+                    "rx_pkts": 36258401,
+                    "rx_errors": 0,
+                    "rx_peak_bps": 27627822,
+                    "tx_peak_bps": 1223959
+                },
+                "eth1": {
+                    "up": false,
+                    "speed": 0,
+                    "full_duplex": false,
+                    "tx_bytes": 0,
+                    "tx_pkts": 0,
+                    "rx_bytes": 0,
+                    "rx_pkts": 0,
+                    "rx_errors": 0,
+                    "rx_peak_bps": 0,
+                    "tx_peak_bps": 0
+                }
+            },
+            "cpu_user": 19760278,
+            "model": "AP43",
+            "power_opmode": "",
+            "mem_used_kb": 135756,
+            "inactive_wired_vlans": [],
+            "_offset_apstats": 10489805873,
+            "ip": "192.168.0.128",
+            "lldp_stat": {
+                "system_name": "home-switch",
+                "system_desc": "Juniper Networks, Inc. ex2300-c-12p Ethernet Switch, kernel JUNOS 23.4R2-S2.1, Build date: 2024-08-21 10:39:26 UTC Copyright (c) 1996-2024 Juniper Networks, Inc.",
+                "mgmt_addr": "28-b8-29-43-79-b1",
+                "mgmt_addrs": [
+                    "28-b8-29-43-79-b1"
+                ],
+                "port_desc": "ge-0/0/4",
+                "port_id": "ge-0/0/4",
+                "chassis_id": "28:b8:29:43:79:b1",
+                "lldp_med_supported": true,
+                "power_request_count": 3,
+                "power_allocated": 25500,
+                "power_requested": 25500,
+                "power_draw": 25500
+            },
+            "mount": "faceup",
+            "_partition": 109,
+            "rx_bps": 928229,
+            "cpu_util": 7,
+            "iot_stat": {},
+            "esl_stat": {},
+            "rx_pkts": 8291226,
+            "_offset_apbasic": 10489805873,
+            "ext_ip": "24.63.47.62",
+            "power_budget": 0,
+            "tx_pkts": 20099299,
+            "mem_total_kb": 505760,
+            "version": "0.12.27139",
+            "tx_bps": 19868793,
+            "last_seen": 1733951693,
+            "fwupdate": {
+                "timestamp": 1731013373.9813778,
+                "status": "success",
+                "status_id": 8,
+                "progress": 0,
+                "will_retry": false
+            },
+            "power_src": "LLDP",
+            "ip_stat": {
+                "dns": [
+                    "75.75.75.75",
+                    "75.75.76.76",
+                    "192.168.0.1"
+                ],
+                "ips": {
+                    "vlan1": "192.168.0.128/24,fe80:0:0:0:aa53:7dff:fe89:7f4a/64"
+                },
+                "gateway": "192.168.0.1",
+                "ip6": "fe80:0:0:0:aa53:7dff:fe89:7f4a",
+                "netmask6": "/64",
+                "ip": "192.168.0.128",
+                "netmask": "255.255.255.0",
+                "dhcp_server": "192.168.0.1"
+            },
+            "_ttl": 15549005,
+            "_id": "a8537d897f4a",
+            "status": "disconnected",
+            "auto_upgrade_stat": {
+                "scheduled_version": "apfw-0.12.27139-lollys-c4ed",
+                "scheduled_time": 1731013364.0813498,
+                "scheduled": false,
+                "lastcheck": 1733951020
+            },
+            "switch_redundancy": {
+                "num_redundant_aps": 1
+            },
+            "id": "00000000-0000-0000-1000-a8537d897f4a",
+            "name": "htanna-homeAP",
+            "site_id": "244aafbf-245c-485e-9707-22d7a8ccd9e0",
+            "org_id": "039a327b-3927-48c3-9475-10d64a4cc753",
+            "created_time": 1731012785,
+            "modified_time": 1731012785,
+            "map_id": null,
+            "serial": "A074522060ED9",
+            "hw_rev": "F08",
+            "type": "ap",
+            "tag_uuid": "039a327b-3927-48c3-9475-10d64a4cc753",
+            "tag_id": 2981055,
+            "evpntopo_id": null,
+            "deviceprofile_id": null
+        }
+    ]

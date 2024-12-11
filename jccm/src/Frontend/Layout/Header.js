@@ -266,8 +266,6 @@ export default () => {
             }
         });
 
-        console.log('>>>> inventoryWithFacts:', inventoryWithFacts);
-
         const orderedData = inventoryWithFacts.map((item) => {
             const orderedRow = {};
             columnOrder.forEach((key) => {
@@ -306,7 +304,12 @@ export default () => {
         writeFile(wb, fileName);
 
         // Notify the user of the success
-        notify('The local inventory data has been successfully exported to an Excel file.', { intent: 'success' });
+        notify(
+            <Toast>
+                <ToastTitle>The local inventory data has been successfully exported to an Excel file.</ToastTitle>
+            </Toast>,
+            { intent: 'success' }
+        );
     };
 
     return (

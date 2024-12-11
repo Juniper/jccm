@@ -1,0 +1,761 @@
+[
+    {
+        "config_status": "",
+        "hostname": "R13-U36-QFX5100-48S",
+        "config_version": 0,
+        "master_mac": "c042d01d6ca0",
+        "module_stat": [
+            {
+                "locating": false,
+                "optics_cpld_version": "",
+                "power_cpld_version": "3.a",
+                "memory_stat": {
+                    "usage": 58
+                },
+                "cpld_version": "",
+                "vc_state": "present",
+                "boot_partition": "junos",
+                "poe": {},
+                "backup_version": "",
+                "vc_mode": "HiGiG",
+                "type": "fpc",
+                "mac": "f4a739688c20",
+                "_idx": 0,
+                "temperatures": [
+                    {
+                        "name": "Sensor TopMiddle E",
+                        "status": "ok",
+                        "celsius": 36
+                    },
+                    {
+                        "name": "Sensor TopRight C",
+                        "status": "ok",
+                        "celsius": 34
+                    },
+                    {
+                        "name": "Sensor TopLeft C",
+                        "status": "ok",
+                        "celsius": 36
+                    },
+                    {
+                        "name": "Sensor TopRight E",
+                        "status": "ok",
+                        "celsius": 35
+                    },
+                    {
+                        "name": "Sensor CPURight C",
+                        "status": "ok",
+                        "celsius": 36
+                    },
+                    {
+                        "name": "Sensor CPULeft E",
+                        "status": "ok",
+                        "celsius": 36
+                    },
+                    {
+                        "name": "Sensor CPU Die Temp",
+                        "status": "ok",
+                        "celsius": 48
+                    }
+                ],
+                "psus": [
+                    {
+                        "name": "Power Supply 0",
+                        "status": "ok"
+                    },
+                    {
+                        "name": "Power Supply 1",
+                        "status": "absent"
+                    }
+                ],
+                "humidity": [],
+                "model": "QFX5100-48S-6Q",
+                "private_mac": "",
+                "pics": [
+                    {
+                        "port_groups": [
+                            {
+                                "count": 48,
+                                "type": "SFP/SFP+"
+                            },
+                            {
+                                "count": 6,
+                                "type": "QSFP/QSFP+"
+                            }
+                        ],
+                        "index": 0,
+                        "model_number": "QFX5100-48S-AFI"
+                    }
+                ],
+                "re_fpga_version": "",
+                "recovery_version": "",
+                "fpga_version": "",
+                "pending_version": "",
+                "uboot_version": "",
+                "tmc_fpga_version": "6.d8",
+                "cpu_stat": {
+                    "interrupt": 0,
+                    "idle": 93,
+                    "user": 6,
+                    "system": 2,
+                    "load_avg": [
+                        0.04,
+                        0.09,
+                        0.08
+                    ]
+                },
+                "bios_version": "V0018.7",
+                "version": "21.4R3.15",
+                "fpc_idx": 0,
+                "fans": [
+                    {
+                        "name": "Fan Tray 0",
+                        "status": "ok",
+                        "airflow": "in",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 1",
+                        "status": "ok",
+                        "airflow": "in",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 2",
+                        "status": "ok",
+                        "airflow": "in",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 3",
+                        "status": "ok",
+                        "airflow": "in",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 4",
+                        "status": "ok",
+                        "airflow": "in",
+                        "rpm": 0
+                    }
+                ],
+                "uptime": 9940817,
+                "vc_links": [
+                    {
+                        "port_id": "vcp-0/0/47",
+                        "neighbor_module_idx": 1,
+                        "neighbor_port_id": "vcp-1/0/47"
+                    }
+                ],
+                "serial": "TA3717020567",
+                "poe_version": "",
+                "vc_role": "backup"
+            },
+            {
+                "locating": false,
+                "optics_cpld_version": "",
+                "power_cpld_version": "3.a",
+                "memory_stat": {
+                    "usage": 76
+                },
+                "cpld_version": "",
+                "vc_state": "present",
+                "boot_partition": "junos",
+                "poe": {},
+                "backup_version": "",
+                "vc_mode": "HiGiG",
+                "type": "fpc",
+                "mac": "c042d01d6ca0",
+                "_idx": 1,
+                "temperatures": [
+                    {
+                        "name": "Sensor TopMiddle E",
+                        "status": "ok",
+                        "celsius": 41
+                    },
+                    {
+                        "name": "Sensor TopRight C",
+                        "status": "ok",
+                        "celsius": 28
+                    },
+                    {
+                        "name": "Sensor TopLeft C",
+                        "status": "ok",
+                        "celsius": 35
+                    },
+                    {
+                        "name": "Sensor TopRight E",
+                        "status": "ok",
+                        "celsius": 37
+                    },
+                    {
+                        "name": "Sensor CPURight C",
+                        "status": "ok",
+                        "celsius": 38
+                    },
+                    {
+                        "name": "Sensor CPULeft E",
+                        "status": "ok",
+                        "celsius": 41
+                    },
+                    {
+                        "name": "Sensor CPU Die Temp",
+                        "status": "ok",
+                        "celsius": 55
+                    }
+                ],
+                "psus": [
+                    {
+                        "name": "Power Supply 0",
+                        "status": "ok"
+                    },
+                    {
+                        "name": "Power Supply 1",
+                        "status": "absent"
+                    }
+                ],
+                "humidity": [],
+                "model": "QFX5100-48S-6Q",
+                "private_mac": "",
+                "pics": [
+                    {
+                        "port_groups": [
+                            {
+                                "count": 48,
+                                "type": "SFP/SFP+"
+                            },
+                            {
+                                "count": 6,
+                                "type": "QSFP/QSFP+"
+                            }
+                        ],
+                        "index": 0,
+                        "model_number": "QFX5100-48S-AFO"
+                    }
+                ],
+                "re_fpga_version": "",
+                "recovery_version": "",
+                "fpga_version": "",
+                "pending_version": "",
+                "uboot_version": "",
+                "tmc_fpga_version": "6.d8",
+                "cpu_stat": {
+                    "interrupt": 0,
+                    "idle": 91,
+                    "user": 7,
+                    "system": 2,
+                    "load_avg": [
+                        0.1,
+                        0.16,
+                        0.16
+                    ]
+                },
+                "bios_version": "V0018.7",
+                "version": "21.4R3.15",
+                "fpc_idx": 1,
+                "fans": [
+                    {
+                        "name": "Fan Tray 0",
+                        "status": "ok",
+                        "airflow": "out",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 1",
+                        "status": "ok",
+                        "airflow": "out",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 2",
+                        "status": "ok",
+                        "airflow": "out",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 3",
+                        "status": "ok",
+                        "airflow": "out",
+                        "rpm": 0
+                    },
+                    {
+                        "name": "Fan Tray 4",
+                        "status": "ok",
+                        "airflow": "out",
+                        "rpm": 0
+                    }
+                ],
+                "uptime": 9940462,
+                "vc_links": [
+                    {
+                        "port_id": "vcp-1/0/47",
+                        "neighbor_module_idx": 0,
+                        "neighbor_port_id": "vcp-0/0/47"
+                    }
+                ],
+                "serial": "TA3717440378",
+                "poe_version": "",
+                "vc_role": "master"
+            }
+        ],
+        "chassis_serial": "TA3717440378",
+        "mac_table_stats": {
+            "mac_table_count": 0,
+            "max_mac_entries_supported": 1000000
+        },
+        "_ttl": 183.8147268295288,
+        "cpu_stat": {
+            "system": 2,
+            "idle": 91,
+            "interrupt": 0,
+            "user": 7,
+            "load_avg": [
+                0.1,
+                0.16,
+                0.16
+            ]
+        },
+        "ext_ip": "66.129.241.10",
+        "fpc0_mac": "f4a739688c20",
+        "fw_versions_outofsync": false,
+        "name": "R13-U36-QFX5100-48S",
+        "site_id": "da8e3709-a661-40e2-821f-59b50386680a",
+        "last_seen": 1733954683,
+        "has_pcap": false,
+        "if_stat": {
+            "ge-1/0/34.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/34",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "em0.0": {
+                "tx_pkts": 23496145,
+                "rx_pkts": 64203311,
+                "rx_bytes": 4993796387,
+                "port_id": "em0",
+                "up": true,
+                "ips": [
+                    "10.6.3.241/25",
+                    "10.6.3.242/25"
+                ],
+                "servp_info": {},
+                "tx_bytes": 23001028109
+            },
+            "ge-1/0/5.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/5",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/11.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/11",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/36.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/36",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/2.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/2",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/7.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/7",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "irb.1": {
+                "tx_pkts": 2,
+                "vlan": 1,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "irb",
+                "up": true,
+                "ips": [
+                    "192.168.220.1/24"
+                ],
+                "servp_info": {},
+                "tx_bytes": 92
+            },
+            "irb.2": {
+                "tx_pkts": 2,
+                "vlan": 2,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "irb",
+                "up": true,
+                "ips": [
+                    "192.168.230.1/24"
+                ],
+                "servp_info": {},
+                "tx_bytes": 92
+            },
+            "ge-1/0/4.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/4",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/0.0": {
+                "tx_pkts": 68447,
+                "rx_pkts": 68417,
+                "rx_bytes": 23124946,
+                "port_id": "ge-1/0/0",
+                "up": true,
+                "tx_bytes": 28403021
+            },
+            "irb.0": {
+                "tx_pkts": 2,
+                "vlan": 1,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "irb",
+                "up": true,
+                "ips": [
+                    "192.168.210.1/24"
+                ],
+                "servp_info": {},
+                "tx_bytes": 92
+            },
+            "ge-1/0/9.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/9",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/38.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/38",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "em2.32768": {
+                "tx_pkts": 2806624,
+                "rx_pkts": 3383492,
+                "rx_bytes": 400221264,
+                "port_id": "em2",
+                "up": true,
+                "ips": [
+                    "192.168.1.2/24"
+                ],
+                "servp_info": {},
+                "tx_bytes": 204917776
+            },
+            "lo0.0": {
+                "tx_pkts": 81059,
+                "rx_pkts": 81059,
+                "rx_bytes": 12952860,
+                "port_id": "lo0",
+                "up": true,
+                "ips": [
+                    "192.168.200.1/0"
+                ],
+                "servp_info": {},
+                "tx_bytes": 12952860
+            },
+            "ge-0/0/5.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/5",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/40.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/40",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/6.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/6",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/3.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/3",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/1.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/1",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/4.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/4",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/7.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/7",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/10.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/10",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/8.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/8",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/11.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/11",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/8.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/8",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/6.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/6",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/3.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/3",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-1/0/10.16386": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-1/0/10",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/1.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/1",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "ge-0/0/2.0": {
+                "tx_pkts": 0,
+                "rx_pkts": 0,
+                "rx_bytes": 0,
+                "port_id": "ge-0/0/2",
+                "up": false,
+                "tx_bytes": 0
+            },
+            "lo0.16385": {
+                "tx_pkts": 454164778,
+                "rx_pkts": 454164778,
+                "rx_bytes": 32121935990,
+                "port_id": "lo0",
+                "up": true,
+                "tx_bytes": 32121935990
+            },
+            "ge-0/0/0.0": {
+                "tx_pkts": 21,
+                "rx_pkts": 3,
+                "rx_bytes": 1067,
+                "port_id": "ge-0/0/0",
+                "up": false,
+                "tx_bytes": 7293
+            }
+        },
+        "uptime": 9939372,
+        "arp_table_stats": {
+            "arp_table_count": 7,
+            "max_entries_supported": 512000
+        },
+        "memory_stat": {
+            "usage": 76
+        },
+        "clients_stats": {
+            "total": {
+                "num_wired_clients": 2,
+                "num_aps": [
+                    0,
+                    0
+                ]
+            }
+        },
+        "type": "switch",
+        "config_timestamp": 0,
+        "chassis_mac": "c042d01d6ca0",
+        "serial": "TA3717020567",
+        "org_id": "fc0ed18a-0525-49cd-8a53-705ea9bf5638",
+        "model": "QFX5100-48S",
+        "commits": [
+            {
+                "seq_no": 0,
+                "log": "obssh cfg update",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1733426146
+            },
+            {
+                "seq_no": 1,
+                "client": "cli",
+                "user": "poc",
+                "timestamp": 1733426133
+            },
+            {
+                "seq_no": 2,
+                "log": "remove-obssh-cfg",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1733425315
+            },
+            {
+                "seq_no": 3,
+                "log": "obssh cfg update",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1733249265
+            },
+            {
+                "seq_no": 4,
+                "client": "cli",
+                "user": "poc",
+                "timestamp": 1733249252
+            },
+            {
+                "seq_no": 5,
+                "log": "unset-mist-mgmt",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1733248195
+            },
+            {
+                "seq_no": 6,
+                "log": "unset-mist-mgmt",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1733248181
+            },
+            {
+                "seq_no": 7,
+                "log": "oc-config",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1732844811
+            },
+            {
+                "seq_no": 8,
+                "log": "oc-script",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1732844795
+            },
+            {
+                "seq_no": 9,
+                "log": "oc-script",
+                "client": "netconf",
+                "user": "ai-prod",
+                "timestamp": 1732844606
+            }
+        ],
+        "master_serial": "TA3717440378",
+        "vc_setup_info": {
+            "config_type": "preprovisioned",
+            "err_missing_dev_id_fpc": false
+        },
+        "mac": "f4a739688c20",
+        "dhcpd_stat": {},
+        "version": "21.4R3.15",
+        "route_summary_stats": {
+            "max_unicast_routes_supported": 1000000,
+            "fib_routes": 5,
+            "rib_routes": 25,
+            "total_routes": 14
+        },
+        "ip_stat": {
+            "netmask": "255.255.255.255",
+            "ip": "10.6.3.241",
+            "ips": {
+                "vlan2": "192.168.230.1",
+                "vlan1": "10.6.3.241,10.6.3.242,192.168.1.2,192.168.210.1,192.168.220.1,192.168.200.1"
+            },
+            "gateway": "10.6.3.129"
+        },
+        "service_stat": {},
+        "_id": "f4a739688c20",
+        "ip": "10.6.3.241",
+        "status": "connected",
+        "vc_mac": "f4a739688c20",
+        "auto_upgrade_stat": {
+            "lastcheck": 1733953353
+        },
+        "id": "00000000-0000-0000-1000-f4a739688c20",
+        "created_time": 1730737076,
+        "modified_time": 1730737178,
+        "map_id": null,
+        "hw_rev": "",
+        "tag_uuid": "fc0ed18a-0525-49cd-8a53-705ea9bf5638",
+        "tag_id": 3886939,
+        "evpntopo_id": null,
+        "deviceprofile_id": null
+    }
+]

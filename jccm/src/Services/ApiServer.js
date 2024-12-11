@@ -181,6 +181,33 @@ const serverGetCloudInventory = async (targetOrgs = null, ignoreCaseInName = fal
     return { inventory, isFilterApplied };
 };
 
+const serverGetDeviceStats = async (siteId) => {
+    console.log('main: serverGetDeviceStats');
+
+    const selfData = await acUserSelf();
+
+    if (selfData.status === 'error') {
+        console.error('main: serverGetDeviceStats failed', selfData.error);
+        return [];
+    }
+
+    const cloudId = await msGetActiveCloud();
+    const deviceTypes = cloudId.toLowerCase().includes('mist')
+        ? ['switch', 'gateway']
+        : ['switch', 'gateway', 'router'];
+
+    const inventory = [];
+
+    for (const deviceType of deviceTypes) {
+        const response = await acGetDeviceStatsType(siteId, deviceType);
+        if (response.status === 'success') {
+            inventory.push(...response.data);
+        }
+    }
+
+    return inventory;
+};
+
 const startSSHConnectionStandalone = (event, device, { id, cols, rows }) => {
     const { address, port, username, password } = device;
 
@@ -621,6 +648,15 @@ export const setupApiHandlers = () => {
         return { cloudInventory: true, inventory, isFilterApplied };
     });
 
+    ipcMain.handle('saGetDeviceStats', async (event, args = {}) => {
+        console.log('main: saGetDeviceStats');
+        const { siteId } = args;
+
+        const inventory = await serverGetDeviceStats(siteId);
+
+        return inventory;
+    });
+
     ipcMain.handle('saProxyCall', async (event, args) => {
         console.log('main: saProxyCall');
         const { method, api, body } = args;
@@ -704,29 +740,32 @@ export const setupApiHandlers = () => {
 
         const vault = await msLoadVault();
 
-        
         const getPasswordFromVault = (tag) => {
             const vaultEntry = vault.find((item) => item.tag === tag);
             return vaultEntry ? vaultEntry.password : tag; // Return the password or null if not found
-        }
+        };
 
         const isVaultFormat = (password) => {
             if (typeof password !== 'string') {
                 return false; // Invalid input
             }
             // Check for the `${vault:tag_name}` format
-            return password.startsWith('${vault:') && password.endsWith('}') && password.split('${vault:')[1]?.slice(0, -1)?.trim() !== '';
+            return (
+                password.startsWith('${vault:') &&
+                password.endsWith('}') &&
+                password.split('${vault:')[1]?.slice(0, -1)?.trim() !== ''
+            );
         };
-        
+
         const getPassword = (password) => {
             if (isVaultFormat(password)) {
-                const tagName = password.slice(8, -1).trim(); 
-                const v = getPasswordFromVault(tagName); 
-                return v; 
+                const tagName = password.slice(8, -1).trim();
+                const v = getPasswordFromVault(tagName);
+                return v;
             }
-            return password; 
+            return password;
         };
-        
+
         device.password = getPassword(device.password);
 
         if (bastionHost?.active) {

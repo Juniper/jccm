@@ -1,0 +1,236 @@
+[
+    {
+        "mac": "4c961420a100",
+        "name": "vsrx20",
+        "version": "24.2R1.17",
+        "arp_table_stats": {
+            "arp_table_count": 34,
+            "max_entries_supported": 64000
+        },
+        "hostname": "vsrx20",
+        "dhcpd_stat": {},
+        "if_stat": {
+            "fxp0.0": {
+                "rx_pkts": 2635646,
+                "network_name": "",
+                "port_usage": "",
+                "ips": [
+                    "192.168.100.20/24"
+                ],
+                "tx_pkts": 2081549,
+                "address_mode": "Unknown",
+                "vlan": 0,
+                "rx_bytes": 253937870,
+                "port_id": "fxp0",
+                "nat_addresses": [
+                    "0.0.0.0"
+                ],
+                "up": true,
+                "servp_info": {},
+                "tx_bytes": 791791819
+            },
+            "lo0.32768": {
+                "tx_pkts": 0,
+                "address_mode": "Unknown",
+                "vlan": 0,
+                "rx_pkts": 0,
+                "network_name": "",
+                "rx_bytes": 0,
+                "port_id": "lo0",
+                "nat_addresses": [],
+                "port_usage": "",
+                "up": true,
+                "tx_bytes": 0
+            },
+            "lo0.16385": {
+                "rx_pkts": 378778,
+                "network_name": "",
+                "port_usage": "",
+                "ips": [
+                    "10.0.0.1/0",
+                    "10.0.0.16/0",
+                    "128.0.0.4/0",
+                    "128.0.1.16/0"
+                ],
+                "tx_pkts": 378778,
+                "address_mode": "Unknown",
+                "vlan": 0,
+                "rx_bytes": 19506880,
+                "port_id": "lo0",
+                "nat_addresses": [
+                    "0.0.0.0",
+                    "0.0.0.0",
+                    "0.0.0.0",
+                    "0.0.0.0",
+                    "0.0.0.0"
+                ],
+                "up": true,
+                "servp_info": {},
+                "tx_bytes": 19506880
+            },
+            "lo0.16384": {
+                "rx_pkts": 44,
+                "network_name": "",
+                "port_usage": "",
+                "ips": [
+                    "127.0.0.1/0"
+                ],
+                "tx_pkts": 44,
+                "address_mode": "Unknown",
+                "vlan": 0,
+                "rx_bytes": 14528,
+                "port_id": "lo0",
+                "nat_addresses": [
+                    "0.0.0.0"
+                ],
+                "up": true,
+                "servp_info": {},
+                "tx_bytes": 14528
+            }
+        },
+        "has_pcap": false,
+        "ext_ip": "66.129.241.14",
+        "org_id": "fc0ed18a-0525-49cd-8a53-705ea9bf5638",
+        "route_summary_stats": {
+            "max_unicast_routes_supported": 1240000,
+            "fib_routes": 0,
+            "rib_routes": 0,
+            "total_routes": 0
+        },
+        "cpu_stat": {
+            "system": 0,
+            "idle": 99,
+            "interrupt": 0,
+            "user": 0,
+            "load_avg": [
+                0.43,
+                0.46,
+                0.45
+            ]
+        },
+        "mac_table_stats": {
+            "mac_table_count": 0,
+            "max_mac_entries_supported": 160000
+        },
+        "service_status": {
+            "idp_status": "disabled",
+            "idp_policy": "",
+            "idp_install_timestamp": "",
+            "appid_install_result": "",
+            "ewf_status": "disabled",
+            "idp_update_timestamp": "",
+            "av_status": "disabled",
+            "ssl_root_ca_store": "disabled",
+            "av_engine_type": "",
+            "appid_status": "disabled",
+            "av_engine_status": "disabled",
+            "ssl_proxy_status": "disabled",
+            "idp_install_result": "",
+            "appid_version": 0,
+            "appid_install_timestamp": ""
+        },
+        "_ttl": 184.10917472839355,
+        "chassis_mac": "4c961420a180",
+        "config_status": "",
+        "module_stat": [
+            {
+                "locating": false,
+                "optics_cpld_version": "",
+                "power_cpld_version": "",
+                "cpld_version": "",
+                "last_seen": 1733954552,
+                "vc_state": "",
+                "backup_version": "",
+                "poe": {},
+                "vc_mode": "",
+                "mac": "4c961420a100",
+                "_idx": 0,
+                "temperatures": [
+                    {
+                        "celsius": 0,
+                        "name": "Routing Engine",
+                        "status": "failed"
+                    },
+                    {
+                        "celsius": 0,
+                        "name": "Routing Engine CPU",
+                        "status": "failed"
+                    }
+                ],
+                "psus": [
+                    {
+                        "name": "Power Supply 0",
+                        "status": "ok"
+                    }
+                ],
+                "model": "VSRX3",
+                "re_fpga_version": "",
+                "recovery_version": "",
+                "fpga_version": "",
+                "pending_version": "",
+                "uboot_version": "",
+                "tmc_fpga_version": "",
+                "version": "24.2R1.17",
+                "bios_version": "",
+                "uptime": 0,
+                "fans": [],
+                "serial": "67db9975c11e",
+                "poe_version": "",
+                "vc_role": "",
+                "status": "connected",
+                "_ttl": 52.109174728393555,
+                "errors": [
+                    {
+                        "description": "FPC 0 Hard errors",
+                        "shortDescription": "FPC 0 Hard errors",
+                        "type": "Chassis",
+                        "class": "Major",
+                        "since": 1728011078
+                    },
+                    {
+                        "type": "NON_SUPPORTED_JUNOS_VERSION_SRX",
+                        "since": 1733954487
+                    }
+                ]
+            }
+        ],
+        "model": "VSRX3",
+        "config_timestamp": 0,
+        "_id": "4c961420a100",
+        "site_id": "b2ca651d-aaab-4018-aade-a1207b27f62b",
+        "memory_stat": {
+            "usage": 0
+        },
+        "ip": "192.168.100.20",
+        "chassis_serial": "67db9975c11e",
+        "spu_stat": [],
+        "service_stat": {},
+        "last_seen": 1733954684,
+        "uptime": 5945875,
+        "ip_stat": {
+            "netmask": "255.255.255.255",
+            "ip": "192.168.100.20",
+            "ips": {
+                "vlan1": "192.168.100.20"
+            },
+            "gateway": "192.168.100.254"
+        },
+        "type": "gateway",
+        "config_version": 0,
+        "serial": "67DB9975C11E",
+        "cert_expiry": 1765482433,
+        "status": "connected",
+        "auto_upgrade_stat": {
+            "lastcheck": 1733953788
+        },
+        "id": "00000000-0000-0000-1000-4c961420a100",
+        "created_time": 1733946420,
+        "modified_time": 1733946420,
+        "map_id": null,
+        "hw_rev": "",
+        "tag_uuid": "fc0ed18a-0525-49cd-8a53-705ea9bf5638",
+        "tag_id": 3926104,
+        "evpntopo_id": null,
+        "deviceprofile_id": null
+    }
+]
