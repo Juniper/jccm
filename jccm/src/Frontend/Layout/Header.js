@@ -87,6 +87,7 @@ import InventoryLocalImportForm from './InventoryLocalImportForm';
 import InventorySearchCard from './InventorySearch/InventorySearch';
 import { GlobalSettings } from './GlobalSettings/GlobalSettings';
 import { Vault } from './Vault';
+import EditCLIShortcutsCard from './EditCLIShortcutsCard';
 
 const ColorIcon = bundleIcon(ColorFilled, ColorRegular);
 const LoginUserIcon = bundleIcon(PersonAvailableRegular, PersonCircleRegular);
@@ -95,6 +96,7 @@ const CubeTree = bundleIcon(CubeTreeFilled, CubeTreeRegular);
 const ArrowUpload = bundleIcon(ArrowUploadFilled, ArrowUploadRegular);
 const ArrowDownload = bundleIcon(ArrowDownloadFilled, ArrowDownloadRegular);
 const DiscoverInventoryIcon = bundleIcon(BoxMultipleSearchRegular, BoxMultipleRegular);
+const EditCommandShortcutsIcon = bundleIcon(ClipboardCodeRegular, ClipboardRegular);
 const ImportInventoryIcon = bundleIcon(AppsAddInFilled, AppsAddInRegular);
 // const ImportInventoryIcon = bundleIcon(TableMoveAboveFilled, TableMoveAboveRegular);
 const ExportInventoryIcon = bundleIcon(TableMoveBelowFilled, TableMoveBelowRegular);
@@ -137,6 +139,7 @@ export default () => {
     const [isInventoryEditCardVisible, setIsInventoryEditCardVisible] = useState(false);
     const [isInventoryImportCardVisible, setIsInventoryImportCardVisible] = useState(false);
     const [isDeviceSearchCardVisible, setIsDeviceSearchCardVisible] = useState(false);
+    const [isEditCLIShortcutsCardVisible, setIsEditCLIShortcutsCardVisible] = useState(false);
     const [isSettingsCardVisible, setIsSettingsCardVisible] = useState(false);
 
     const [importedInventory, setImportedInventory] = useState([]);
@@ -400,8 +403,16 @@ export default () => {
                                 }}
                                 icon={<DiscoverInventoryIcon style={{ fontSize: '20px' }} />}
                             >
-                                Search
+                                <Text size={200}>Network Search</Text>
                             </MenuItem>
+                            {/* <MenuItem
+                                onClick={() => {
+                                    setIsEditCLIShortcutsCardVisible(true);
+                                }}
+                                icon={<EditCommandShortcutsIcon style={{ fontSize: '20px' }} />}
+                            >
+                                 <Text size={200}>Edit CLI Command Shortcuts</Text>
+                            </MenuItem> */}
                         </MenuList>
                     </MenuPopover>
                 </Menu>
@@ -520,12 +531,18 @@ export default () => {
                 )}
                 {isDeviceSearchCardVisible && (
                     <InventorySearchCard
-                        title={<Text size={500}>Edit Inventory</Text>}
                         isOpen={isDeviceSearchCardVisible}
                         onClose={async () => {
                             setIsDeviceSearchCardVisible(false);
                         }}
-                        importedInventory={inventory}
+                    />
+                )}
+                {isEditCLIShortcutsCardVisible && (
+                    <EditCLIShortcutsCard
+                        isOpen={isEditCLIShortcutsCardVisible}
+                        onClose={async () => {
+                            setIsEditCLIShortcutsCardVisible(false);
+                        }}
                     />
                 )}
 

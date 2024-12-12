@@ -1,6 +1,7 @@
 const webpack = require('webpack'); // Require webpack at the top
 const rules = require('./webpack.rules');
 const path = require('path');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 rules.push({
     test: /\.svg$/,
@@ -32,6 +33,15 @@ module.exports = {
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
         }),
+        new MonacoWebpackPlugin(),
+        // new webpack.ContextReplacementPlugin( // Resolve issues with dynamic require() calls that Webpack cannot statically analyze
+        //     /monaco-editor(\\|\/)esm(\\|\/)vs(\\|\/)editor(\\|\/)common(\\|\/)services/
+        // ),
+    ],
+    ignoreWarnings: [
+        {
+            message: /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/
+        }
     ],
     devServer: {
         contentBase: path.join(__dirname, 'dist'), // Output directory

@@ -612,16 +612,39 @@ export const getDeviceFacts = async (
 
                 if (rpcReply !== null) {
                     const parsedData = await parser.parseStringPromise(rpcReply);
-                    const info = parsedData['route-information'];
+                    let info = parsedData['route-information'];
 
-                    const name =
-                        info['route-table']?.['rt']?.['rt-entry']?.['nh']?.['nh-local-interface'] ||
-                        info['route-table']?.['rt']?.['rt-entry']?.['nh']?.['via'] ||
-                        'Unknown';
+                    // If info is an array, pick the first element
+                    if (Array.isArray(info)) {
+                        info = info[0];
+                    }
 
-                    facts.interface = {
-                        name,
-                    };
+                    // Safely handle route-table
+                    let routeTable = info['route-table'];
+                    if (Array.isArray(routeTable)) {
+                        routeTable = routeTable[0];
+                    }
+
+                    // Safely handle rt
+                    let rt = routeTable['rt'];
+                    if (Array.isArray(rt)) {
+                        rt = rt[0];
+                    }
+
+                    // Safely handle rt-entry
+                    let rtEntry = rt['rt-entry'];
+                    if (Array.isArray(rtEntry)) {
+                        rtEntry = rtEntry[0];
+                    }
+
+                    // Safely handle nh
+                    let nh = rtEntry['nh'];
+                    if (Array.isArray(nh)) {
+                        nh = nh[0];
+                    }
+
+                    const name = nh['nh-local-interface'] || nh['via'] || 'Unknown';
+                    facts.interface = { name };
                 }
             }
 

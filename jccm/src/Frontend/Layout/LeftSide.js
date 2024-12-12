@@ -140,7 +140,7 @@ const LeftSide = () => {
             const siteName = state.siteName;
             const devices = state.devices;
             for (const dev of devices) {
-                const { ip, name, model, serial, version } = dev;
+                const { ip, name, model, serial, version, management_ip } = dev;
 
                 // Create a unique key for deduplication
                 const uniqueKey = `${orgName}-${siteName}-${ip}-${serial}`;
@@ -154,7 +154,7 @@ const LeftSide = () => {
                         username: 'Your username',
                         password: 'Your password',
                         port: 22,
-                        ip: ip?.length > 0 ? ip : 'Not Available yet',
+                        ip: ip?.length > 0 ? ip : management_ip?.length > 0 ? management_ip : 'Not Available yet',
                         name,
                         model,
                         serial,
@@ -174,6 +174,7 @@ const LeftSide = () => {
             model: 'hardware model',
             version: 'os version',
             serial: 'serial number',
+            name: 'host name',
         };
 
         // Create columnOrder for consistency and ordering in the Excel file
