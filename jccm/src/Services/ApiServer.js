@@ -56,7 +56,6 @@ const handleOnTabKeyDown = (event, input) => {
     if (input.key === 'Tab') {
         event.preventDefault();
         sendTabKeyDownEvent();
-        console.log('Tab key intercepted at BrowserWindow level.');
     }
 };
 
