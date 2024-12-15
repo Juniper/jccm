@@ -23,7 +23,7 @@ function App() {
     
     
     return (
-        <div>
+        <div style={{ overflow: 'hidden' }}>
             <FluentProvider zIndex={zIndex} theme={getActiveTheme(currentActiveThemeName).theme}>
                 <MessageBarProvider>
                     <NotificationProvider>

@@ -87,7 +87,7 @@ import InventoryLocalImportForm from './InventoryLocalImportForm';
 import InventorySearchCard from './InventorySearch/InventorySearch';
 import { GlobalSettings } from './GlobalSettings/GlobalSettings';
 import { Vault } from './Vault';
-import EditCLIShortcutsCard from './CLIShortcutsCard';
+import { EditCLIShortcutsCard } from './CLIShortcutsCard';
 
 const ColorIcon = bundleIcon(ColorFilled, ColorRegular);
 const LoginUserIcon = bundleIcon(PersonAvailableRegular, PersonCircleRegular);
@@ -411,7 +411,7 @@ export default () => {
                                 }}
                                 icon={<EditCommandShortcutsIcon style={{ fontSize: '16px' }} />}
                             >
-                                 <Text size={200}>Edit CLI Command Shortcuts</Text>
+                                <Text size={200}>Edit CLI Shortcuts</Text>
                             </MenuItem>
                         </MenuList>
                     </MenuPopover>

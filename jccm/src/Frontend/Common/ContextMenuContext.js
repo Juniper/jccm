@@ -92,11 +92,8 @@ export const ContextMenuProvider = ({ children }) => {
             contextMenuState.isVisible &&
             ReactDOM.createPortal(
                 <FluentProvider theme={getActiveTheme(currentActiveThemeName).theme}>
-                    <div>
-                        <Menu
-                            open={isVisible}
-                            onOpenChange={handleOnOpenChange}
-                        >
+                    <div style={{ overflow: 'hidden' }}>                        
+                        <Menu open={isVisible} onOpenChange={handleOnOpenChange} positioning={{ autoSize: true }}>
                             <MenuTrigger>
                                 <Button
                                     style={{

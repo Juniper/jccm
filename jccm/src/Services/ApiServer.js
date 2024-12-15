@@ -2,7 +2,7 @@ import { app, ipcMain, BrowserWindow, session, screen } from 'electron';
 import { getCloudInfoMinVersion } from '../config';
 import { Client } from 'ssh2';
 
-import { mainWindow, sendLogMessage, sendTabKeyDownEvent } from '../main.js';
+import { mainWindow, sendEscKeyDownEvent, sendLogMessage, sendTabKeyDownEvent } from '../main.js';
 
 import {
     msGetActiveCloud,
@@ -51,11 +51,19 @@ import { commitJunosSetConfig, executeJunosCommand, getDeviceFacts, getDeviceNet
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const sshSessions = {};
+let keyBindings = []; // Store the relevant keys globally or in a scoped variable
 
-const handleOnTabKeyDown = (event, input) => {
-    if (input.key === 'Tab') {
+const onKeyDown = (event, input) => {
+    if (keyBindings.includes(input.key)) {
         event.preventDefault();
-        sendTabKeyDownEvent();
+
+        if (input.key === 'Tab') {
+            // sendTabKeyDownEvent();
+            mainWindow.webContents.send('onTabKeyDown');
+        } else if (input.key === 'Escape') {
+            // sendEscKeyDownEvent();
+            mainWindow.webContents.send('onEscKeyDown');
+        }
     }
 };
 
@@ -1223,14 +1231,17 @@ export const setupApiHandlers = () => {
         return { result: true, vault };
     });
 
-    ipcMain.on('saAddTabKeyDownEvent', () => {
-        console.log('main: saAddTabKeyDownEvent');
-        mainWindow.webContents.off('before-input-event', handleOnTabKeyDown); 
-        mainWindow.webContents.on('before-input-event', handleOnTabKeyDown);
+    // IPC handlers to set keyBindings dynamically
+    ipcMain.on('saAddKeyDownEvent', (event, keys) => {
+        console.log('main: saAddKeyDownEvent', keys);
+        keyBindings = keys; // Update key bindings dynamically
+        mainWindow.webContents.off('before-input-event', onKeyDown);
+        mainWindow.webContents.on('before-input-event', onKeyDown);
     });
 
-    ipcMain.on('saDeleteTabKeyDownEvent', () => {
-        console.log('main: saDeleteTabKeyDownEvent');
-        mainWindow.webContents.off('before-input-event', handleOnTabKeyDown);
+    ipcMain.on('saDeleteKeyDownEvent', () => {
+        console.log('main: saDeleteKeyDownEvent');
+        keyBindings = []; // Clear all key bindings
+        mainWindow.webContents.off('before-input-event', onKeyDown);
     });
 };

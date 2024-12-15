@@ -34,6 +34,10 @@ export const sendTabKeyDownEvent = () => {
     mainWindow.webContents.send('onTabKeyDown');
 };
 
+export const sendEscKeyDownEvent = () => {
+    mainWindow.webContents.send('onEscKeyDown');
+};
+
 
 const createWindow = () => {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;

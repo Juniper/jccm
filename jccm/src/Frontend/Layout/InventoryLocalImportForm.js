@@ -102,6 +102,25 @@ const InventoryLocalImportForm = ({ isOpen, onClose, title, importedInventory })
     const [isValid, setIsValid] = useState(validateData(data));
     const gridRef = useRef(null);
 
+    useEffect(() => {
+        const enableTabKeyEventCapture = async () => {
+            await electronAPI.saAddKeyDownEvent(['Escape']);
+        };
+        const disableTabKeyEventCapture = async () => {
+            await electronAPI.saDeleteKeyDownEvent();
+        };
+
+        enableTabKeyEventCapture();
+
+        return () => {
+            disableTabKeyEventCapture();
+        };
+    }, []);
+
+    electronAPI.onEscKeyDown(() => {
+        onClose();
+    });
+
     const PasswordCellRenderer = ({ value, node, api }) => {
         const [isEditing, setIsEditing] = useState(false);
 

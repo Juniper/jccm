@@ -33,6 +33,17 @@ export const MonacoEditor = ({
                 automaticLayout: false,
             });
 
+            // Re-register the action to disable it
+            monacoEditorInstance.current.addAction({
+                id: 'logSelectedText', // Same action ID
+                label: '', // Empty label so it doesn't appear
+                contextMenuGroupId: '', // Exclude from any group
+                contextMenuOrder: 0, // Irrelevant
+                run: function () {
+                    // Empty behavior, does nothing
+                },
+            });
+            
             monacoEditorInstance.current.focus();
 
             if (onEditorReady) {
@@ -99,10 +110,10 @@ export const MonacoEditor = ({
 
     useEffect(() => {
         const enableTabKeyEventCapture = async () => {
-            await electronAPI.saAddTabKeyDownEvent();
+            await electronAPI.saAddKeyDownEvent(['Tab']);
         };
         const disableTabKeyEventCapture = async () => {
-            await electronAPI.saDeleteTabKeyDownEvent();
+            await electronAPI.saDeleteKeyDownEvent();
         };
 
         enableTabKeyEventCapture();

@@ -81,6 +81,25 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
     const gridRef = useRef(null);
     const fileInputRef = useRef(null);
 
+    useEffect(() => {
+        const enableTabKeyEventCapture = async () => {
+            await electronAPI.saAddKeyDownEvent(['Escape']);
+        };
+        const disableTabKeyEventCapture = async () => {
+            await electronAPI.saDeleteKeyDownEvent();
+        };
+
+        enableTabKeyEventCapture();
+
+        return () => {
+            disableTabKeyEventCapture();
+        };
+    }, []);
+
+    electronAPI.onEscKeyDown(() => {
+        onClose();
+    });
+
     const PasswordCellRenderer = ({ value, node, api }) => {
         const [isEditing, setIsEditing] = useState(false);
 
@@ -293,11 +312,7 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
     ];
 
     return (
-        <Dialog
-            open={isOpen}
-            onDismiss={onClose}
-            modalProps={{ isBlocking: true }}
-        >
+        <Dialog open={isOpen} onDismiss={onClose} modalProps={{ isBlocking: true }}>
             <DialogSurface
                 style={{
                     display: 'flex',
@@ -305,7 +320,7 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
                     justifyContent: 'flex-start',
                     minWidth: `calc(100% - 200px - ${getConsoleWindowWidth()}px)`,
                     minHeight: `${Constants.sharedInventoryWindowHeight}px`,
-                    
+
                     position: 'fixed',
                     top: '0%',
                     left: `calc(0% - ${getConsoleWindowWidth()}px)`,
@@ -313,13 +328,7 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
             >
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     {title}
-                    <Button
-                        onClick={onClose}
-                        shape='circular'
-                        appearance='subtle'
-                        icon={<Dismiss />}
-                        size='small'
-                    />
+                    <Button onClick={onClose} shape='circular' appearance='subtle' icon={<Dismiss />} size='small' />
                 </div>
 
                 <div
@@ -331,13 +340,7 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
                         marginTop: '20px',
                     }}
                 >
-                    <Button
-                        onClick={onAddRow}
-                        shape='circular'
-                        appearance='subtle'
-                        icon={<AddCircle />}
-                        size='small'
-                    >
+                    <Button onClick={onAddRow} shape='circular' appearance='subtle' icon={<AddCircle />} size='small'>
                         Add Inventory
                     </Button>
                     <Button

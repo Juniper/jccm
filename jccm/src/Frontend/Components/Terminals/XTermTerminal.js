@@ -34,19 +34,28 @@ import {
     bundleIcon,
     CircleSmallFilled,
     CircleSmallRegular,
+    CircleEditRegular,
+    EditRegular,
+    CircleEditFilled,
+    EditFilled,
+    PlayCircleRegular,
+    PlayRegular,
 } from '@fluentui/react-icons';
 
 const { electronAPI } = window;
 
 import useStore from '../../Common/StateStore'; // Adjust the import path as per your project structure
 import { useContextMenu } from '../../Common/ContextMenuContext';
+import { EditCLIShortcutsCard } from '../../Layout/CLIShortcutsCard';
+import { set } from 'lodash';
 
 const ClipboardPaste = bundleIcon(ClipboardPasteFilled, ClipboardPasteRegular);
 const CopySelect = bundleIcon(CopySelectFilled, CopySelectRegular);
 const ClipboardTaskAdd = bundleIcon(ClipboardTaskAddFilled, ClipboardTaskAddRegular);
 const ClipboardSettings = bundleIcon(ClipboardSettingsFilled, ClipboardSettingsRegular);
 const ClipboardBrush = bundleIcon(ClipboardBrushFilled, ClipboardBrushRegular);
-const CommandIcon = bundleIcon(CircleSmallFilled, CircleSmallRegular);
+const CommandIcon = bundleIcon(PlayCircleRegular, CircleSmallRegular);
+const EditShortcutIcon = bundleIcon(CircleEditFilled, CircleEditRegular);
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -56,6 +65,7 @@ const XTermTerminal = ({ device }) => {
     const { isPasteDisabled, setIsPasteDisabled } = useStore();
     const { cliShortcutMapping } = useStore();
     const { setTab } = useStore();
+    const [isEditCLIShortcutsCardVisible, setIsEditCLIShortcutsCardVisible] = useState(false);
 
     const { selectedTabValue } = useStore();
     const getLocalStorageKey = (deviceKey) => `${uniqueSessionId}/${deviceKey}/isEditing`;
@@ -410,15 +420,27 @@ const XTermTerminal = ({ device }) => {
                 >
                     <Text>Reset Paste Content</Text>
                 </MenuItem>
+
+                <MenuDivider />
+
+                <MenuGroupHeader>CLI Shortcuts</MenuGroupHeader>
+                <MenuItem
+                    icon={<EditShortcutIcon fontSize='16px' />}
+                    onClick={() => {
+                        setIsEditCLIShortcutsCardVisible(true);
+                    }}
+                >
+                    <Text size={200}>Edit Shortcuts</Text>
+                </MenuItem>
+                <MenuDivider />
+
                 {Object.keys(cliShortcutMapping).length > 0 && (
                     <>
-                        <MenuDivider />
-                        <MenuGroupHeader>CLI Shortcuts</MenuGroupHeader>
                         {cliShortcutMapping?.mappings?.map((shortcut, index) => (
                             <MenuItem
                                 disabled={!isJunos}
                                 key={index} // Add a unique key to each MenuItem
-                                icon={<CommandIcon />}
+                                icon={<CommandIcon fontSize='16px' />}
                                 onClick={async () => {
                                     const { commands } = shortcut;
 
@@ -432,9 +454,20 @@ const XTermTerminal = ({ device }) => {
                                         if (command.startsWith('sleep')) {
                                             const parts = command.split(/\s+/);
                                             const delayValue = parseInt(parts[1], 10);
+                                            console.log('parts', parts);
+                                            console.log('Sleeping for', delayValue, 'ms');
 
                                             if (isNaN(delayValue)) {
-                                                console.error(`Invalid delay value in command: "${command}"`);
+                                                const errorMessage = `# Warning: The command "${command}" has an invalid delay value. Reverting to the default delay. #`;
+                                                console.error(errorMessage);
+
+                                                terminal.writeln('');
+                                                terminal.writeln('#'.repeat(errorMessage.length));
+                                                terminal.writeln(errorMessage);
+                                                terminal.writeln('#'.repeat(errorMessage.length));
+                                                terminal.writeln('');
+
+                                                await delay(defaultDelay);
                                             } else {
                                                 await delay(delayValue);
                                             }
@@ -489,6 +522,14 @@ const XTermTerminal = ({ device }) => {
                     backgroundColor: 'black',
                 }}
             />
+            {isEditCLIShortcutsCardVisible && (
+                <EditCLIShortcutsCard
+                    isOpen={isEditCLIShortcutsCardVisible}
+                    onClose={async () => {
+                        setIsEditCLIShortcutsCardVisible(false);
+                    }}
+                />
+            )}
         </>
     );
 };

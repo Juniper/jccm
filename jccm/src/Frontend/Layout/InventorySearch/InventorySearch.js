@@ -46,6 +46,25 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
     });
 
     useEffect(() => {
+        const enableTabKeyEventCapture = async () => {
+            await electronAPI.saAddKeyDownEvent(['Escape']);
+        };
+        const disableTabKeyEventCapture = async () => {
+            await electronAPI.saDeleteKeyDownEvent();
+        };
+
+        enableTabKeyEventCapture();
+
+        return () => {
+            disableTabKeyEventCapture();
+        };
+    }, []);
+
+    electronAPI.onEscKeyDown(() => {
+        onClose();
+    });
+
+    useEffect(() => {
         const handleResize = () => {
             setWindowSize({
                 width: window.innerWidth,
@@ -254,13 +273,8 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
         });
     };
 
-
     return (
-        <Dialog
-            open={isOpen}
-            onDismiss={onClose}
-            modalProps={{ isBlocking: true }}
-        >
+        <Dialog open={isOpen} onDismiss={onClose} modalProps={{ isBlocking: true }}>
             <DialogSurface
                 style={{
                     display: 'flex',
@@ -324,15 +338,12 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                                     flexDirection: 'column',
                                     width: `${leftWidth}px`,
                                     height: '100%',
-                                    background: tokens.colorNeutralBackground1
+                                    background: tokens.colorNeutralBackground1,
                                 }}
                             >
                                 {/* Subnet Input Form */}
                                 <div style={{ width: '100%', margin: 0, padding: 0 }}>
-                                    <SubnetInputForm
-                                        onAddSubnet={onAddSubnet}
-                                        disabled={isSearchRun}
-                                    />
+                                    <SubnetInputForm onAddSubnet={onAddSubnet} disabled={isSearchRun} />
                                 </div>
 
                                 <div style={{ width: '100%', marginTop: '10px', marginBottom: '5px', padding: 0 }}>

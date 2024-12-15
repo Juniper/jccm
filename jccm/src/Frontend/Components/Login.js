@@ -65,16 +65,11 @@ export const Login = ({ isOpen, onClose }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const [emailMessage, setEmailMessage] = useState(
-        'Please enter your email address.'
-    );
-    const [passwordMessage, setPasswordMessage] = useState(
-        'Please enter your password.'
-    );
+    const [emailMessage, setEmailMessage] = useState('Please enter your email address.');
+    const [passwordMessage, setPasswordMessage] = useState('Please enter your password.');
 
     const [emailValidationState, setEmailValidationState] = useState('none');
-    const [passwordValidationState, setPasswordValidationState] =
-        useState('none');
+    const [passwordValidationState, setPasswordValidationState] = useState('none');
     const [loginButtonStatus, setLoginButtonStatus] = useState('Login');
 
     const [passwordVisible, setPasswordVisible] = useState(false);
@@ -174,12 +169,7 @@ export const Login = ({ isOpen, onClose }) => {
 
         if (!isGoogleSSOLogin) {
             setLoginButtonStatus('Login...');
-            const response = await requestUserLogin(
-                cloud,
-                region,
-                email,
-                password
-            );
+            const response = await requestUserLogin(cloud, region, email, password);
             await processLoginResponse(response);
         } else {
             await startGoogleSSOAuth(cloud, region);
@@ -196,13 +186,7 @@ export const Login = ({ isOpen, onClose }) => {
         setPasswordVisible(false);
 
         setLoginButtonStatus('Login...');
-        const response = await requestUserLogin(
-            cloud,
-            region,
-            email,
-            null,
-            passcode
-        );
+        const response = await requestUserLogin(cloud, region, email, null, passcode);
         await processLoginResponse(response);
     };
 
@@ -223,13 +207,7 @@ export const Login = ({ isOpen, onClose }) => {
         }
     };
 
-    const requestUserLogin = async (
-        cloud,
-        region,
-        email,
-        password,
-        passcode = null
-    ) => {
+    const requestUserLogin = async (cloud, region, email, password, passcode = null) => {
         cloudList.forEach((item) => {
             if (item.id === cloud) setCloudDescription(item.description);
         });
@@ -293,9 +271,7 @@ export const Login = ({ isOpen, onClose }) => {
             resetAll();
 
             setIsUserLoggedIn(true);
-            setCurrentActiveThemeName(
-                Constants.getActiveThemeName(data?.user?.theme)
-            );
+            setCurrentActiveThemeName(Constants.getActiveThemeName(data?.user?.theme));
 
             await eventBus.emit('cloud-inventory-refresh', {
                 force: true,
@@ -340,12 +316,7 @@ export const Login = ({ isOpen, onClose }) => {
             if (lookupResult.regions.length === 1) {
                 const region = lookupResult.regions[0];
                 setRegion(region);
-                const response = await requestUserLogin(
-                    cloud,
-                    region,
-                    email,
-                    password
-                );
+                const response = await requestUserLogin(cloud, region, email, password);
                 await processLoginResponse(response);
             } else if (lookupResult.regions.length > 1) {
                 setRegions(lookupResult.regions);
@@ -416,9 +387,7 @@ export const Login = ({ isOpen, onClose }) => {
             resetAll();
 
             setIsUserLoggedIn(true);
-            setCurrentActiveThemeName(
-                Constants.getActiveThemeName(data?.user?.theme)
-            );
+            setCurrentActiveThemeName(Constants.getActiveThemeName(data?.user?.theme));
 
             onClose();
         } else {
@@ -446,14 +415,10 @@ export const Login = ({ isOpen, onClose }) => {
                 setRegion(region);
 
                 await startGoogleSSOAuth(cloud, region);
-                await electronAPI.saGoogleSSOAuthCodeReceived(
-                    async (authCode) => {
-                        const response = await requestGoogleSSOUserLogin(
-                            authCode
-                        );
-                        await processGoogleSSOLoginResponse(response);
-                    }
-                );
+                await electronAPI.saGoogleSSOAuthCodeReceived(async (authCode) => {
+                    const response = await requestGoogleSSOUserLogin(authCode);
+                    await processGoogleSSOLoginResponse(response);
+                });
             } else {
                 setRegions(lookupResult.regions); // Assume regions are returned in the lookup result
                 setOpenRegionSelect(true);
@@ -522,12 +487,9 @@ export const Login = ({ isOpen, onClose }) => {
                         if (cloud.length === 0) setCloud(data.clouds[0].id);
                     }
                 } else {
-                    console.error(
-                        'Failed to fetch cloud data: cloud list is missing'
-                    );
+                    console.error('Failed to fetch cloud data: cloud list is missing');
                     showMessageBar({
-                        message:
-                            'An error occurred while fetching cloud data. Please try again later.',
+                        message: 'An error occurred while fetching cloud data. Please try again later.',
                         intent: 'error',
                     });
                 }
@@ -555,22 +517,16 @@ export const Login = ({ isOpen, onClose }) => {
             setPasswordMessage(validation.message);
         }
 
-        const valid =
-            emailValidationState === 'success' &&
-            passwordValidationState === 'success';
+        const valid = emailValidationState === 'success' && passwordValidationState === 'success';
 
         setIsFormValid(valid);
     }, [password, email, emailValidationState, passwordValidationState]);
 
     useEffect(() => {
         if (loginButtonRef.current && openRegionSelect) {
-            regionSelectPositioningRef.current?.setTarget(
-                loginButtonRef.current
-            );
+            regionSelectPositioningRef.current?.setTarget(loginButtonRef.current);
         } else if (loginButtonRef.current && openPasscodeInput) {
-            passcodeInputPositioningRef.current?.setTarget(
-                loginButtonRef.current
-            );
+            passcodeInputPositioningRef.current?.setTarget(loginButtonRef.current);
         } else if (!openRegionSelect && !openPasscodeInput) {
             // Restore focus to the email or password input after popover closes
             if (emailInputRef.current) {
@@ -586,6 +542,25 @@ export const Login = ({ isOpen, onClose }) => {
             passcodeInputRef.current.focus();
         }
     }, [openPasscodeInput]);
+
+    useEffect(() => {
+        const enableTabKeyEventCapture = async () => {
+            await electronAPI.saAddKeyDownEvent(['Escape']);
+        };
+        const disableTabKeyEventCapture = async () => {
+            await electronAPI.saDeleteKeyDownEvent();
+        };
+
+        enableTabKeyEventCapture();
+
+        return () => {
+            disableTabKeyEventCapture();
+        };
+    }, []);
+
+    electronAPI.onEscKeyDown(() => {
+        onClose();
+    });
 
     return (
         <Dialog
@@ -659,9 +634,7 @@ export const Login = ({ isOpen, onClose }) => {
                     <Field label='Target Service' required>
                         <Select
                             appearance='filled-darker'
-                            onChange={(event) =>
-                                onChangeCloudSelection(event.target.value)
-                            }
+                            onChange={(event) => onChangeCloudSelection(event.target.value)}
                             value={cloud}
                         >
                             {cloudList.map((item) => (
@@ -687,9 +660,7 @@ export const Login = ({ isOpen, onClose }) => {
                                 setEmail(currentEmail);
                                 const validation = validateEmail(currentEmail);
                                 setEmailMessage(validation.message);
-                                setEmailValidationState(
-                                    validation.validationState
-                                );
+                                setEmailValidationState(validation.validationState);
                             }}
                             ref={emailInputRef}
                             onKeyDown={onKeyDownForLogin} // Listen for key down events on the email input
@@ -711,9 +682,7 @@ export const Login = ({ isOpen, onClose }) => {
                                 setPassword(currPass);
                                 const validation = validatePassword(currPass);
                                 setPasswordMessage(validation.message);
-                                setPasswordValidationState(
-                                    validation.validationState
-                                );
+                                setPasswordValidationState(validation.validationState);
                             }}
                             ref={passwordInputRef}
                             onKeyDown={onKeyDownForLogin} // Listen for key down events on the email input
@@ -722,9 +691,7 @@ export const Login = ({ isOpen, onClose }) => {
                                     shape='circular'
                                     size='small'
                                     appearance='transparent'
-                                    icon={
-                                        passwordVisible ? <Eye /> : <EyeOff />
-                                    }
+                                    icon={passwordVisible ? <Eye /> : <EyeOff />}
                                     onClick={togglePasswordVisibility}
                                     tabIndex={-1}
                                 />
@@ -776,9 +743,7 @@ export const Login = ({ isOpen, onClose }) => {
                                 }}
                             >
                                 <Text align='justify'>
-                                    You have accounts in multiple regions.
-                                    Please select a region to proceed with
-                                    login.
+                                    You have accounts in multiple regions. Please select a region to proceed with login.
                                 </Text>
                                 <div
                                     style={{
@@ -831,15 +796,10 @@ export const Login = ({ isOpen, onClose }) => {
                                 }}
                             >
                                 <Text align='justify'>
-                                    Please enter the verification code from your
-                                    authentication app.
+                                    Please enter the verification code from your authentication app.
                                 </Text>
 
-                                <Field
-                                    label='Passcode'
-                                    required
-                                    style={{ width: '100%' }}
-                                >
+                                <Field label='Passcode' required style={{ width: '100%' }}>
                                     <Input
                                         required
                                         value={passcode}
@@ -889,11 +849,7 @@ export const Login = ({ isOpen, onClose }) => {
                     </Button>
                     <Label>- or -</Label>
                     <Button
-                        icon={
-                            <GoogleIcon
-                                disabled={emailValidationState !== 'success'}
-                            />
-                        }
+                        icon={<GoogleIcon disabled={emailValidationState !== 'success'} />}
                         shape='rounded'
                         appearance='subtle'
                         size='small'

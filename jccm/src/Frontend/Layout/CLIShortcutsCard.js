@@ -39,15 +39,15 @@ import {
     bundleIcon,
 } from '@fluentui/react-icons';
 
+import yaml from 'js-yaml';
+import Ajv from 'ajv';
+
 const { electronAPI } = window;
 
 import { useNotify } from '../Common/NotificationContext';
 import useStore from '../Common/StateStore';
 import { cliShortcutDataSchema, defaultCliShortcutData } from '../Common/CommonVariables';
 import { MonacoEditor } from '../Components/Editor/MonacoEditor';
-
-import yaml from 'js-yaml';
-import Ajv from 'ajv';
 
 const DismissIcon = bundleIcon(DismissFilled, DismissRegular);
 const ResetIcon = bundleIcon(ArrowResetFilled, ArrowResetRegular);
@@ -81,7 +81,7 @@ const validateYamlSchema = (yamlData, schema) => {
     return parsedData;
 };
 
-const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
+export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
     const { notify } = useNotify();
     const { settings, setSettings, exportSettings, setCliShortcutMapping } = useStore();
@@ -288,6 +288,25 @@ const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
         setLine(newLine);
         setColumn(newColumn);
     };
+
+    useEffect(() => {
+        const enableTabKeyEventCapture = async () => {
+            await electronAPI.saAddKeyDownEvent(['Escape']);
+        };
+        const disableTabKeyEventCapture = async () => {
+            await electronAPI.saDeleteKeyDownEvent();
+        };
+
+        enableTabKeyEventCapture();
+
+        return () => {
+            disableTabKeyEventCapture();
+        };
+    }, []);
+
+    electronAPI.onEscKeyDown(() => {
+        onClose();
+    });
 
     return (
         <Dialog
@@ -531,5 +550,3 @@ const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
         </Dialog>
     );
 };
-
-export default EditCLIShortcutsCard;

@@ -41,10 +41,12 @@ const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const DeleteIcon = bundleIcon(SubtractCircleFilled, SubtractCircleRegular);
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const { electronAPI } = window;
+
 export const GlobalSettings = ({ title, isOpen, onClose }) => {
     if (!isOpen) return null;
-    
-    const {getConsoleWindowWidth} = useStore();  
+
+    const { getConsoleWindowWidth } = useStore();
     const [selectedTab, setSelectedTab] = useState('General');
 
     const [windowSize, setWindowSize] = useState({
@@ -60,12 +62,27 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
         onClose();
     };
 
+    useEffect(() => {
+        const enableTabKeyEventCapture = async () => {
+            await electronAPI.saAddKeyDownEvent(['Escape']);
+        };
+        const disableTabKeyEventCapture = async () => {
+            await electronAPI.saDeleteKeyDownEvent();
+        };
+
+        enableTabKeyEventCapture();
+
+        return () => {
+            disableTabKeyEventCapture();
+        };
+    }, []);
+
+    electronAPI.onEscKeyDown(() => {
+        onClose();
+    });
+
     return (
-        <Dialog
-            open={isOpen}
-            onDismiss={handleClose}
-            modalProps={{ isBlocking: true }}
-        >
+        <Dialog open={isOpen} onDismiss={handleClose} modalProps={{ isBlocking: true }}>
             <DialogSurface
                 style={{
                     display: 'flex',
@@ -77,7 +94,7 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
                     overflow: 'hidden',
                     border: 0, // Hide border lines
                     background: tokens.colorNeutralBackground1,
-                    
+
                     position: 'fixed',
                     top: '0%',
                     left: `calc(0% - ${getConsoleWindowWidth()}px)`,
@@ -117,21 +134,9 @@ export const GlobalSettings = ({ title, isOpen, onClose }) => {
                         size='small'
                         appearance='transparent'
                     >
-                        <Tab
-                            value='General'
-                        >
-                            General
-                        </Tab>
-                        <Tab
-                            value='BastionHost'
-                        >
-                            Bastion Host
-                        </Tab>
-                        <Tab
-                            value='Cautionary'
-                        >
-                            Cautionary Message
-                        </Tab>
+                        <Tab value='General'>General</Tab>
+                        <Tab value='BastionHost'>Bastion Host</Tab>
+                        <Tab value='Cautionary'>Cautionary Message</Tab>
                     </TabList>
 
                     <div

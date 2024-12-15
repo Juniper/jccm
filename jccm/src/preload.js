@@ -74,6 +74,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saLoadVault: () => ipcRenderer.invoke('saLoadVault'),
 
     onTabKeyDown: (callback) => ipcRenderer.on('onTabKeyDown', (event, args) => callback(args)),
-    saAddTabKeyDownEvent: () => ipcRenderer.send('saAddTabKeyDownEvent'),
-    saDeleteTabKeyDownEvent: () => ipcRenderer.send('saDeleteTabKeyDownEvent'),
+    onEscKeyDown: (callback) => ipcRenderer.on('onEscKeyDown', (event, args) => callback(args)),
+
+    saAddKeyDownEvent: (keys) => ipcRenderer.send('saAddKeyDownEvent', keys),
+    saDeleteKeyDownEvent: () => ipcRenderer.send('saDeleteKeyDownEvent'),
 });

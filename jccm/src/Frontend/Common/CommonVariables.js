@@ -96,27 +96,29 @@ export const defaultCliShortcutData = `#
 #     - name: <name2>
 #       ...
 #
+# The sleep <time> keyword pauses execution for milliseconds before the next command.
+#
 mappings:
-  - name: system information
+  - name: System Information
     commands:
       - show system information
-  - name: chassis mac-addresses
+  - name: Chassis MAC-Addresses
     commands:
       - show chassis mac-addresses
-  - name: hardware information
+  - name: Hardware Information
     commands:
-      - show chassis hardware
-  - name: outbound-ssh session
+      - show chassis hardware | no-more
+  - name: Outbound-SSH Session
     commands:
-      - show system connection | match 2200
-  - name: outbound-ssh config
-    commands:
-      - show configuration system service outbound-ssh
-  - name: outbound-ssh config and session
+      - show system connection | match \\.2200
+  - name: Outbound-SSH Config
     commands:
       - show configuration system service outbound-ssh
-      - sleep 1000
-      - show system connection | match 2200
+  - name: Outbound-SSH Config and Session
+    commands:
+      - show configuration system service outbound-ssh
+      - sleep 500
+      - show system connection | match \\.2200
 `;
 
 
