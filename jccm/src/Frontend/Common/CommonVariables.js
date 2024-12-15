@@ -51,3 +51,72 @@ export const capitalizeFirstChar = (str) => {
     if (!str) return str; // return the original string if it's empty
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
+
+export const cliShortcutDataSchema = {
+    type: 'object',
+    properties: {
+        mappings: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    name: {
+                        type: 'string',
+                        description: 'The name of the command mapping',
+                    },
+                    commands: {
+                        type: 'array',
+                        items: {
+                            type: 'string',
+                            description: 'A CLI command string',
+                        },
+                        minItems: 1,
+                        description: 'List of CLI commands for the mapping',
+                    },
+                },
+                required: ['name', 'commands'],
+                additionalProperties: false,
+            },
+        },
+    },
+    required: ['mappings'],
+    additionalProperties: false,
+};
+
+export const defaultCliShortcutData = `#
+# CLI Commands Mapping
+# This file maps CLI commands to their respective shortcuts
+# The format is as follows in YAML:
+#   mappings:
+#     - name: <name1>
+#       commands:
+#         - <CLI command1>
+#         - <CLI command2>
+#         - ...
+#     - name: <name2>
+#       ...
+#
+mappings:
+  - name: system information
+    commands:
+      - show system information
+  - name: chassis mac-addresses
+    commands:
+      - show chassis mac-addresses
+  - name: hardware information
+    commands:
+      - show chassis hardware
+  - name: outbound-ssh session
+    commands:
+      - show system connection | match 2200
+  - name: outbound-ssh config
+    commands:
+      - show configuration system service outbound-ssh
+  - name: outbound-ssh config and session
+    commands:
+      - show configuration system service outbound-ssh
+      - sleep 1000
+      - show system connection | match 2200
+`;
+
+

@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+
 // Expose protected methods that perform the API calls
 contextBridge.exposeInMainWorld('electronAPI', {
     saFetchAvailableClouds: () => ipcRenderer.invoke('saFetchAvailableClouds'),
@@ -71,4 +72,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     saStoreVault: (args) => ipcRenderer.invoke('saStoreVault', args),
     saLoadVault: () => ipcRenderer.invoke('saLoadVault'),
+
+    onTabKeyDown: (callback) => ipcRenderer.on('onTabKeyDown', (event, args) => callback(args)),
+    saAddTabKeyDownEvent: () => ipcRenderer.send('saAddTabKeyDownEvent'),
+    saDeleteTabKeyDownEvent: () => ipcRenderer.send('saDeleteTabKeyDownEvent'),
 });

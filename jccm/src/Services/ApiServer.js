@@ -2,7 +2,7 @@ import { app, ipcMain, BrowserWindow, session, screen } from 'electron';
 import { getCloudInfoMinVersion } from '../config';
 import { Client } from 'ssh2';
 
-import { mainWindow, sendLogMessage } from '../main.js';
+import { mainWindow, sendLogMessage, sendTabKeyDownEvent } from '../main.js';
 
 import {
     msGetActiveCloud,
@@ -51,6 +51,14 @@ import { commitJunosSetConfig, executeJunosCommand, getDeviceFacts, getDeviceNet
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const sshSessions = {};
+
+const handleOnTabKeyDown = (event, input) => {
+    if (input.key === 'Tab') {
+        event.preventDefault();
+        sendTabKeyDownEvent();
+        console.log('Tab key intercepted at BrowserWindow level.');
+    }
+};
 
 const serverGetCloudInventory = async (targetOrgs = null, ignoreCaseInName = false) => {
     console.log('main: serverGetCloudInventory');
@@ -1214,5 +1222,16 @@ export const setupApiHandlers = () => {
         const vault = await msLoadVault();
 
         return { result: true, vault };
+    });
+
+    ipcMain.on('saAddTabKeyDownEvent', () => {
+        console.log('main: saAddTabKeyDownEvent');
+        mainWindow.webContents.off('before-input-event', handleOnTabKeyDown); 
+        mainWindow.webContents.on('before-input-event', handleOnTabKeyDown);
+    });
+
+    ipcMain.on('saDeleteTabKeyDownEvent', () => {
+        console.log('main: saDeleteTabKeyDownEvent');
+        mainWindow.webContents.off('before-input-event', handleOnTabKeyDown);
     });
 };

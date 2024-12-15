@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import _, { update } from 'lodash';
 const { electronAPI } = window;
+import { defaultCliShortcutData } from './CommonVariables';
+import yaml from 'js-yaml';
 
 const useStore = create((set, get) => ({
     consoleWindowButtonShow: false,
@@ -32,7 +34,16 @@ const useStore = create((set, get) => ({
         const vaultEntry = state.vault.find((item) => item.tag === tag);
         return vaultEntry ? vaultEntry.password : tag; // Return the password or tag if not found
     },
-    
+
+    cliShortcutMapping: {},
+    setCliShortcutMapping: (cliShortcutMapping) =>
+        set((state) => {
+            if (!_.isEqual(state.cliShortcutMapping, cliShortcutMapping)) {
+                return { cliShortcutMapping };
+            }
+            return state;
+        }),
+
     settings: {},
     setSettings: (settings) =>
         set((state) => {
@@ -47,7 +58,14 @@ const useStore = create((set, get) => ({
             try {
                 const response = await electronAPI.saLoadSettings();
                 if (response.status) {
-                    set({ settings: response.settings });
+                    const cliShortcutData = response.settings?.cliShortcuts ?? defaultCliShortcutData;
+                    let cliShortcutMapping = {};
+                    try {
+                        cliShortcutMapping = yaml.load(cliShortcutData);
+                    } catch (error) {
+                        console.log('Failed to load cliShortcutData:', error);
+                    }
+                    set({ settings: response.settings, cliShortcutMapping });
                 }
             } catch (error) {
                 console.error('Failed to import settings:', error);

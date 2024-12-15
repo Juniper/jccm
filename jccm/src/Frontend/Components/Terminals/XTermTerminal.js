@@ -15,6 +15,8 @@ import {
     MenuGroup,
     MenuGroupHeader,
     MenuButton,
+    Tooltip,
+    Text,
     tokens,
 } from '@fluentui/react-components';
 
@@ -30,6 +32,8 @@ import {
     ClipboardBrushFilled,
     ClipboardBrushRegular,
     bundleIcon,
+    CircleSmallFilled,
+    CircleSmallRegular,
 } from '@fluentui/react-icons';
 
 const { electronAPI } = window;
@@ -42,11 +46,15 @@ const CopySelect = bundleIcon(CopySelectFilled, CopySelectRegular);
 const ClipboardTaskAdd = bundleIcon(ClipboardTaskAddFilled, ClipboardTaskAddRegular);
 const ClipboardSettings = bundleIcon(ClipboardSettingsFilled, ClipboardSettingsRegular);
 const ClipboardBrush = bundleIcon(ClipboardBrushFilled, ClipboardBrushRegular);
+const CommandIcon = bundleIcon(CircleSmallFilled, CircleSmallRegular);
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const XTermTerminal = ({ device }) => {
     const { showContextMenu } = useContextMenu(); // Use the context menu
     const { adoptConfig, setAdoptConfig } = useStore();
     const { isPasteDisabled, setIsPasteDisabled } = useStore();
+    const { cliShortcutMapping } = useStore();
     const { setTab } = useStore();
 
     const { selectedTabValue } = useStore();
@@ -290,7 +298,9 @@ const XTermTerminal = ({ device }) => {
                 '# The configuration database is currently locked. Please wait for the existing lock to be released before proceeding.\n'
             );
         } else {
-            terminalRef.current.paste('# The configuration database is available and ready to accept new configurations.\n');
+            terminalRef.current.paste(
+                '# The configuration database is available and ready to accept new configurations.\n'
+            );
         }
         return result;
     };
@@ -398,8 +408,57 @@ const XTermTerminal = ({ device }) => {
                         terminal.focus();
                     }}
                 >
-                    Reset Paste Content
+                    <Text>Reset Paste Content</Text>
                 </MenuItem>
+                {Object.keys(cliShortcutMapping).length > 0 && (
+                    <>
+                        <MenuDivider />
+                        <MenuGroupHeader>CLI Shortcuts</MenuGroupHeader>
+                        {cliShortcutMapping?.mappings?.map((shortcut, index) => (
+                            <MenuItem
+                                disabled={!isJunos}
+                                key={index} // Add a unique key to each MenuItem
+                                icon={<CommandIcon />}
+                                onClick={async () => {
+                                    const { commands } = shortcut;
+
+                                    const defaultDelay = 500;
+
+                                    for (let i = 0; i < commands.length; i++) {
+                                        const command = commands[i];
+                                        const isLastCommand = i === commands.length - 1;
+                                        const isNextCommandSleep = !isLastCommand && commands[i + 1]?.includes('sleep');
+
+                                        if (command.startsWith('sleep')) {
+                                            const parts = command.split(/\s+/);
+                                            const delayValue = parseInt(parts[1], 10);
+
+                                            if (isNaN(delayValue)) {
+                                                console.error(`Invalid delay value in command: "${command}"`);
+                                            } else {
+                                                await delay(delayValue);
+                                            }
+                                        } else {
+                                            if (isConfigurationMode) {
+                                                terminal.paste(`run ${command}\n`);
+                                            } else {
+                                                terminal.paste(`${command}\n`);
+                                            }
+
+                                            // Add default delay unless the next command is a sleep or it's the last command
+                                            if (!isLastCommand && !isNextCommandSleep) {
+                                                await delay(defaultDelay);
+                                            }
+                                        }
+                                    }
+                                    terminal.focus();
+                                }}
+                            >
+                                <Text size={200}>{shortcut.name}</Text>
+                            </MenuItem>
+                        ))}
+                    </>
+                )}
             </MenuGroup>
         </MenuList>
     );

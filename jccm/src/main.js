@@ -30,6 +30,11 @@ export const sendLogMessage = (type, ...args) => {
     mainWindow.webContents.send('onLogMessage', { type, args });
 };
 
+export const sendTabKeyDownEvent = () => {
+    mainWindow.webContents.send('onTabKeyDown');
+};
+
+
 const createWindow = () => {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     mainWindow = new BrowserWindow({
@@ -60,7 +65,7 @@ app.whenReady().then(() => {
     createWindow();
 
     setupAutoUpdate(); // Set up auto-update
-    
+
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     app.on('activate', () => {

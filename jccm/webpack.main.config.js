@@ -12,7 +12,7 @@ module.exports = {
         rules: require('./webpack.rules'),
     },
     resolve: {
-        extensions: ['.js', '.jsx', '.json'],
+        extensions: ['.js', '.jsx', '.json', '.yml', '.yaml'], // Resolve these extensions
         fallback: {
             fs: false, // Tells Webpack to ignore 'fs' module
             path: require.resolve('path-browserify'), // Provides a polyfill for 'path'

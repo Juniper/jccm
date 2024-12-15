@@ -7,6 +7,10 @@ module.exports = [
         use: 'node-loader',
     },
     {
+        test: /\.ya?ml$/,
+        loader: 'yaml-loader',
+    },
+    {
         test: /[/\\]node_modules[/\\].+\.(m?js|node)$/,
         parser: { amd: false },
         use: {

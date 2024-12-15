@@ -87,7 +87,7 @@ import InventoryLocalImportForm from './InventoryLocalImportForm';
 import InventorySearchCard from './InventorySearch/InventorySearch';
 import { GlobalSettings } from './GlobalSettings/GlobalSettings';
 import { Vault } from './Vault';
-import EditCLIShortcutsCard from './EditCLIShortcutsCard';
+import EditCLIShortcutsCard from './CLIShortcutsCard';
 
 const ColorIcon = bundleIcon(ColorFilled, ColorRegular);
 const LoginUserIcon = bundleIcon(PersonAvailableRegular, PersonCircleRegular);
@@ -401,18 +401,18 @@ export default () => {
                                 onClick={() => {
                                     setIsDeviceSearchCardVisible(true);
                                 }}
-                                icon={<DiscoverInventoryIcon style={{ fontSize: '20px' }} />}
+                                icon={<DiscoverInventoryIcon style={{ fontSize: '16px' }} />}
                             >
                                 <Text size={200}>Network Search</Text>
                             </MenuItem>
-                            {/* <MenuItem
+                            <MenuItem
                                 onClick={() => {
                                     setIsEditCLIShortcutsCardVisible(true);
                                 }}
-                                icon={<EditCommandShortcutsIcon style={{ fontSize: '20px' }} />}
+                                icon={<EditCommandShortcutsIcon style={{ fontSize: '16px' }} />}
                             >
                                  <Text size={200}>Edit CLI Command Shortcuts</Text>
-                            </MenuItem> */}
+                            </MenuItem>
                         </MenuList>
                     </MenuPopover>
                 </Menu>
