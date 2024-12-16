@@ -202,7 +202,6 @@ import {
     FireRegular,
     FireFilled,
     DismissCircleFilled,
-    WrenchRegular,
     bundleIcon,
 } from '@fluentui/react-icons';
 import _, { set } from 'lodash';
@@ -730,7 +729,7 @@ const InventoryTreeMenuLocal = () => {
             const result = deviceNetworkCondition[path] || {};
 
             const message = result.message?.length > 0 ? result.message : 'No network condition test result available';
-            const isConnectable = result.dns && result.route && result.access && result.curl;
+            const isConnectable = result.dns && result.route && result.access;
 
             return (
                 <div
@@ -942,70 +941,6 @@ const InventoryTreeMenuLocal = () => {
                                     }}
                                 >
                                     No Access available
-                                </Text>
-                            </div>
-                        </Tooltip>
-                    ) : !result.curl ? (
-                        <Tooltip
-                            content={{
-                                className: styles.tooltipMaxWidthClass,
-                                children: (
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'center',
-                                            alignItems: 'flex-start',
-                                        }}
-                                    >
-                                        <Text
-                                            size={200}
-                                            weight='regular'
-                                            style={{
-                                                color: tokens.colorPaletteCranberryForeground2,
-                                            }}
-                                        >
-                                            {message}
-                                        </Text>
-                                        <Text
-                                            size={100}
-                                            weight='regular'
-                                            style={{
-                                                color: tokens.colorPaletteMarigoldForeground2,
-                                            }}
-                                        >
-                                            The network OS release might be outdated, but this needs confirmation.
-                                        </Text>
-                                    </div>
-                                ),
-                            }}
-                            relationship='description'
-                            withArrow
-                            positioning='above'
-                        >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'row',
-                                    justifyContent: 'flex-start',
-                                    alignItems: 'center',
-                                    gap: '5px',
-                                }}
-                            >
-                                <WrenchRegular
-                                    style={{
-                                        fontSize: '12px',
-                                        color: tokens.colorPaletteMarigoldForeground1,
-                                    }}
-                                />
-                                <Text
-                                    size={100}
-                                    weight='regular'
-                                    style={{
-                                        color: tokens.colorPaletteMarigoldForeground1,
-                                    }}
-                                >
-                                    No access test is available.
                                 </Text>
                             </div>
                         </Tooltip>
@@ -2024,6 +1959,7 @@ const InventoryTreeMenuLocal = () => {
                             icon={<AdoptDeviceIcon style={{ fontSize: '14px' }} />}
                             onClick={async () => {
                                 if (settingWarningShowForAdoption) {
+
                                     customAlert(
                                         'Device Adoption',
                                         () => {
@@ -2040,7 +1976,7 @@ const InventoryTreeMenuLocal = () => {
                                                 exportSettings(newSettings);
                                             };
                                             saveFunction();
-                                        }
+                                        },
                                     );
                                 } else {
                                     actionAdoptDevices(node);
@@ -2080,7 +2016,7 @@ const InventoryTreeMenuLocal = () => {
                                                     exportSettings(newSettings);
                                                 };
                                                 saveFunction();
-                                            }
+                                            },
                                         );
                                     } else {
                                         actionAdoptDevices(node, true);

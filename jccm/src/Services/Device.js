@@ -771,6 +771,7 @@ export const getDeviceNetworkCondition = async (
                 dns: false,
                 access: false,
                 route: false,
+                curl: true,
                 message: '',
             };
             let rpcReply;
@@ -778,9 +779,11 @@ export const getDeviceNetworkCondition = async (
             for (const result of results.data) {
                 rpcReply = getRpcReply('curl-output', result);
 
+                console.log(`rpc curl-output reply: ${rpcReply}`);
+
                 if (rpcReply !== null) {
                     if (rpcReply.includes('* Connected to')) {
-                        networkCondition.message = `Connection to ${termServer}:${termPort} verified successfully.`;
+                        networkCondition.message = `Connection to ${termServer}:${termPort} was verified successfully.`;
                         networkCondition.dns = true;
                         networkCondition.access = true;
                         networkCondition.route = true;
@@ -790,7 +793,7 @@ export const getDeviceNetworkCondition = async (
                         networkCondition.access = false;
                         networkCondition.route = false;
                     } else if (rpcReply.includes('* Connection timed out')) {
-                        networkCondition.message = `Access to ${termServer}:${termPort} timed out.`;
+                        networkCondition.message = `Connection to ${termServer}:${termPort} timed out.`;
                         networkCondition.dns = true;
                         networkCondition.access = false;
                         networkCondition.route = true;
@@ -800,12 +803,18 @@ export const getDeviceNetworkCondition = async (
                         networkCondition.access = false;
                         networkCondition.route = false;
                     } else if (rpcReply.includes('Operation not permitted')) {
-                        networkCondition.message = `Access to ${termServer}:${termPort} was refused.`;
+                        networkCondition.message = `Access to ${termServer}:${termPort} was refused due to insufficient permissions.`;
                         networkCondition.dns = true;
                         networkCondition.access = false;
                         networkCondition.route = true;
+                    } else if (rpcReply.includes('curl: not found')) {
+                        networkCondition.message = `The network access test is unavailable because the 'curl' command is missing.`;
+                        networkCondition.dns = true;
+                        networkCondition.access = true;
+                        networkCondition.route = true;
+                        networkCondition.curl = false;
                     } else {
-                        networkCondition.message = `Unknown network issue for ${termServer}:${termPort}.`;
+                        networkCondition.message = `An unknown network issue occurred for ${termServer}:${termPort}.`;
                         networkCondition.dns = true;
                         networkCondition.access = false;
                         networkCondition.route = true;
