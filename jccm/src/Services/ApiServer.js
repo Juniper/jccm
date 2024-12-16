@@ -1236,7 +1236,10 @@ export const setupApiHandlers = () => {
     // IPC handlers to set keyBindings dynamically
     ipcMain.on('saAddKeyDownEvent', (event, keys) => {
         console.log('main: saAddKeyDownEvent', keys);
-        keyBindings = keys; // Update key bindings dynamically
+        // Add keys to keyBindings without duplicates
+        keyBindings = Array.from(new Set([...keyBindings, ...keys]));
+        console.log('Updated keyBindings:', keyBindings);
+
         mainWindow.webContents.off('before-input-event', onKeyDown);
         mainWindow.webContents.on('before-input-event', onKeyDown);
     });
@@ -1255,9 +1258,8 @@ export const setupApiHandlers = () => {
     ipcMain.handle('getAPIBaseUrl', async (event) => {
         console.log('main: getAPIBaseUrl');
         const isLoggedIn = await msIsUserLoggedIn();
-        if (!isLoggedIn)
-            return { apiBase: '' };
-    
+        if (!isLoggedIn) return { apiBase: '' };
+
         const activeRegionName = await msGetActiveRegionName();
         const regions = await msGetRegions();
         const activeRegion = regions[activeRegionName];

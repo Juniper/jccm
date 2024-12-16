@@ -1,0 +1,246 @@
+{
+        "systemInformation": {
+            "hardwareModel": "qfx5100-48s-6q",
+            "osName": "junos-qfx",
+            "osVersion": "21.4R3.15",
+            "serialNumber": "TA3715480145",
+            "hostName": "R10-36-QFX5100-48S"
+        },
+        "chassisInventory": {
+            "$": {
+                "xmlns": "http://xml.juniper.net/junos/21.4R0/junos-chassis"
+            },
+            "chassis": {
+                "$": {
+                    "junos:style": "inventory"
+                },
+                "name": "Chassis",
+                "serial-number": "TA3715480145",
+                "description": "QFX5100-48S-6Q",
+                "chassis-module": [
+                    {
+                        "name": "Pseudo CB 0"
+                    },
+                    {
+                        "name": "Routing Engine 0",
+                        "part-number": "BUILTIN",
+                        "serial-number": "BUILTIN",
+                        "description": "QFX Routing Engine",
+                        "clei-code": "CMMTZ00ARA",
+                        "model-number": "QFX5100-48S-AFO"
+                    },
+                    {
+                        "name": "FPC 0",
+                        "version": "REV 27",
+                        "part-number": "650-049938",
+                        "serial-number": "TA3715480145",
+                        "description": "QFX5100-48S-6Q",
+                        "clei-code": "CMMTZ00ARA",
+                        "model-number": "QFX5100-48S-AFO",
+                        "chassis-sub-module": [
+                            {
+                                "name": "CPU",
+                                "part-number": "BUILTIN",
+                                "serial-number": "BUILTIN",
+                                "description": "FPC CPU"
+                            },
+                            {
+                                "name": "PIC 0",
+                                "part-number": "BUILTIN",
+                                "serial-number": "BUILTIN",
+                                "description": "48x10G-6x40G",
+                                "clei-code": "CMMTZ00ARA",
+                                "model-number": "QFX5100-48S-AFO",
+                                "chassis-sub-sub-module": [
+                                    {
+                                        "name": "Xcvr 0",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "G441860",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 1",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "G444281",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 2",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "P0AACEX",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 3",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "P0AACGQ",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 4",
+                                        "version": "REV 01",
+                                        "part-number": "740-038291",
+                                        "serial-number": "PU71KQW",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 5",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "P0BC60H",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 6",
+                                        "version": "REV 01",
+                                        "part-number": "740-038291",
+                                        "serial-number": "PU71JUV",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 7",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "P0BC5Y1",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 8",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "C350387",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 9",
+                                        "version": "REV 01",
+                                        "part-number": "740-038291",
+                                        "serial-number": "PU71JZF",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 10",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "F357089",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 11",
+                                        "version": "REV 01",
+                                        "part-number": "740-013111",
+                                        "serial-number": "PYS0H5S",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 12",
+                                        "version": "REV 01",
+                                        "part-number": "740-013111",
+                                        "serial-number": "G492893",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 13",
+                                        "version": "REV 01",
+                                        "part-number": "740-013111",
+                                        "serial-number": "PYS0GWH",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 14",
+                                        "version": "REV 01",
+                                        "part-number": "740-013111",
+                                        "serial-number": "G494617",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 16",
+                                        "version": "REV 01",
+                                        "part-number": "740-013111",
+                                        "serial-number": "PYS0GPJ",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 18",
+                                        "version": "REV 02",
+                                        "part-number": "740-013111",
+                                        "serial-number": "P0BC60Z",
+                                        "description": "SFP-T"
+                                    },
+                                    {
+                                        "name": "Xcvr 21",
+                                        "version": "REV 01",
+                                        "part-number": "740-013111",
+                                        "serial-number": "G493809",
+                                        "description": "SFP-T"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Power Supply 0",
+                        "version": "REV 03",
+                        "part-number": "740-041741",
+                        "serial-number": "1GA24253309",
+                        "description": "JPSU-650W-AC-AFO",
+                        "clei-code": "CMUPABHBAA",
+                        "model-number": "JPSU-650W-AC-AFO"
+                    },
+                    {
+                        "name": "Power Supply 1",
+                        "version": "REV 03",
+                        "part-number": "740-041741",
+                        "serial-number": "1GA24252998",
+                        "description": "JPSU-650W-AC-AFO",
+                        "clei-code": "CMUPABHBAA",
+                        "model-number": "JPSU-650W-AC-AFO"
+                    },
+                    {
+                        "name": "Fan Tray 0",
+                        "description": "QFX5100 Fan Tray 0, Front to Back Airflow - AFO",
+                        "model-number": "QFX5100-FANAFO"
+                    },
+                    {
+                        "name": "Fan Tray 1",
+                        "description": "QFX5100 Fan Tray 1, Front to Back Airflow - AFO",
+                        "model-number": "QFX5100-FANAFO"
+                    },
+                    {
+                        "name": "Fan Tray 2",
+                        "description": "QFX5100 Fan Tray 2, Front to Back Airflow - AFO",
+                        "model-number": "QFX5100-FANAFO"
+                    },
+                    {
+                        "name": "Fan Tray 3",
+                        "description": "QFX5100 Fan Tray 3, Front to Back Airflow - AFO",
+                        "model-number": "QFX5100-FANAFO"
+                    },
+                    {
+                        "name": "Fan Tray 4",
+                        "description": "QFX5100 Fan Tray 4, Front to Back Airflow - AFO",
+                        "model-number": "QFX5100-FANAFO"
+                    }
+                ]
+            }
+        },
+        "vc": [
+            {
+                "model": "qfx5100-48s-6q",
+                "serial": "TA3715480145",
+                "slot": "0",
+                "role": "Master*"
+            }
+        ],
+        "routeSummaryInformation": {
+            "routerId": "10.6.2.221"
+        },
+        "interface": {
+            "name": "vme.0"
+        },
+        "status": "success"
+    }
