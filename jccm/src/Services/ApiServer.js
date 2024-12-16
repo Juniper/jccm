@@ -1,4 +1,4 @@
-import { app, ipcMain, BrowserWindow, session, screen } from 'electron';
+import { app, ipcMain, BrowserWindow, session, screen, shell } from 'electron';
 import { getCloudInfoMinVersion } from '../config';
 import { Client } from 'ssh2';
 
@@ -29,6 +29,8 @@ import {
     clearAndCompactDatabase,
     msLoadVault,
     msSaveVault,
+    msGetRegions,
+    msIsUserLoggedIn,
 } from './mainStore';
 import {
     acLookupRegions,
@@ -230,8 +232,8 @@ const startSSHConnectionStandalone = (event, device, { id, cols, rows }) => {
     sshSessions[id] = conn;
 
     conn.on('ready', () => {
-        console.log(`SSH session successfully opened for id: ${id}`);
-        event.reply('sshSessionOpened', { id }); // Notify renderer that the session is open
+        console.log(`SSH session successfully opened for id: ${id} address: ${address}`);
+        event.reply('sshSessionOpened', { id, address }); // Notify renderer that the session is open
 
         conn.shell({ cols, rows }, (err, stream) => {
             if (err) {
@@ -289,8 +291,8 @@ const startSSHConnectionProxy = (event, device, bastionHost, { id, cols, rows })
     sshSessions[id] = conn;
 
     conn.on('ready', () => {
-        console.log(`SSH session successfully opened for id: ${id}`);
-        event.reply('sshSessionOpened', { id }); // Notify renderer that the session is open
+        console.log(`SSH session successfully opened for id: ${id} address: ${device.address}`);
+        event.reply('sshSessionOpened', { id, address: device.address }); // Notify renderer that the session is open
 
         conn.shell({ cols, rows }, (err, stream) => {
             if (err) {
@@ -1243,5 +1245,22 @@ export const setupApiHandlers = () => {
         console.log('main: saDeleteKeyDownEvent');
         keyBindings = []; // Clear all key bindings
         mainWindow.webContents.off('before-input-event', onKeyDown);
+    });
+
+    ipcMain.on('openExternalLink', (event, url) => {
+        console.log('main: openExternalLink', url);
+        shell.openExternal(url);
+    });
+
+    ipcMain.handle('getAPIBaseUrl', async (event) => {
+        console.log('main: getAPIBaseUrl');
+        const isLoggedIn = await msIsUserLoggedIn();
+        if (!isLoggedIn)
+            return { apiBase: '' };
+    
+        const activeRegionName = await msGetActiveRegionName();
+        const regions = await msGetRegions();
+        const activeRegion = regions[activeRegionName];
+        return { apiBase: activeRegion.apiBase };
     });
 };

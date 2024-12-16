@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcMain, ipcRenderer } from 'electron';
 
 
 // Expose protected methods that perform the API calls
@@ -38,7 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     sendSSHInput: (id, data) => ipcRenderer.send(`sendSSHInput-${id}`, data),
     resizeSSHSession: (id, size) => ipcRenderer.send(`resizeSSHSession-${id}`, size),
     disconnectSSHSession: (id) => ipcRenderer.send('disconnectSSHSession', { id }),
-    sshSessionOpened: (callback) => ipcRenderer.on('sshSessionOpened', (event, id) => callback(id)),
+    sshSessionOpened: (callback) => ipcRenderer.on('sshSessionOpened', (event, data) => callback(data)),
     onSSHDataReceived: (callback) => ipcRenderer.on('sshDataReceived', (event, data) => callback(data)),
     onSSHErrorOccurred: (callback) => ipcRenderer.on('sshErrorOccurred', (event, error) => callback(error)),
     onSSHSessionClosed: (callback) => ipcRenderer.on('sshSessionClosed', (event, data) => callback(data)),
@@ -78,4 +78,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     saAddKeyDownEvent: (keys) => ipcRenderer.send('saAddKeyDownEvent', keys),
     saDeleteKeyDownEvent: () => ipcRenderer.send('saDeleteKeyDownEvent'),
+
+    openExternalLink: (url) => ipcRenderer.send('openExternalLink', url),
+
+    getAPIBaseUrl: () => ipcRenderer.invoke('getAPIBaseUrl'),
 });

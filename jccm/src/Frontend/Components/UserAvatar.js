@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import _ from 'lodash';
 
-import {
-    Tooltip,
-    Persona,
-    Text,
-    makeStyles,
-    tokens,
-} from '@fluentui/react-components';
+import { Tooltip, Persona, Text, makeStyles, Link, tokens } from '@fluentui/react-components';
 
 import useStore from '../Common/StateStore';
 import Logout from './Logout';
 import eventBus from '../Common/eventBus';
+
+const { electronAPI } = window;
 
 const usePersonaStyles = makeStyles({
     root: {
@@ -26,8 +22,7 @@ const usePersonaStyles = makeStyles({
 
 const UserAvatar = () => {
     const { user } = useStore();
-    const [isUserLogoutCardVisible, setIsUserLogoutCardVisible] =
-        useState(false);
+    const [isUserLogoutCardVisible, setIsUserLogoutCardVisible] = useState(false);
     const styles = usePersonaStyles();
 
     useEffect(() => {
@@ -40,6 +35,23 @@ const UserAvatar = () => {
     }, []);
 
     const userName = `${user?.first_name} ${user?.last_name}`;
+
+    const handleLinkClick = (e) => {
+        e.preventDefault();
+
+        let url = 'https://manage.mist.com';
+        const cloudDescription = user.cloudDescription.toLowerCase();
+
+        if (cloudDescription.includes('mist')) {
+            url = 'https://manage.mist.com';
+        } else if (cloudDescription.includes('support')) {
+            url = 'https://jsi.ai.juniper.net';
+        } else if (cloudDescription.includes('routing')) {
+            url = 'https://routing.ai.juniper.net';
+        }
+
+        electronAPI.openExternalLink(url);
+    };
 
     return (
         <div
@@ -54,9 +66,18 @@ const UserAvatar = () => {
             <div className={styles.root}>
                 <Tooltip
                     content={
-                        <Text
-                            size={100}
-                        >{`Logged into the service "${user?.service}"`}</Text>
+                        <Text size={100}>
+                            Logged into the service&nbsp;
+                            <Link href='#' inline onClick={handleLinkClick}>
+                                {(() => {
+                                    const serviceParts = user?.service?.split('/') || [];
+                                    if (serviceParts.length >= 2 && serviceParts[0] === serviceParts[1]) {
+                                        return serviceParts[0];
+                                    }
+                                    return user?.service;
+                                })()}
+                            </Link>
+                        </Text>
                     }
                     relationship='label'
                     withArrow

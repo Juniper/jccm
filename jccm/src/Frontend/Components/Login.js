@@ -420,6 +420,7 @@ export const Login = ({ isOpen, onClose }) => {
                     await processGoogleSSOLoginResponse(response);
                 });
             } else {
+                console.log('regions:', lookupResult.regions);
                 setRegions(lookupResult.regions); // Assume regions are returned in the lookup result
                 setOpenRegionSelect(true);
             }
@@ -754,19 +755,37 @@ export const Login = ({ isOpen, onClose }) => {
                                         alignItems: 'center',
                                     }}
                                 >
-                                    {regions.map((region) => (
-                                        <Button
-                                            key={region}
-                                            shape='circular'
-                                            // appearance='subtle'
-                                            size='small'
-                                            onClick={() => {
-                                                onRegionInput(region);
-                                            }}
-                                        >
-                                            {region}
-                                        </Button>
-                                    ))}
+                                    {regions
+                                        .slice() // Create a shallow copy to avoid mutating the original array
+                                        .sort((a, b) => {
+                                            const isGlobalA = a.toLowerCase().startsWith('global');
+                                            const isGlobalB = b.toLowerCase().startsWith('global');
+
+                                            if (isGlobalA && isGlobalB) {
+                                                // If both are "global ...", sort alphabetically
+                                                return a.localeCompare(b);
+                                            }
+                                            if (isGlobalA) {
+                                                return -1; // "global ..." comes first
+                                            }
+                                            if (isGlobalB) {
+                                                return 1; // Non-"global ..." comes after
+                                            }
+                                            return a.localeCompare(b); // Alphabetical sort for other regions
+                                        })
+                                        .map((region) => (
+                                            <Button
+                                                key={region}
+                                                shape='circular'
+                                                // appearance='subtle'
+                                                size='small'
+                                                onClick={() => {
+                                                    onRegionInput(region);
+                                                }}
+                                            >
+                                                {region}
+                                            </Button>
+                                        ))}
                                 </div>
                             </div>
                         </PopoverSurface>

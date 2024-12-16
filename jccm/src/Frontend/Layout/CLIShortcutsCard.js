@@ -74,7 +74,7 @@ const validateYamlSchema = (yamlData, schema) => {
 
     const valid = validate(parsedData);
     if (!valid) {
-        console.log(validate.errors[0].message);
+        console.log('CLI Shortcut mapping data schema error:', validate?.errors);
         throw new Error(`Schema validation error:\n${validate.errors?.[0]?.message}`);
     }
 
@@ -518,7 +518,10 @@ export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
                                     withArrow
                                     positioning='above-end'
                                 >
-                                    <Text size={100}>Invalid Data (Hover for details)</Text>
+                                    <Text size={100}>
+                                        <span style={{ color: tokens.colorPaletteRedForeground3 }}>Invalid Input</span>{' '}
+                                        (Check for syntax, grammar, or schema errors)
+                                    </Text>
                                 </Tooltip>
                             )}
                         </div>

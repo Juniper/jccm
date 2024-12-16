@@ -64,8 +64,9 @@ const XTermTerminal = ({ device }) => {
     const { adoptConfig, setAdoptConfig } = useStore();
     const { isPasteDisabled, setIsPasteDisabled } = useStore();
     const { cliShortcutMapping } = useStore();
-    const { setTab } = useStore();
+    const { setTab, settings } = useStore();
     const [isEditCLIShortcutsCardVisible, setIsEditCLIShortcutsCardVisible] = useState(false);
+    const [deviceAddress, setDeviceAddress] = useState('');
 
     const { selectedTabValue } = useStore();
     const getLocalStorageKey = (deviceKey) => `${uniqueSessionId}/${deviceKey}/isEditing`;
@@ -78,9 +79,12 @@ const XTermTerminal = ({ device }) => {
     const [isJunos, setIsJunos] = useState(false);
     const [isConfigurationMode, setIsConfigurationMode] = useState(false);
     const [uniqueSessionId] = useState(uuidv4()); // Generates a unique ID for each component instance
+
     const containerRef = useRef(null);
     const terminalRef = useRef(null);
     const fitAddonRef = useRef(null);
+
+    const deleteOutboundSSHTerm = settings?.deleteOutboundSSHTerm ?? false;
 
     const deviceKey = device?.path;
 
@@ -143,10 +147,11 @@ const XTermTerminal = ({ device }) => {
 
             let checkForOSVersion = true;
 
-            electronAPI.sshSessionOpened(({ id }) => {
+            electronAPI.sshSessionOpened(({ id, address }) => {
                 if (id === deviceKey) {
-                    console.log(`Connected to server for device: ${deviceKey}.`);
                     terminalRef.current.writeln('Connected to device.');
+
+                    setDeviceAddress(address);
 
                     checkForOSVersion = true;
                     setTimeout(() => {
@@ -315,6 +320,23 @@ const XTermTerminal = ({ device }) => {
         return result;
     };
 
+    const getAPIUrlDomain = async () => {
+        const { apiBase } = await electronAPI.getAPIBaseUrl();
+        if (apiBase.length === 0) {
+            return '';
+        }
+
+        console.log('apiBase', apiBase);
+        const url = new URL(apiBase);
+        const host = url.hostname;
+
+        // Split the hostname and remove the first item
+        const parts = host.split('.');
+        const domain = parts.slice(1).join('.'); // Remove the first part and join the rest
+
+        return domain;
+    };
+
     const menuContent = (event, terminal) => (
         <MenuList>
             <MenuGroup>
@@ -395,11 +417,11 @@ const XTermTerminal = ({ device }) => {
                         if (!isEditing) {
                             if (!isConfigurationMode) {
                                 terminal.paste('edit private\n');
-                                terminal.paste('delete system services outbound-ssh\n');
+                                deleteOutboundSSHTerm && terminal.paste('delete system services outbound-ssh\n');
                                 terminal.paste(`${adoptConfig}\n`);
                                 terminal.paste('commit and-quit\n');
                             } else {
-                                terminal.paste('delete system services outbound-ssh\n');
+                                deleteOutboundSSHTerm && terminal.paste('delete system services outbound-ssh\n');
                                 terminal.paste(`${adoptConfig}\n`);
                                 terminal.paste('commit\n');
                             }
@@ -446,6 +468,19 @@ const XTermTerminal = ({ device }) => {
 
                                     const defaultDelay = 500;
 
+                                    let domain = await getAPIUrlDomain();
+                                    let ocTermHost = 'not-available-yet';
+
+                                    console.log('domain', domain);
+
+                                    if (domain.length > 0) {
+                                        if (domain === 'mist.com') {
+                                            ocTermHost = 'oc-term.mistsys.net';
+                                        } else {
+                                            ocTermHost = `oc-term.${domain}`;
+                                        }
+                                    }
+
                                     for (let i = 0; i < commands.length; i++) {
                                         const command = commands[i];
                                         const isLastCommand = i === commands.length - 1;
@@ -472,10 +507,22 @@ const XTermTerminal = ({ device }) => {
                                                 await delay(delayValue);
                                             }
                                         } else {
+                                            const placeholders = {
+                                                '${device-address}': deviceAddress,
+                                                '${oc-term-hostname}': ocTermHost,
+                                                '${jsi-term-hostname}': 'jsi-term.ai.juniper.net',
+                                            };
+
+                                            const renderedCommand = Object.keys(placeholders).reduce(
+                                                (commandText, placeholder) =>
+                                                    commandText.replace(placeholder, placeholders[placeholder]),
+                                                command
+                                            );
+
                                             if (isConfigurationMode) {
-                                                terminal.paste(`run ${command}\n`);
+                                                terminal.paste(`run ${renderedCommand}\n`);
                                             } else {
-                                                terminal.paste(`${command}\n`);
+                                                terminal.paste(`${renderedCommand}\n`);
                                             }
 
                                             // Add default delay unless the next command is a sleep or it's the last command

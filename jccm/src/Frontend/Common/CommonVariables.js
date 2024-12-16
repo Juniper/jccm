@@ -97,6 +97,9 @@ export const defaultCliShortcutData = `#
 #       ...
 #
 # The sleep <time> keyword pauses execution for milliseconds before the next command.
+# For example, 'sleep 500' pauses for 500 milliseconds.
+# \${device-address} is a placeholder for the device's address.
+# \${oc-term-hostname} is a placeholder for the oc-term hostname.
 #
 mappings:
   - name: System Information
@@ -108,17 +111,32 @@ mappings:
   - name: Hardware Information
     commands:
       - show chassis hardware | no-more
+  - name: Name Server Configuration
+    commands:
+      - show configuration system name-server | display inheritance
   - name: Outbound-SSH Session
     commands:
       - show system connection | match \\.2200
-  - name: Outbound-SSH Config
+  - name: Outbound SSH Configuration
     commands:
       - show configuration system service outbound-ssh
-  - name: Outbound-SSH Config and Session
+  - name: Outbound SSH Config and Session
     commands:
       - show configuration system service outbound-ssh
       - sleep 500
       - show system connection | match \\.2200
+  - name: Route to Device Address
+    commands:
+      - show route \${device-address}
+  - name: Route to OC-Term Host
+    commands:
+      - show route \${oc-term-hostname}
+  - name: Ping OC-Term Host
+    commands:
+      - ping \${oc-term-hostname} inet count 3 wait 1
+  - name: Telnet to OC-Term Host
+    commands:
+      - telnet \${oc-term-hostname} inet port 2200
 `;
 
 
