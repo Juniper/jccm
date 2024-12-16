@@ -85,7 +85,8 @@ export const cliShortcutDataSchema = {
 
 export const defaultCliShortcutData = `#
 # CLI Commands Mapping
-# This file maps CLI commands to their respective shortcuts
+# This YAML data maps CLI commands to their respective shortcuts.
+# You can view command shortcuts and run them using the right-click context menu in the shell terminal.
 # The format is as follows in YAML:
 #   mappings:
 #     - name: <name1>
