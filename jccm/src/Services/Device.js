@@ -808,7 +808,7 @@ export const getDeviceNetworkCondition = async (
                         networkCondition.access = false;
                         networkCondition.route = true;
                     } else if (rpcReply.includes('curl: not found')) {
-                        networkCondition.message = `The network access test is unavailable because the 'curl' command is missing.`;
+                        networkCondition.message = `The network access test to ${termServer}:${termPort} is unavailable because the 'curl' command is missing.`;
                         networkCondition.dns = true;
                         networkCondition.access = true;
                         networkCondition.route = true;

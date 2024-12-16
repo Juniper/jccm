@@ -976,6 +976,15 @@ const InventoryTreeMenuLocal = () => {
                                         >
                                             The network OS release might be outdated, but this needs confirmation.
                                         </Text>
+                                        <Text
+                                            size={100}
+                                            weight='regular'
+                                            style={{
+                                                color: tokens.colorPaletteMarigoldForeground2,
+                                            }}
+                                        >
+                                            Please perform a network access test manually using commands such as telnet.
+                                        </Text>
                                     </div>
                                 ),
                             }}
