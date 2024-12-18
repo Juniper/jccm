@@ -5,6 +5,9 @@ import { defaultCliShortcutData } from './CommonVariables';
 import yaml from 'js-yaml';
 
 const useStore = create((set, get) => ({
+    showConfigViewer: false,
+    setShowConfigViewer: (showConfigViewer) => set(() => ({ showConfigViewer })),
+
     consoleWindowButtonShow: false,
     setConsoleWindowButtonShow: (consoleWindowButtonShow) => set(() => ({ consoleWindowButtonShow })),
 

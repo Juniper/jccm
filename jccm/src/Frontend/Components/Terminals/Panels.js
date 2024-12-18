@@ -1,15 +1,18 @@
 import * as React from 'react';
-import {
-    tokens,
-    Label,
-    Button,
-    Tooltip,
-} from '@fluentui/react-components';
+import { tokens, Label, Button, Text, Tooltip } from '@fluentui/react-components';
 import {
     bundleIcon,
     DismissCircle16Filled,
     DismissCircle16Regular,
     ClipboardTextEditFilled,
+    CodeCircleRegular,
+    CodeCircleFilled,
+    CircleHighlightRegular,
+    CircleHighlightFilled,
+    CircleHintRegular,
+    ChevronCircleLeftFilled,
+    EyeRegular,
+    BookOpenRegular,
 } from '@fluentui/react-icons';
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbDivider } from '@fluentui/react-components';
@@ -18,23 +21,18 @@ import useStore from '../../Common/StateStore';
 import XTermTerminal from './XTermTerminal';
 
 const DismissCircle = bundleIcon(DismissCircle16Filled, DismissCircle16Regular);
+const OpenConfigIcon = bundleIcon(BookOpenRegular, CircleHintRegular);
 
 const BreadcrumbComponent = ({ path }) => {
     // Split the path into segments based on '/'
     const pathSegments = path.split('/');
 
     return (
-        <Breadcrumb
-            size='small'
-            style={{ color: 'white' }}
-        >
+        <Breadcrumb size='small' style={{ color: 'white' }}>
             {pathSegments.map((segment, index) => (
                 <React.Fragment key={`${segment}-${index}`}>
                     <BreadcrumbItem>
-                        <Label
-                            size='small'
-                            style={{ color: 'white' }}
-                        >
+                        <Label size='small' style={{ color: 'white' }}>
                             {segment}
                         </Label>
                     </BreadcrumbItem>
@@ -46,7 +44,8 @@ const BreadcrumbComponent = ({ path }) => {
 };
 
 const Panels = () => {
-    const { tabs, selectedTabValue, removeTab } = useStore();
+    const { tabs, selectedTabValue, removeTab, showConfigViewer, setShowConfigViewer } = useStore();
+
     const isJunos = useStore((state) => state.getIsJunos(selectedTabValue));
     const isJunosConfigMode = useStore((state) => state.getIsJunosConfigMode(selectedTabValue));
 
@@ -97,10 +96,7 @@ const Panels = () => {
                             justifyContent: 'flex-start',
                         }}
                     >
-                        <Tooltip
-                            content='Close the terminal'
-                            relationship='label'
-                        >
+                        <Tooltip content='Close the terminal' relationship='label'>
                             <Button
                                 shape='circular'
                                 appearance='primary'
@@ -114,31 +110,50 @@ const Panels = () => {
                             <BreadcrumbComponent path={selectedTabValue} />
                         </div>
                     </div>
-                    {isJunos & isJunosConfigMode ? (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'flex-start',
-                                margineRight: '100px',
-                            }}
-                        >
-                            <ClipboardTextEditFilled style={{ color: 'white' }} />
-                            <Label
-                                size='small'
-                                style={{ color: 'white', marginLeft: '5px', marginRight: '20px' }}
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                        }}
+                    >
+                        {isJunos & isJunosConfigMode ? (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-start',
+                                    margineRight: '100px',
+                                }}
                             >
-                                Junos Configuration Mode
-                            </Label>
-                        </div>
-                    ) : null}
+                                <ClipboardTextEditFilled style={{ color: 'white' }} />
+                                <Label size='small' style={{ color: 'white', marginLeft: '5px', marginRight: '20px' }}>
+                                    Junos Configuration Mode
+                                </Label>
+                            </div>
+                        ) : null}
+                        {/* <Tooltip content='View the configuration' relationship='label'>
+                            <Button
+                                icon={<OpenConfigIcon fontSize='18px' />}
+                                size='small'
+                                shape='circular'
+                                appearance='transparent'
+                                style={{ color: 'white', marginRight: '10px' }}
+                                onClick={() => {
+                                    setShowConfigViewer(true);
+                                }}
+                            />
+                        </Tooltip> */}
+                    </div>
                 </div>
 
                 <div
                     style={{
                         display: 'flex',
                         flexWrap: 'nowrap',
+                        flexDirection: 'column',
                         width: 'calc(100% - 8px)',
                         height: 'calc(100% - 8px)',
                         border: `4px solid ${tokens.colorBrandBackground}`,
@@ -147,22 +162,21 @@ const Panels = () => {
                     }}
                 >
                     {tabs.map((item) => (
-                        <div
-                            key={item.path}
-                            style={{
-                                display: selectedTabValue === item.path ? 'flex' : 'none',
-                                flexWrap: 'nowrap',
-                                width: '100%',
-                                height: '100%',
-                                resize: 'none',
-                                overflow: 'hidden',
-                            }}
-                        >
-                            <XTermTerminal
+                        <>
+                            <div
                                 key={item.path}
-                                device={item}
-                            />
-                        </div>
+                                style={{
+                                    display: selectedTabValue === item.path ? 'flex' : 'none',
+                                    flexWrap: 'nowrap',
+                                    width: '100%',
+                                    height: '100%',
+                                    resize: 'none',
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <XTermTerminal key={item.path} device={item}/>
+                            </div>
+                        </>
                     ))}
                 </div>
             </div>

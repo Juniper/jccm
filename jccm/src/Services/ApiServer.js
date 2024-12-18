@@ -806,7 +806,7 @@ export const setupApiHandlers = () => {
     });
 
     ipcMain.handle('saGetDeviceFacts', async (event, args) => {
-        console.log('main: saGetDeviceFacts');
+        console.log('main: saGetDeviceFacts', `${args?.address}:${args?.port}`);
 
         const { address, port, username, password, timeout, upperSerialNumber, bastionHost } = args;
 

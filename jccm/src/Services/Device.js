@@ -235,9 +235,6 @@ function processCommandsProxy(
 ) {
     const commands = [..._commands];
 
-    // console.log('processCommandsProxy bastionHost: ', bastionHost);
-    // console.log('processCommandsProxy commands: ', commands);
-
     return new Promise((resolve, reject) => {
         const sshOptions = [
             '-o StrictHostKeyChecking=no',
@@ -507,6 +504,7 @@ export const getDeviceFacts = async (
     ];
 
     if (username === 'root') commands.unshift('cli');
+    else if (username === 'regress') commands.unshift('cli');
 
     const sshConfig = {
         host: address,
@@ -611,40 +609,44 @@ export const getDeviceFacts = async (
                 rpcReply = getRpcReply('route-information', result);
 
                 if (rpcReply !== null) {
-                    const parsedData = await parser.parseStringPromise(rpcReply);
-                    let info = parsedData['route-information'];
+                    try {
+                        const parsedData = await parser.parseStringPromise(rpcReply);
+                        let info = parsedData?.['route-information'];
 
-                    // If info is an array, pick the first element
-                    if (Array.isArray(info)) {
-                        info = info[0];
+                        // If info is an array, pick the first element
+                        if (Array.isArray(info)) {
+                            info = info[0];
+                        }
+
+                        // Safely handle route-table
+                        let routeTable = info?.['route-table'];
+                        if (Array.isArray(routeTable)) {
+                            routeTable = routeTable[0];
+                        }
+
+                        // Safely handle rt
+                        let rt = routeTable?.['rt'];
+                        if (Array.isArray(rt)) {
+                            rt = rt[0];
+                        }
+
+                        // Safely handle rt-entry
+                        let rtEntry = rt?.['rt-entry'];
+                        if (Array.isArray(rtEntry)) {
+                            rtEntry = rtEntry[0];
+                        }
+
+                        // Safely handle nh
+                        let nh = rtEntry?.['nh'];
+                        if (Array.isArray(nh)) {
+                            nh = nh[0];
+                        }
+
+                        const name = nh?.['nh-local-interface'] || nh?.['via'] || 'Unknown';
+                        facts.interface = { name };
+                    } catch (error) {
+                        console.error(`Error parsing route-information: ${error}`);
                     }
-
-                    // Safely handle route-table
-                    let routeTable = info['route-table'];
-                    if (Array.isArray(routeTable)) {
-                        routeTable = routeTable[0];
-                    }
-
-                    // Safely handle rt
-                    let rt = routeTable['rt'];
-                    if (Array.isArray(rt)) {
-                        rt = rt[0];
-                    }
-
-                    // Safely handle rt-entry
-                    let rtEntry = rt['rt-entry'];
-                    if (Array.isArray(rtEntry)) {
-                        rtEntry = rtEntry[0];
-                    }
-
-                    // Safely handle nh
-                    let nh = rtEntry['nh'];
-                    if (Array.isArray(nh)) {
-                        nh = nh[0];
-                    }
-
-                    const name = nh['nh-local-interface'] || nh['via'] || 'Unknown';
-                    facts.interface = { name };
                 }
             }
 
@@ -689,8 +691,10 @@ export const commitJunosSetConfig = async (
         .map((line) => line.trim());
 
     const commands = ['edit exclusive private', ...configs, 'commit', 'exit'];
-    if (username === 'root') commands.unshift('cli');
 
+    if (username === 'root') commands.unshift('cli');
+    else if (username === 'regress') commands.unshift('cli');
+    
     const sshConfig = {
         host: address,
         port,
@@ -753,6 +757,7 @@ export const getDeviceNetworkCondition = async (
     ];
 
     if (username === 'root') commands.unshift('cli');
+    else if (username === 'regress') commands.unshift('cli');
 
     const sshConfig = {
         host: address,

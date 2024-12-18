@@ -472,8 +472,8 @@ const InventoryTreeMenuLocal = () => {
 
     const convertErrorMessage = (message) => {
         if (
-            message.includes('Permission denied') &&
-            (message.includes('publickey') || message.includes('password') || message.includes('keyboard-interactive'))
+            message?.includes('Permission denied') &&
+            (message?.includes('publickey') || message?.includes('password') || message?.includes('keyboard-interactive'))
         ) {
             return 'SSH Authentication failed.';
         } else {
@@ -729,7 +729,7 @@ const InventoryTreeMenuLocal = () => {
 
             const result = deviceNetworkCondition[path] || {};
 
-            const message = result.message?.length > 0 ? result.message : 'No network condition test result available';
+            const message = result?.message?.length > 0 ? result?.message : 'No network condition test result available';
             const isConnectable = result.dns && result.route && result.access && result.curl;
 
             return (
@@ -1510,7 +1510,7 @@ const InventoryTreeMenuLocal = () => {
                         An error occurred while retrieving the device facts. Please check the device configuration and
                         try again.
                     </Text>
-                    <Text>Error Message: {response.result.message}</Text>
+                    <Text>Error Message: {response.result?.message}</Text>
                 </ToastBody>
             </Toast>,
             { intent: 'error' }
@@ -1609,7 +1609,7 @@ const InventoryTreeMenuLocal = () => {
                         <Text size={200}>
                             The device could not be adopted into the organization: "{device.organization}".
                         </Text>
-                        <Text size={200}>Error Message: {response?.result.message}</Text>
+                        <Text size={200}>Error Message: {response?.result?.message}</Text>
                     </div>
                 </ToastBody>
             </Toast>,
@@ -1824,7 +1824,7 @@ const InventoryTreeMenuLocal = () => {
                     setIsTesting(device._path, {
                         status: false,
                         retry: -1,
-                        error: response.result?.message,
+                        error: response?.result?.message,
                     });
                     return;
                 } else if (response.result?.status?.toLowerCase().includes('ssh client error')) {
@@ -1832,7 +1832,7 @@ const InventoryTreeMenuLocal = () => {
                     setIsTesting(device._path, {
                         status: false,
                         retry: -1,
-                        error: response.result?.message,
+                        error: response?.result?.message,
                     });
                     return;
                 }
@@ -1840,7 +1840,7 @@ const InventoryTreeMenuLocal = () => {
                 setIsTesting(device._path, {
                     status: true,
                     retry: attempt,
-                    error: response.result?.message,
+                    error: response?.result?.message,
                 });
                 await new Promise((resolve) => setTimeout(resolve, retryInterval));
             }
@@ -1850,7 +1850,7 @@ const InventoryTreeMenuLocal = () => {
         setIsTesting(device._path, {
             status: false,
             retry: -1,
-            error: response.result?.message,
+            error: response?.result?.message,
         });
 
         notify(
@@ -1861,7 +1861,7 @@ const InventoryTreeMenuLocal = () => {
                         An error occurred while retrieving the device network condition information. Please check the
                         device configuration and try again.
                     </Text>
-                    <Text>Error Message: {response.result.message}</Text>
+                    <Text>Error Message: {response?.result?.message}</Text>
                 </ToastBody>
             </Toast>,
             { intent: 'error' }

@@ -59,7 +59,7 @@ const EditShortcutIcon = bundleIcon(CircleEditFilled, CircleEditRegular);
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const XTermTerminal = ({ device }) => {
+const XTermTerminal = ({ device, fontSize=12 }) => {
     const { showContextMenu } = useContextMenu(); // Use the context menu
     const { adoptConfig, setAdoptConfig } = useStore();
     const { isPasteDisabled, setIsPasteDisabled } = useStore();
@@ -96,6 +96,13 @@ const XTermTerminal = ({ device }) => {
         }, 100),
         []
     );
+
+    useEffect(() => {
+        if (terminalRef.current && fontSize) {
+            terminalRef.current.options.fontSize = fontSize;
+            fitAddonRef.current?.fit(); // Call fit to adjust the terminal size
+        }
+    }, [fontSize]);
 
     useEffect(() => {
         if (terminalRef.current && selectedTabValue === deviceKey) {
