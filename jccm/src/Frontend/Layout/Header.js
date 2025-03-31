@@ -17,6 +17,7 @@ import {
     TabList,
     Toast,
     ToastTitle,
+    ToastBody,
     Text,
     Toolbar,
     ToolbarButton,
@@ -74,6 +75,10 @@ import {
     MoreCircleRegular,
     XboxConsoleFilled,
     bundleIcon,
+    TableDismissFilled,
+    TableDismissRegular,
+    TableDeleteRowFilled,
+    TableDeleteRowRegular,
 } from '@fluentui/react-icons';
 
 import Login from '../Components/Login';
@@ -88,6 +93,8 @@ import InventorySearchCard from './InventorySearch/InventorySearch';
 import { GlobalSettings } from './GlobalSettings/GlobalSettings';
 import { Vault } from './Vault';
 import { EditCLIShortcutsCard } from './CLIShortcutsCard';
+import { ConfirmWindow } from '../ConfirmWindow';
+import eventBus from '../Common/eventBus';
 
 const ColorIcon = bundleIcon(ColorFilled, ColorRegular);
 const LoginUserIcon = bundleIcon(PersonAvailableRegular, PersonCircleRegular);
@@ -100,6 +107,7 @@ const EditCommandShortcutsIcon = bundleIcon(ClipboardCodeRegular, ClipboardRegul
 const ImportInventoryIcon = bundleIcon(AppsAddInFilled, AppsAddInRegular);
 // const ImportInventoryIcon = bundleIcon(TableMoveAboveFilled, TableMoveAboveRegular);
 const ExportInventoryIcon = bundleIcon(TableMoveBelowFilled, TableMoveBelowRegular);
+const ResetInventoryIcon = bundleIcon(TableDeleteRowFilled, TableDeleteRowRegular);
 const AdoptDeviceConfigIcon = bundleIcon(ClipboardCodeRegular, ClipboardRegular);
 const Organization = bundleIcon(OrganizationFilled, OrganizationRegular);
 const BastionIcon = bundleIcon(HexagonThreeFilled, HexagonThreeRegular);
@@ -138,6 +146,7 @@ export default () => {
 
     const [isInventoryEditCardVisible, setIsInventoryEditCardVisible] = useState(false);
     const [isInventoryImportCardVisible, setIsInventoryImportCardVisible] = useState(false);
+    const [isInventoryResetCardVisible, setIsInventoryResetCardVisible] = useState(false);
     const [isDeviceSearchCardVisible, setIsDeviceSearchCardVisible] = useState(false);
     const [isEditCLIShortcutsCardVisible, setIsEditCLIShortcutsCardVisible] = useState(false);
     const [isSettingsCardVisible, setIsSettingsCardVisible] = useState(false);
@@ -168,9 +177,10 @@ export default () => {
     const onCopyAdoptionConfig = async (org) => {
         const orgId = org.id;
         const orgName = org.name;
+        const endpoint = user?.cloudId?.toLowerCase() === 'jsi' ? 'jsi/devices' : 'ocdevices';
 
         const data = await electronAPI.saProxyCall({
-            api: `orgs/${orgId}/ocdevices/outbound_ssh_cmd`,
+            api: `orgs/${orgId}/${endpoint}/outbound_ssh_cmd`,
             method: 'GET',
             body: null,
         });
@@ -178,12 +188,15 @@ export default () => {
         if (data.proxy) {
             notify(
                 <Toast>
-                    <ToastTitle>Copied the adoption configuration for the organization: '{orgName}'.</ToastTitle>
+                    <ToastTitle>
+                        Copied the {user?.cloudId?.toLowerCase() === 'jsi' ? 'jsi-term' : ''} adoption configuration for
+                        the organization: '{orgName}'.
+                    </ToastTitle>
                 </Toast>,
                 { intent: 'success' }
             );
-            copyToClipboard(data.response.cmd);
-            setAdoptConfig(data.response.cmd);
+            copyToClipboard(data.response.cmd + '\n');
+            setAdoptConfig(data.response.cmd + '\n');
         } else {
             console.error('api call error: ', data?.error);
         }
@@ -207,7 +220,24 @@ export default () => {
                 let json = utils.sheet_to_json(worksheet);
 
                 // Eliminate redundant rows
+                const originalCount = json.length;
                 const uniqueRows = Array.from(new Set(json.map(JSON.stringify))).map(JSON.parse);
+
+                // Notify if duplicate rows were found and removed
+                if (uniqueRows.length < originalCount) {
+                    notify(
+                        <Toast>
+                            <ToastTitle>Duplicate Rows Removed</ToastTitle>
+                            <ToastBody subtitle='Duplicates Found'>
+                                <Text>
+                                    {originalCount - uniqueRows.length} duplicate row
+                                    {originalCount - uniqueRows.length > 1 ? 's' : ''} were removed.
+                                </Text>
+                            </ToastBody>
+                        </Toast>,
+                        { intent: 'warning' }
+                    );
+                }
 
                 // Count organizations, sites, and devices
                 const organizations = new Set();
@@ -315,6 +345,10 @@ export default () => {
         );
     };
 
+    const handleReset = () => {
+        setIsInventoryResetCardVisible(true);
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <TabList selectedValue={selectedTab} onTabSelect={onTabSelect}>
@@ -387,6 +421,15 @@ export default () => {
                                 disabled={!inventory || inventory.length === 0}
                             >
                                 Export
+                            </MenuItem>
+                            <MenuItem
+                                onClick={() => {
+                                    handleReset();
+                                }}
+                                icon={<ResetInventoryIcon fontSize='19px' />}
+                                disabled={!inventory || inventory.length === 0}
+                            >
+                                Reset
                             </MenuItem>
                         </MenuList>
                     </MenuPopover>
@@ -527,6 +570,21 @@ export default () => {
                             setIsInventoryEditCardVisible(false);
                         }}
                         importedInventory={inventory}
+                    />
+                )}
+                {isInventoryResetCardVisible && (
+                    <ConfirmWindow
+                        isOpen={isInventoryResetCardVisible}
+                        onClose={() => setIsInventoryResetCardVisible(false)}
+                        message={'This will reset all inventory data.\nAre you sure you want to proceed?'}
+                        onConfirm={async () => {
+                            setInventory([]);
+                            await electronAPI.saSetLocalInventory({ inventory: [] });
+                            setTimeout(async () => {
+                                await eventBus.emit('device-facts-cleanup', { notification: false });
+                                await eventBus.emit('device-network-access-check-refresh');
+                            }, 1000);
+                        }}
                     />
                 )}
                 {isDeviceSearchCardVisible && (

@@ -53,7 +53,7 @@ import LeftSide from './Layout/LeftSide';
 import UserAvatar from './Components/UserAvatar';
 import useStore from './Common/StateStore';
 import Login from './Components/Login';
-import TerminalLayout from './Components/Terminals/TerminalLayout';
+import PanelLayout from './Components/Terminals/PanelLayout';
 import eventBus from './Common/eventBus';
 import { ConsoleWindow } from './ConsoleWindow';
 import { AboutWindow } from './AboutWindow';
@@ -530,7 +530,7 @@ export const Main = () => {
                             height: '100%',
                         }}
                     >
-                        <TerminalLayout />
+                        <PanelLayout />
                     </div>
                 </div>
                 <div

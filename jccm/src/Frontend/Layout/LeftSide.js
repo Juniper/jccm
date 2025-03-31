@@ -81,8 +81,6 @@ const LeftSide = () => {
         isInventoryLoading,
         isChecking,
         settings,
-        showConfigViewer,
-        setShowConfigViewer,
     } = useStore();
 
     const [selectedTree, setSelectedTree] = useState('local');

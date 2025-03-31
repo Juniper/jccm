@@ -20,12 +20,14 @@ module.exports = {
         rules,
     },
     resolve: {
-        extensions: ['.js', '.jsx', '.json', '.yml', '.yaml'], // Resolve these extensions
+        extensions: ['.js', '.jsx', '.json', '.yml', '.yaml', '.mjs'], // Resolve these extensions
         fallback: {
             fs: false, // Tells Webpack to ignore 'fs' module
             path: require.resolve('path-browserify'), // Provides a polyfill for 'path'
             buffer: require.resolve('buffer/'), // Provides a polyfill for 'buffer'
             os: require.resolve('os-browserify/browser'), // Provides a polyfill for 'os'
+            timers: require.resolve('timers-browserify'), // Provides a polyfill for 'timers'
+            stream: require.resolve("stream-browserify"), // Provides a polyfill for 'stream'            
         },
     },
     plugins: [
@@ -40,16 +42,15 @@ module.exports = {
     ],
     ignoreWarnings: [
         {
-            message: /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/
-        }
+            message:
+                /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/,
+        },
     ],
     devServer: {
         contentBase: path.join(__dirname, 'dist'), // Output directory
         hot: true, // Enable HMR on the server
         host: '127.0.0.1', // Bind to IPv4 address
-        allowedHosts: [
-            '127.0.0.1'
-        ],
+        allowedHosts: ['127.0.0.1'],
     },
     // Set target to 'web' for HMR to work properly
     target: 'web',

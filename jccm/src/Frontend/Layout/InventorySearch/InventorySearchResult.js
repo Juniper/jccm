@@ -95,6 +95,10 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled, und
 
                 keys.forEach((k) => {
                     value = value && value[k] ? value[k] : `Your ${k}`;
+                    if (typeof value === 'string' && value === 'Your site') {
+                        value = 'Your site (or leave it empty if a site assignment is not needed)';
+                    }
+
                     value =
                         value !== null && typeof value === 'object' && !Array.isArray(value)
                             ? value.values.join(', ')
@@ -207,6 +211,9 @@ export const InventorySearchResult = ({ columns, items, rowHeight, disabled, und
                             ? value.values.join(', ')
                             : value;
 
+                    if (typeof value === 'string' && value === 'Your site') {
+                        value = 'Your site (or leave it empty if a site assignment is not needed)';
+                    }
                     orderedRow[columnMapping[key]] = value;
                 }
             });

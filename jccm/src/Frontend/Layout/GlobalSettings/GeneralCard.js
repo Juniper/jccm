@@ -32,14 +32,40 @@ import _ from 'lodash';
 import { useNotify } from '../../Common/NotificationContext';
 import useStore from '../../Common/StateStore';
 import eventBus from '../../Common/eventBus';
+import { xtermDefaultOptions } from '../../Common/CommonVariables';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const DeleteIcon = bundleIcon(SubtractCircleFilled, SubtractCircleRegular);
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const { minFontSize, maxFontSize, defaultFontSize } = xtermDefaultOptions;
 
 export const GeneralCard = () => {
-    const { settings, setSettings, setConsoleWindowOpen, exportSettings } =
-        useStore();
+    const { settings, setSettings, setConsoleWindowOpen, exportSettings } = useStore();
+    const [terminalFontSize, setTerminalFontSize] = useState(settings?.terminal?.fontSize || 14);
+
+    const saveTerminalFontSize = (fontSize) => {
+        const saveFunction = async () => {
+            const newSettings = { ...settings, terminal: { fontSize } };
+            setSettings(newSettings);
+            exportSettings(newSettings);
+        };
+        saveFunction();
+    };
+
+    const handleTerminalFontSizeSpinButtonChange = (event, { value, displayValue }) => {
+        if (value !== undefined) {
+            setTerminalFontSize(value);
+            saveTerminalFontSize(value);
+        } else if (displayValue !== undefined) {
+            const fontSize = parseInt(displayValue);
+            if (!Number.isNaN(fontSize)) {
+                setTerminalFontSize(fontSize);
+                saveTerminalFontSize(fontSize);
+            } else {
+                console.error(`Cannot parse "${fontSize}" as a number.`);
+            }
+        }
+    };
 
     const saveConsoleWindowButtonShow = (newShowConsoleWindow) => {
         const saveFunction = async () => {
@@ -132,6 +158,7 @@ export const GeneralCard = () => {
                 justifyContent: 'flex-start',
                 alignItems: 'center',
                 width: '100%',
+                height: '100%',
                 marginLeft: '10px',
             }}
         >
@@ -159,12 +186,9 @@ export const GeneralCard = () => {
                         onChange={onChangeDeviceModelValidation}
                     />
                 </div>
-                <Text>
-                    {settings.deviceModelsValidation ? 'Enabled' : 'Disabled'}
-                </Text>
+                <Text size={200}>{settings.deviceModelsValidation ? 'Enabled' : 'Disabled'}</Text>
             </div>
-            
-                        
+
             <div
                 style={{
                     display: 'flex',
@@ -185,18 +209,14 @@ export const GeneralCard = () => {
                     }}
                 >
                     <Switch
-                        checked={
-                            settings?.consoleWindowButtonShow ? true : false
-                        }
+                        checked={settings?.consoleWindowButtonShow ? true : false}
                         onChange={onChangConsoleWindowButtonShow}
                     />
                 </div>
-                <Text>
-                    {settings?.consoleWindowButtonShow ? 'Enabled' : 'Disabled'}
-                </Text>
+                <Text size={200}>{settings?.consoleWindowButtonShow ? 'Enabled' : 'Disabled'}</Text>
             </div>
 
-            <div
+            {/* <div
                 style={{
                     display: 'flex',
                     flexDirection: 'row',
@@ -214,13 +234,10 @@ export const GeneralCard = () => {
                         transformOrigin: 'right',
                     }}
                 >
-                    <Switch
-                        checked={settings.jsiTerm ? true : false}
-                        onChange={onChangeJsiTerm}
-                    />
+                    <Switch checked={settings.jsiTerm ? true : false} onChange={onChangeJsiTerm} />
                 </div>
-                <Text>{settings.jsiTerm ? 'Enabled' : 'Disabled'}</Text>
-            </div>
+                <Text size={200}>{settings.jsiTerm ? 'Enabled' : 'Disabled'}</Text>
+            </div> */}
 
             <div
                 style={{
@@ -240,14 +257,43 @@ export const GeneralCard = () => {
                         transformOrigin: 'right',
                     }}
                 >
-                    <Switch
-                        checked={settings.ignoreCase ? true : false}
-                        onChange={onChangeIgnoreCase}
-                    />
+                    <Switch checked={settings.ignoreCase ? true : false} onChange={onChangeIgnoreCase} />
                 </div>
-                <Text>{settings.ignoreCase ? 'Enabled' : 'Disabled'}</Text>
+                <Text size={200}>{settings.ignoreCase ? 'Enabled' : 'Disabled'}</Text>
             </div>
 
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    gap: '5px',
+                    width: '100%',
+                    marginLeft: '10px',
+                    height: '40px',
+                }}
+            >
+                <Text>Set the default font size for the shell terminal:</Text>
+                <div
+                    style={{
+                        transform: 'scale(0.8)',
+                        transformOrigin: 'right',
+                    }}
+                >
+                    <SpinButton
+                        appearance='filled-darker'
+                        defaultValue={defaultFontSize}
+                        value={terminalFontSize}
+                        min={minFontSize}
+                        max={maxFontSize}
+                        onChange={handleTerminalFontSizeSpinButtonChange}
+                        size='small'
+                        style={{ width: '100px' }}
+                    />
+                </div>
+
+            </div>
 
             {/* <div
                 style={{
@@ -273,7 +319,7 @@ export const GeneralCard = () => {
                         onChange={onChangeDeleteOutboundSSHTerm}
                     />
                 </div>
-                <Text>
+                <Text size={200}>
                     {settings.deleteOutboundSSHTerm ? 'Enabled' : 'Disabled'}
                 </Text>
             </div> */}

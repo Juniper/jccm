@@ -160,6 +160,7 @@ export const Login = ({ isOpen, onClose }) => {
     };
 
     const onChangeCloudSelection = (id) => {
+        console.log('cloud id', id);
         setCloud(id);
     };
 
@@ -196,6 +197,7 @@ export const Login = ({ isOpen, onClose }) => {
                 cloud,
                 email,
             });
+            console.log('Lookup Result:', data);
             return data; // Ensure data is returned here
         } catch (err) {
             console.error('Error lookup the cloud api server endpoint:', err);

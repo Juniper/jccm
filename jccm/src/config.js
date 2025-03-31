@@ -2,16 +2,16 @@ import NodeCache from 'node-cache';
 
 export const CloudInfo = {
     mist: {
-        description: 'Juniper Mist Cloud',
+        description: 'Juniper MIST Wired / WAN Assurance + JSI',
         lookupApiUrl: 'https://api.mist.com/api/v1/sso/lookup',
     },
-    jsi: {
-        description: 'Juniper Support Insights',
-        lookupApiUrl: 'https://jsi.ai.juniper.net/api/v1/login/lookup',
-    },
-    juniper: {
-        description: 'Juniper Routing Assurance',
+    jmra: {
+        description: 'Juniper MIST Routing Assurance + JSI',
         lookupApiUrl: 'https://routing.ai.juniper.net/api/v1/login/lookup',
+    },
+    jsi: {
+        description: 'Juniper Support Insights [JSI]',
+        lookupApiUrl: 'https://jsi.ai.juniper.net/api/v1/login/lookup',
     },
 };
 

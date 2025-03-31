@@ -22,6 +22,8 @@ export const sharedInventoryWindowHeight = 500;
 export const InventorySearchWindowWidth = 1000;
 export const InventorySearchWindowHeight = 700;
 
+export const EmptySiteName = '~~ Site Not Assigned ~~';
+
 export const Themes = {
     webLightTheme: { theme: webLightTheme, description: 'Web Light' },
     webDarkTheme: { theme: webDarkTheme, description: 'Web Dark' },
@@ -29,6 +31,15 @@ export const Themes = {
     teamsDarkTheme: { theme: teamsDarkTheme, description: 'Teams Dark' },
     teamsHighContrastTheme: { theme: teamsHighContrastTheme, description: 'Teams High Contrast' },
 };
+
+export const xtermDefaultOptions = {
+    minFontSize: 5,
+    maxFontSize: 32,
+    defaultFontSize: 12,
+};
+
+export const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+export const sleep = delay;
 
 export const getActiveTheme = (themeName) => {
     return Themes[themeName] || Themes.webLightTheme;
@@ -100,7 +111,9 @@ export const defaultCliShortcutData = `#
 # The sleep <time> keyword pauses execution for milliseconds before the next command.
 # For example, 'sleep 500' pauses for 500 milliseconds.
 # \${device-address} is a placeholder for the device's address.
-# \${oc-term-hostname} is a placeholder for the oc-term hostname.
+# \${oc-term-hostname} is a placeholder for the oc-term.
+# \${jsi-term-hostname} is a placeholder for the jsi-term hostname.
+# \${outbound-ssh-hostname} is a placeholder for the oc-term or jsi-term hostname, depending on the logged-in service.
 #
 mappings:
   - name: System Information
@@ -118,10 +131,10 @@ mappings:
   - name: Outbound-SSH Session
     commands:
       - show system connection | match \\.2200
-  - name: Outbound SSH Configuration
+  - name: Outbound-SSH Configuration
     commands:
       - show configuration system service outbound-ssh
-  - name: Outbound SSH Config and Session
+  - name: Outbound-SSH Config and Session
     commands:
       - show configuration system service outbound-ssh
       - sleep 500
@@ -129,15 +142,13 @@ mappings:
   - name: Route to Device Address
     commands:
       - show route \${device-address}
-  - name: Route to OC-Term Host
+  - name: Route to outbound-ssh target host
     commands:
-      - show route \${oc-term-hostname}
-  - name: Ping OC-Term Host
+      - show route \${outbound-ssh-hostname}
+  - name: Ping outbound-ssh target host
     commands:
-      - ping \${oc-term-hostname} inet count 3 wait 1
-  - name: Telnet to OC-Term Host
+      - ping \${outbound-ssh-hostname} inet count 3 wait 1
+  - name: Telnet to outbound-ssh target host
     commands:
-      - telnet \${oc-term-hostname} inet port 2200
+      - telnet \${outbound-ssh-hostname} inet port 2200
 `;
-
-

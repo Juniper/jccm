@@ -204,6 +204,8 @@ import {
     DismissCircleFilled,
     WrenchRegular,
     bundleIcon,
+    SquareHintRegular,
+    SquareHintFilled,
 } from '@fluentui/react-icons';
 import _, { set } from 'lodash';
 const { electronAPI } = window;
@@ -211,7 +213,7 @@ const { electronAPI } = window;
 import useStore from '../Common/StateStore';
 import { useNotify } from '../Common/NotificationContext';
 import { useContextMenu } from '../Common/ContextMenuContext';
-import { copyToClipboard, capitalizeFirstChar } from '../Common/CommonVariables';
+import { copyToClipboard, capitalizeFirstChar, EmptySiteName } from '../Common/CommonVariables';
 import {
     adoptDevices,
     executeJunosCommand,
@@ -387,14 +389,23 @@ const convertToFlatTreeItems = (localInventory, deviceFacts) => {
                 parentValue: `/Inventory/${organization}`,
                 value: `/Inventory/${organization}/${site}`,
                 content: site,
-                icon: (
-                    <SquareMultipleRegular
-                        style={{
-                            fontSize: '14px',
-                            color: tokens.colorPaletteLightGreenBorderActive,
-                        }}
-                    />
-                ), // Placeholder for icon, replace with actual icon if needed
+                icon:
+                    site.length > 0 ? (
+                        <SquareMultipleRegular
+                            style={{
+                                fontSize: '14px',
+                                color: tokens.colorPaletteLightGreenBorderActive,
+                            }}
+                        />
+                    ) : (
+                        // No site name case
+                        <SquareHintFilled
+                            style={{
+                                fontSize: '14px',
+                                color: tokens.colorPaletteLightGreenBorderActive,
+                            }}
+                        />
+                    ), // Placeholder for icon, replace with actual icon if needed
                 counter: siteData.counter,
                 type: 'site',
             });
@@ -473,7 +484,9 @@ const InventoryTreeMenuLocal = () => {
     const convertErrorMessage = (message) => {
         if (
             message?.includes('Permission denied') &&
-            (message?.includes('publickey') || message?.includes('password') || message?.includes('keyboard-interactive'))
+            (message?.includes('publickey') ||
+                message?.includes('password') ||
+                message?.includes('keyboard-interactive'))
         ) {
             return 'SSH Authentication failed.';
         } else {
@@ -512,6 +525,7 @@ const InventoryTreeMenuLocal = () => {
         );
 
         if (!factKey) return undefined; // Return an empty object if no match is found
+
         const fact = deviceFacts[factKey];
 
         return fact;
@@ -554,10 +568,12 @@ const InventoryTreeMenuLocal = () => {
                 // Check org and site name with case sensitivity based on ignoreCaseInName
                 if (ignoreCaseInName) {
                     setIsOrgMatch(cloudOrgName?.toLowerCase() === deviceOrgName?.toLowerCase());
-                    setIsSiteMatch(cloudSiteName?.toLowerCase() === deviceSiteName?.toLowerCase());
+                    setIsSiteMatch(
+                        deviceSiteName.length === 0 || cloudSiteName?.toLowerCase() === deviceSiteName?.toLowerCase()
+                    );
                 } else {
                     setIsOrgMatch(cloudOrgName === deviceOrgName);
-                    setIsSiteMatch(cloudSiteName === deviceSiteName);
+                    setIsSiteMatch(deviceSiteName.length === 0 || cloudSiteName === deviceSiteName);
                 }
             }
             setIsAdopted(adopted);
@@ -596,12 +612,20 @@ const InventoryTreeMenuLocal = () => {
                     width: '100%',
                 }}
             >
-                <Text size={200}>
-                    The site name (<i>{device.siteName}</i>) does not exist in your account:
-                </Text>
-                <Text size={100} font='monospace'>
-                    {`"${device.siteName}" ≠ "${foundCloudDevice?.site_name}"`}
-                </Text>
+                {foundCloudDevice?.site_name ? (
+                    <>
+                        <Text size={100}>
+                            The site name (<i>{device.siteName}</i>) does not exist in your account:
+                        </Text>
+                        <Text size={100} font='monospace'>
+                            {`"${device.siteName}" ≠ "${foundCloudDevice?.site_name}"`}
+                        </Text>
+                    </>
+                ) : (
+                    <>
+                        <Text size={100}>The device is not assigned to any site in your account:</Text>
+                    </>
+                )}
             </div>
         );
 
@@ -729,7 +753,8 @@ const InventoryTreeMenuLocal = () => {
 
             const result = deviceNetworkCondition[path] || {};
 
-            const message = result?.message?.length > 0 ? result?.message : 'No network condition test result available';
+            const message =
+                result?.message?.length > 0 ? result?.message : 'No network condition test result available';
             const isConnectable = result.dns && result.route && result.access && result.curl;
 
             return (
@@ -1014,7 +1039,7 @@ const InventoryTreeMenuLocal = () => {
                                         color: tokens.colorPaletteMarigoldForeground1,
                                     }}
                                 >
-                                    No access test is available.
+                                    The '<b>curl</b>' test command is missing.
                                 </Text>
                             </div>
                         </Tooltip>
@@ -1518,7 +1543,11 @@ const InventoryTreeMenuLocal = () => {
     };
 
     const getFacts = async (node, rate = 10) => {
-        const targetDevices = inventory.filter((device) => device._path.startsWith(node.value));
+        const targetDevices = inventory.filter((device) => {
+            // Normalize node value if site name is missing or incomplete
+            const nodeValue = node.value.endsWith('/') ? node.value + '/' : node.value;
+            return device._path.startsWith(nodeValue);
+        });
 
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         const rateLimit = 1000 / rate; // Rate in calls per second
@@ -1630,6 +1659,8 @@ const InventoryTreeMenuLocal = () => {
             const orgName = device.organization;
             const siteName = device.site;
 
+            console.log(`Adopting device: ${device.path}, siteName: ${siteName}, orgName: ${orgName}`);
+
             const siteExists = doesSiteNameExist(orgName, siteName);
 
             const fact = findFact(device.path);
@@ -1639,7 +1670,10 @@ const InventoryTreeMenuLocal = () => {
             const IsValidDeviceModel = validateDeviceModel(fact.systemInformation?.hardwareModel);
             if (!IsValidDeviceModel) return false;
 
-            return siteExists && device.path.startsWith(node.value) && !!!cloudDevices[serialNumber];
+            // Normalize node value if site name is missing or incomplete
+            const nodeValue = node.value.endsWith('/') ? node.value + '/' : node.value;
+
+            return siteExists && device.path.startsWith(nodeValue) && !!!cloudDevices[serialNumber];
         });
 
         const targetOrgs = new Set();
@@ -1739,7 +1773,11 @@ const InventoryTreeMenuLocal = () => {
 
         const targetDevices = inventoryWithPath.filter((device) => {
             const cloudDevice = findCloudDevice(device._path);
-            return device.path.startsWith(node.value) && !!cloudDevice;
+
+            // Normalize node value if site name is missing or incomplete
+            const nodeValue = node.value.endsWith('/') ? node.value + '/' : node.value;
+
+            return device.path.startsWith(nodeValue) && !!cloudDevice;
         });
 
         const targetOrgs = new Set();
@@ -1881,7 +1919,10 @@ const InventoryTreeMenuLocal = () => {
             const IsValidDeviceModel = validateDeviceModel(fact.systemInformation?.hardwareModel);
             if (!IsValidDeviceModel) return false;
 
-            return siteExists && device._path.startsWith(node.value);
+            // Normalize node value if site name is missing or incomplete
+            const nodeValue = node.value.endsWith('/') ? node.value + '/' : node.value;
+
+            return siteExists && device._path.startsWith(nodeValue);
         });
 
         if (targetDevices.length === 0) {
@@ -1903,11 +1944,13 @@ const InventoryTreeMenuLocal = () => {
         let defaultTermServer = 'oc-term.mistsys.net'; // default oc term service host
         let defaultTermPort = 2200; // default oc term service port
 
+        const endpoint = user?.cloudId?.toLowerCase() === 'jsi' ? 'jsi/devices' : 'ocdevices';
+
         for (const orgName of organizationSet) {
             const orgId = orgs[orgName].id;
 
             const data = await electronAPI.saProxyCall({
-                api: `orgs/${orgId}/ocdevices/outbound_ssh_cmd`,
+                api: `orgs/${orgId}/${endpoint}/outbound_ssh_cmd`,
                 method: 'GET',
                 body: null,
             });
@@ -1967,10 +2010,13 @@ const InventoryTreeMenuLocal = () => {
     };
 
     const ContextMenuContent = (event, node) => {
-        const devices = inventory.filter(
-            (device) => device._path.startsWith(node.value) && !!deviceFacts[device._path]
-        );
-        const devicesAdopted = devices.filter((device) => !!findCloudDevice(device._path));
+        const devices = inventory.filter((device) => {
+            // Normalize node value if site name is missing or incomplete
+            const nodeValue = node.value.endsWith('/') ? node.value + '/' : node.value;
+            return device._path.startsWith(nodeValue) && !!deviceFacts[device._path];
+        });
+
+        const devicesAdopted = devices.filter((device) => findCloudDevice(device._path));
 
         const isTargetDeviceAvailable = () => {
             return devices.length > 0;
@@ -2036,7 +2082,7 @@ const InventoryTreeMenuLocal = () => {
                                     customAlert(
                                         'Device Adoption',
                                         () => {
-                                            actionAdoptDevices(node);
+                                            actionAdoptDevices(node, user?.cloudId === 'jsi');
                                         },
                                         theme,
                                         (newWarningShowForAdoption) => {
@@ -2057,53 +2103,9 @@ const InventoryTreeMenuLocal = () => {
                             }}
                         >
                             <Text size={200} font='numeric'>
-                                Adopt Device to Assurance
+                                Adopt Device to {user?.cloudId?.toLowerCase() === 'jsi' ? 'JSI' : 'Assurance'}
                             </Text>
                         </MenuItem>
-                        {settings.jsiTerm && (
-                            <MenuItem
-                                disabled={
-                                    !isUserLoggedIn ||
-                                    !isTargetDeviceAvailable() ||
-                                    !isOrgSiteMatch() ||
-                                    user?.service?.toLowerCase().includes('mist') ||
-                                    (node.type === 'device' &&
-                                        !validateDeviceModel(findFact(node.value)?.systemInformation?.hardwareModel))
-                                }
-                                icon={<JsiAdoptDeviceIcon style={{ fontSize: '14px' }} />}
-                                onClick={async () => {
-                                    if (settingWarningShowForAdoption) {
-                                        customAlert(
-                                            'Device Adoption',
-                                            () => {
-                                                actionAdoptDevices(node, true);
-                                            },
-                                            theme,
-                                            (newWarningShowForAdoption) => {
-                                                const saveFunction = async () => {
-                                                    const newSettings = {
-                                                        ...settings,
-                                                        warningShowForAdoption: newWarningShowForAdoption,
-                                                    };
-                                                    setSettings(newSettings);
-                                                    exportSettings(newSettings);
-                                                };
-                                                saveFunction();
-                                            }
-                                        );
-                                    } else {
-                                        actionAdoptDevices(node, true);
-                                    }
-                                }}
-                            >
-                                <Text size={200} font='numeric'>
-                                    {user?.service?.toLowerCase().includes('mist')
-                                        ? 'JSI-only adoption not available in Mist'
-                                        : 'Adopt Device to JSI-only'}
-                                </Text>
-                            </MenuItem>
-                        )}
-
                         <MenuItem
                             disabled={!isUserLoggedIn || !isDeviceAdoptedAvailable()}
                             icon={<ReleaseDeviceIcon style={{ fontSize: '14px' }} />}
@@ -2179,6 +2181,10 @@ const InventoryTreeMenuLocal = () => {
         // If the organization is not found, return false
         if (!org) {
             return false;
+        }
+
+        if (siteName.length === 0) {
+            return true;
         }
 
         // Check if the site name exists within the organization's sites array
@@ -2266,31 +2272,50 @@ const InventoryTreeMenuLocal = () => {
                             iconBefore={rowData.icon}
                             onContextMenu={(event) => onNodeRightClick(event, rowData)}
                         >
-                            {!isUserLoggedIn ||
-                            doesSiteNameExist(rowData.parentValue.split('/').pop(), rowData.content) ? (
-                                <Text size={100}>{rowData.content}</Text>
-                            ) : (
-                                <Tooltip
-                                    content='Site name mismatch in cloud.'
-                                    relationship='label'
-                                    withArrow
-                                    positioning='above-end'
-                                >
-                                    <Text
-                                        size={100}
-                                        strikethrough={cloudInventory.length > 0}
-                                        style={
-                                            cloudInventory.length > 0
-                                                ? {
-                                                      color: tokens.colorStatusDangerForeground3,
-                                                  }
-                                                : null
-                                        }
+                            {(() => {
+                                const orgName = rowData.parentValue.split('/').pop();
+                                const siteName = rowData.content?.trim() || ''; // Trim to catch all-whitespace
+                                const isEmptySite = siteName.length === 0;
+                                const siteDisplayName = isEmptySite ? EmptySiteName : siteName;
+
+                                if (!isUserLoggedIn || doesSiteNameExist(orgName, siteName)) {
+                                    return isEmptySite ? (
+                                        <Tooltip
+                                            content='Device is unassigned — site name is empty.'
+                                            relationship='label'
+                                            withArrow
+                                            positioning='above-end'
+                                        >
+                                            <Text size={100} style={{ color: tokens.colorNeutralForeground3Selected }}>
+                                                {siteDisplayName}
+                                            </Text>
+                                        </Tooltip>
+                                    ) : (
+                                        <Text size={100}>{siteDisplayName}</Text>
+                                    );
+                                }
+
+                                return (
+                                    <Tooltip
+                                        content='Site name mismatch in cloud.'
+                                        relationship='label'
+                                        withArrow
+                                        positioning='above-end'
                                     >
-                                        {rowData.content}
-                                    </Text>
-                                </Tooltip>
-                            )}
+                                        <Text
+                                            size={100}
+                                            strikethrough={cloudInventory.length > 0}
+                                            style={
+                                                cloudInventory.length > 0
+                                                    ? { color: tokens.colorStatusDangerForeground3 }
+                                                    : undefined
+                                            }
+                                        >
+                                            {siteName}
+                                        </Text>
+                                    </Tooltip>
+                                );
+                            })()}
                         </TreeItemLayout>
                     </FlatTreeItem>
                 ) : rowData.type === 'device' ? (

@@ -232,7 +232,7 @@ const startSSHConnectionStandalone = (event, device, { id, cols, rows }) => {
     sshSessions[id] = conn;
 
     conn.on('ready', () => {
-        console.log(`SSH session successfully opened for id: ${id} address: ${address}`);
+        console.log(`${id}: SSH session successfully opened for the device ${address}:${port}`);
         event.reply('sshSessionOpened', { id, address }); // Notify renderer that the session is open
 
         conn.shell({ cols, rows }, (err, stream) => {
@@ -507,6 +507,7 @@ export const setupApiHandlers = () => {
         const email = args.email;
         try {
             const response = await acLookupRegions(cloudId, email);
+            console.log('main: saLookupApiEndpoint: response:', JSON.stringify(response, null, 2));
             return response;
         } catch (error) {
             console.error('User lookup failed!', error);
@@ -547,6 +548,7 @@ export const setupApiHandlers = () => {
                             ...response.data,
                             service,
                             theme,
+                            cloudId,
                             cloudDescription,
                             regionName,
                         },
@@ -570,6 +572,7 @@ export const setupApiHandlers = () => {
                             ...response.data,
                             service,
                             theme,
+                            cloudId,
                             cloudDescription,
                             regionName,
                         },
@@ -632,6 +635,7 @@ export const setupApiHandlers = () => {
                         ...response.data,
                         service,
                         theme,
+                        cloudId,
                         cloudDescription,
                         regionName,
                     },
@@ -740,7 +744,7 @@ export const setupApiHandlers = () => {
 
     // SSH handling
     ipcMain.on('startSSHConnection', async (event, { id, cols, rows }) => {
-        console.log('main: startSSHConnection: id: ' + id);
+        console.log(`${id}: startSSHConnection`);
         const inventory = await msGetLocalInventory();
         const settings = await msLoadSettings();
 
@@ -797,7 +801,7 @@ export const setupApiHandlers = () => {
     });
 
     ipcMain.on('disconnectSSHSession', (event, { id }) => {
-        console.log('main: disconnectSSHSession');
+        console.log(`${id}: disconnectSSHSession`);
 
         if (sshSessions[id]) {
             sshSessions[id].end();
@@ -862,7 +866,7 @@ export const setupApiHandlers = () => {
 
         const cloudOrgs = await msGetCloudOrgs();
 
-        console.log('Adopting device:', organization, site, address, port, ignoreCaseInName, cloudOrgs);
+        // console.log('Adopting device:', organization, site, address, port, ignoreCaseInName, cloudOrgs);
 
         let orgId = null;
         let siteId = null;
@@ -1112,6 +1116,7 @@ export const setupApiHandlers = () => {
                     ...response.data,
                     service,
                     theme,
+                    cloudId,
                     cloudDescription,
                     regionName,
                 },
@@ -1142,7 +1147,7 @@ export const setupApiHandlers = () => {
     });
 
     ipcMain.handle('get-device-network-condition', async (event, args) => {
-        console.log('main: saGetDeviceNetworkCondition');
+        console.log('main: saGetDeviceNetworkCondition', `${args?.address}:${args?.port}`);
 
         const { address, port, username, password, timeout, bastionHost, termServer, termPort } = args;
 

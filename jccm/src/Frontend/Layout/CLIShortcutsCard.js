@@ -81,6 +81,32 @@ const validateYamlSchema = (yamlData, schema) => {
     return parsedData;
 };
 
+function ensureDefaultComments(text) {
+    // Split the input text into lines.
+    const lines = text.split('\n');
+
+    // Identify the header block: consecutive comment lines at the top.
+    let headerEndIndex = 0;
+    while (headerEndIndex < lines.length && lines[headerEndIndex].trim().startsWith('#')) {
+        headerEndIndex++;
+    }
+
+    // Get the header block.
+    const headerBlock = lines.slice(0, headerEndIndex);
+
+    // Get the default header block from defaultCliShortcutData.
+    const defaultLines = defaultCliShortcutData.split('\n');
+    let defaultHeaderEndIndex = 0;
+    while (defaultHeaderEndIndex < defaultLines.length && defaultLines[defaultHeaderEndIndex].trim().startsWith('#')) {
+        defaultHeaderEndIndex++;
+    }
+    const defaultHeaderBlock = defaultLines.slice(0, defaultHeaderEndIndex);
+
+    // Replace the original header with the default header.
+    const newLines = [...defaultHeaderBlock, ...lines.slice(headerEndIndex)];
+    return newLines.join('\n');
+}
+
 export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
     const { notify } = useNotify();
@@ -90,7 +116,11 @@ export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
     const [column, setColumn] = useState(0);
 
     const editorMethodsRef = useRef(null);
-    const text = settings?.cliShortcuts?.length > 0 ? settings.cliShortcuts : defaultCliShortcutData;
+
+    const _text = settings?.cliShortcuts?.length > 0 ? settings.cliShortcuts : defaultCliShortcutData;
+
+    const text = ensureDefaultComments(_text);
+
     const [currentText, setCurrentText] = useState(text);
     const [isChanged, setIsChanged] = useState(false);
 

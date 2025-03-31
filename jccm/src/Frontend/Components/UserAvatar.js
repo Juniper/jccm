@@ -69,13 +69,9 @@ const UserAvatar = () => {
                         <Text size={100}>
                             Logged into the service&nbsp;
                             <Link href='#' inline onClick={handleLinkClick}>
-                                {(() => {
-                                    const serviceParts = user?.service?.split('/') || [];
-                                    if (serviceParts.length >= 2 && serviceParts[0] === serviceParts[1]) {
-                                        return serviceParts[0];
-                                    }
-                                    return user?.service;
-                                })()}
+                                {user?.cloudDescription.toLowerCase().includes(user?.regionName.toLowerCase())
+                                    ? user?.cloudDescription
+                                    : `${user?.cloudDescription} in ${user?.regionName}`}
                             </Link>
                         </Text>
                     }

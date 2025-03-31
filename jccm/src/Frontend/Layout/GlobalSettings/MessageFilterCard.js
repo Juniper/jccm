@@ -33,7 +33,6 @@ import { useNotify } from '../../Common/NotificationContext';
 import useStore from '../../Common/StateStore';
 import eventBus from '../../Common/eventBus';
 
-
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const DeleteIcon = bundleIcon(SubtractCircleFilled, SubtractCircleRegular);
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -97,8 +96,7 @@ export const MessageFilterCard = () => {
                     marginLeft: '10px',
                 }}
             >
-                <Text>Precautionary Message for Cloud Multi-homed Device Adoption:</Text>
-
+                <Text>Display message for cloud multi-homed device adoption:</Text>
                 <div
                     style={{
                         transform: 'scale(0.6)',
@@ -110,7 +108,7 @@ export const MessageFilterCard = () => {
                         onChange={onChangWarningShowForAdoption}
                     />
                 </div>
-                <Text>{settings.warningShowForAdoption ? 'Enabled' : 'Disabled'}</Text>
+                <Text size={200}>{settings.warningShowForAdoption ? 'Enabled' : 'Disabled'}</Text>
             </div>
 
             <div
@@ -124,8 +122,7 @@ export const MessageFilterCard = () => {
                     marginLeft: '10px',
                 }}
             >
-                <Text>Precautionary Message for Network Search Action:</Text>
-
+                <Text>Display message for network search action:</Text>
                 <div
                     style={{
                         transform: 'scale(0.6)',
@@ -137,7 +134,7 @@ export const MessageFilterCard = () => {
                         onChange={onChangeWarningShowForNetworkSearch}
                     />
                 </div>
-                <Text>{settings?.warningShowForNetworkSearch ? 'Enabled' : 'Disabled'}</Text>
+                <Text size={200}>{settings?.warningShowForNetworkSearch ? 'Enabled' : 'Disabled'}</Text>
             </div>
         </div>
     );

@@ -80,7 +80,7 @@ const isValidPort = (port) => {
 // };
 
 const validateData = (data) => {
-    const requiredFields = ['organization', 'site', 'address', 'port', 'username', 'password'];
+    const requiredFields = ['organization', 'address', 'port', 'username', 'password'];
 
     return data.every((row, rowIndex) => {
         return requiredFields.every((field) => {
@@ -166,36 +166,97 @@ const InventoryLocalImportForm = ({ isOpen, onClose, title, importedInventory })
     };
 
     const onOverride = async () => {
-        setInventory(rowData);
-        await electronAPI.saSetLocalInventory({inventory: rowData});
-        await eventBus.emit('reset-device-facts', { notification: false });
+        // Normalize the rows (set 'site' to empty string if it's blank)
+        let updatedRows = rowData.map((row) => {
+            const updatedRow = { ...row };
+            if (!updatedRow.site || updatedRow.site.toString().trim() === '') {
+                updatedRow.site = '';
+            }
+            return updatedRow;
+        });
 
+        // Deduplicate rows by address: keep only the last occurrence of each address
+        const addressMap = new Map();
+        updatedRows.forEach((row, index) => {
+            addressMap.set(row.address, { row, index });
+        });
+
+        if (addressMap.size < updatedRows.length) {
+            notify(
+                <Toast>
+                    <ToastTitle>Warning</ToastTitle>
+                    <ToastBody subtitle='Duplicate Addresses'>
+                        <Text>
+                            Duplicate addresses were found. Only the last occurrence for each address has been retained.
+                        </Text>
+                    </ToastBody>
+                </Toast>,
+                { intent: 'warning' }
+            );
+            updatedRows = Array.from(addressMap.values())
+                .sort((a, b) => a.index - b.index)
+                .map((entry) => entry.row);
+        }
+
+        setInventory(updatedRows);
+        await electronAPI.saSetLocalInventory({ inventory: updatedRows });
+        await eventBus.emit('reset-device-facts', { notification: false });
         setTimeout(() => {
             onClose();
         }, 300);
     };
 
     const onMerge = async () => {
+        // Create a composite key to merge inventory and rowData
         const createCompositeKey = (item) => {
             return `${item.organization}/${item.site}/${item.address}/${item.port}`;
         };
 
         const mergedDataMap = new Map();
-
         inventory.forEach((item) => {
             mergedDataMap.set(createCompositeKey(item), item);
         });
-
         rowData.forEach((item) => {
             mergedDataMap.set(createCompositeKey(item), item);
         });
 
-        const mergedData = Array.from(mergedDataMap.values());
+        let mergedData = Array.from(mergedDataMap.values());
+
+        // Normalize each row: set 'site' to empty string if it is blank
+        mergedData = mergedData.map((row) => {
+            const updatedRow = { ...row };
+            if (!updatedRow.site || updatedRow.site.toString().trim() === '') {
+                updatedRow.site = '';
+            }
+            return updatedRow;
+        });
+
+        // Deduplicate based on address: keep only the last occurrence for each address
+        const addressMap = new Map();
+        mergedData.forEach((row, index) => {
+            addressMap.set(row.address, { row, index });
+        });
+
+        if (addressMap.size < mergedData.length) {
+            notify(
+                <Toast>
+                    <ToastTitle>Warning</ToastTitle>
+                    <ToastBody subtitle='Duplicate Addresses'>
+                        <Text>
+                            Duplicate addresses were found. Only the last occurrence for each address has been retained.
+                        </Text>
+                    </ToastBody>
+                </Toast>,
+                { intent: 'warning' }
+            );
+            mergedData = Array.from(addressMap.values())
+                .sort((a, b) => a.index - b.index)
+                .map((entry) => entry.row);
+        }
 
         setInventory(mergedData);
-        await electronAPI.saSetLocalInventory({inventory: mergedData});
+        await electronAPI.saSetLocalInventory({ inventory: mergedData });
         await eventBus.emit('reset-device-facts', { notification: false });
-
         setTimeout(() => {
             onClose();
         }, 300);
@@ -228,6 +289,12 @@ const InventoryLocalImportForm = ({ isOpen, onClose, title, importedInventory })
             editable: true,
             sortable: true,
             filter: 'agTextColumnFilter',
+            cellRenderer: (props) => {
+                const value = props.value;
+                const isEmpty = !value || value.toString().trim() === '';
+
+                return isEmpty ? <span style={{ color: '#999' }}>-</span> : <>{value}</>;
+            },
         },
         {
             field: 'address',
@@ -301,11 +368,7 @@ const InventoryLocalImportForm = ({ isOpen, onClose, title, importedInventory })
     ];
 
     return (
-        <Dialog
-            open={isOpen}
-            onDismiss={onClose}
-            modalProps={{ isBlocking: true }}
-        >
+        <Dialog open={isOpen} onDismiss={onClose} modalProps={{ isBlocking: true }}>
             <DialogSurface
                 style={{
                     display: 'flex',
@@ -314,22 +377,15 @@ const InventoryLocalImportForm = ({ isOpen, onClose, title, importedInventory })
 
                     minWidth: `calc(100% - 200px - ${getConsoleWindowWidth()}px)`,
                     minHeight: `${Constants.sharedInventoryWindowHeight}px`,
-                    
+
                     position: 'fixed',
                     top: '0%',
                     left: `calc(0% - ${getConsoleWindowWidth()}px)`,
-
                 }}
             >
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     {title}
-                    <Button
-                        onClick={onClose}
-                        shape='circular'
-                        appearance='subtle'
-                        icon={<Dismiss />}
-                        size='small'
-                    />
+                    <Button onClick={onClose} shape='circular' appearance='subtle' icon={<Dismiss />} size='small' />
                 </div>
 
                 <div

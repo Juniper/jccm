@@ -694,7 +694,7 @@ export const commitJunosSetConfig = async (
 
     if (username === 'root') commands.unshift('cli');
     else if (username === 'regress') commands.unshift('cli');
-    
+
     const sshConfig = {
         host: address,
         port,
@@ -784,7 +784,7 @@ export const getDeviceNetworkCondition = async (
             for (const result of results.data) {
                 rpcReply = getRpcReply('curl-output', result);
 
-                console.log(`rpc curl-output reply: ${rpcReply}`);
+                // console.log(`rpc curl-output reply: ${rpcReply}`);
 
                 if (rpcReply !== null) {
                     if (rpcReply.includes('* Connected to')) {

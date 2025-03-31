@@ -157,8 +157,8 @@ export const MainEventProcessor = () => {
                     if (!areEqual) {
                         // console.log('userRef.current:', userRef.current);
                         // console.log('data.user:', data.user);
-
-                        console.log('User session will be updated:', data.user);
+                        // console.log('User session will be updated:', data.user);
+                        
                         setUser(data.user);
                         setIsUserLoggedIn(true);
                         await handleCloudInventoryRefresh({ force: true });
@@ -205,10 +205,6 @@ export const MainEventProcessor = () => {
 
             if (response.cloudInventory) {
                 if (!_.isEqual(cloudInventoryRef.current, response.inventory)) {
-                    // console.log('cloudInventoryRef.current:', cloudInventoryRef.current);
-                    // console.log('response.inventory:', response.inventory);
-
-                    console.log('Cloud inventory will be updated:', response.inventory);
                     setCloudInventory(response.inventory);
                     setCloudInventoryFilterApplied(response.isFilterApplied);
                 }

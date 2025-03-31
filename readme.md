@@ -18,6 +18,8 @@ Juniper Cloud Connection Manager (JCCM) is a standalone application designed to 
 - **Auto Update Support:** Automatically checks for updates and applies them seamlessly.
 - **Password Vault:** Device access passwords can be securely stored in the vault and retrieved as needed without being exposed in the inventory file.
 - **CLI Command Shortcut:** Custom CLI command shortcuts can be added and accessed through the context menu of the remote shell terminal for the device.
+- **Syntax Highlight:** Junos syntax and CLI terminal output are automatically highlighted, making it easier to spot configuration changes.
+- **Configuration Set Navigation:** Easily navigate and compare configuration sets with intuitive diff tracking and navigation controls.
 
 ## Bastion Host Proxy Support
 
@@ -62,6 +64,9 @@ To configure a Linux machine as your bastion host proxy, ensure that the OpenSSH
 
 ## CLI Command Shortcut
 ![CLI Command Shortcut](./demo/cli-shortcut-mapping.gif)
+
+## Syntax Highlighting and Configuration Change Tracking
+![Syntax highlight and config change tracking](./demo/syntax-highlight-config-change-tracking.gif)
 
 ## Installation
 

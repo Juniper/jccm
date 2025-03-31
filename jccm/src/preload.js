@@ -1,6 +1,5 @@
 import { contextBridge, ipcMain, ipcRenderer } from 'electron';
 
-
 // Expose protected methods that perform the API calls
 contextBridge.exposeInMainWorld('electronAPI', {
     saFetchAvailableClouds: () => ipcRenderer.invoke('saFetchAvailableClouds'),
@@ -42,6 +41,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onSSHDataReceived: (callback) => ipcRenderer.on('sshDataReceived', (event, data) => callback(data)),
     onSSHErrorOccurred: (callback) => ipcRenderer.on('sshErrorOccurred', (event, error) => callback(error)),
     onSSHSessionClosed: (callback) => ipcRenderer.on('sshSessionClosed', (event, data) => callback(data)),
+
+    openConfigTracking: (id) => ipcRenderer.send('openConfigTracking', id),
+    closeConfigTracking: (id) => ipcRenderer.send('closeConfigTracking', id),
+    isVisibleConfigTracking: (id, isVisible) => ipcRenderer.send('isVisibleConfigTracking', id, isVisible),
+    rpcRequestConfigTracking: (args) => ipcRenderer.invoke('rpcRequestConfigTracking', args),
+    onConfigTracking: (id, callback) => {
+        const eventName = `onConfigTracking-${id}`;
+        const listener = (event, args) => callback(args);
+
+        ipcRenderer.on(eventName, listener);
+
+        // Return a cleanup function to remove the listener
+        return () => {
+            ipcRenderer.removeListener(eventName, listener);
+        };
+    },
 
     on: (channel, listener) => ipcRenderer.on(channel, listener),
     off: (channel, listener) => ipcRenderer.removeListener(channel, listener),

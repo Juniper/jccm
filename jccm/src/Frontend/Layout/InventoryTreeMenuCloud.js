@@ -278,18 +278,14 @@ const getObjectPaths = (obj, prefix = '') => {
 const RenderCounterBadge = ({ counterValue }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', columnGap: '5px' }}>
-            <CounterBadge
-                count={counterValue}
-                color='informative'
-                size='small'
-                overflowCount={10000}
-            />
+            <CounterBadge count={counterValue} color='informative' size='small' overflowCount={10000} />
         </div>
     );
 };
 
 const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
     const {
+        user,
         isUserLoggedIn,
         cloudSites,
         cloudInventory,
@@ -306,11 +302,12 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
     const onAdoptionConfigCopy = async (event, org) => {
         const orgId = org.__id;
         const orgName = org.__name;
+        const endpoint = user?.cloudId?.toLowerCase() === 'jsi' ? 'jsi/devices' : 'ocdevices';
 
         event.stopPropagation();
 
         const data = await electronAPI.saProxyCall({
-            api: `orgs/${orgId}/ocdevices/outbound_ssh_cmd`,
+            api: `orgs/${orgId}/${endpoint}/outbound_ssh_cmd`,
             method: 'GET',
             body: null,
         });
@@ -318,12 +315,15 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
         if (data.proxy) {
             notify(
                 <Toast>
-                    <ToastTitle>Copied the adoption configuration for the organization: '{orgName}'.</ToastTitle>
+                    <ToastTitle>
+                        Copied the {user?.cloudId?.toLowerCase() === 'jsi' ? 'jsi-term' : ''} adoption configuration for
+                        the organization: '{orgName}'.
+                    </ToastTitle>
                 </Toast>,
                 { intent: 'success' }
             );
-            copyToClipboard(data.response.cmd);
-            setAdoptConfig(data.response.cmd);
+            copyToClipboard(data.response.cmd + '\n');
+            setAdoptConfig(data.response.cmd + '\n');
         } else {
             console.error('api call error: ', data?.error);
         }
@@ -387,10 +387,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                 onAdoptionConfigCopy(event, org);
                             }}
                         >
-                            <Text
-                                size={200}
-                                font='numeric'
-                            >
+                            <Text size={200} font='numeric'>
                                 Copy Adoption Configuration
                             </Text>
                         </MenuItem>
@@ -405,10 +402,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                     disabled={!isUserLoggedIn || node.__type !== 'device'}
                                     icon={<LinkIcon style={{ fontSize: '14px' }} />}
                                 >
-                                    <Text
-                                        size={200}
-                                        font='numeric'
-                                    >
+                                    <Text size={200} font='numeric'>
                                         Allocate to Site
                                     </Text>
                                 </MenuItem>
@@ -427,10 +421,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                                         }
                                                         key={site.id}
                                                     >
-                                                        <Text
-                                                            size={200}
-                                                            font='numeric'
-                                                        >
+                                                        <Text size={200} font='numeric'>
                                                             {site.name}
                                                         </Text>
                                                     </MenuItem> // Assuming each site has a unique 'id'
@@ -448,10 +439,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                 setIsOpenReleaseDialog(true);
                             }}
                         >
-                            <Text
-                                size={200}
-                                font='numeric'
-                            >
+                            <Text size={200} font='numeric'>
                                 Disconnect and Remove Device
                             </Text>
                         </MenuItem>
@@ -479,10 +467,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
 
                                     <div style={{ display: 'flex', flexDirection: 'row', columnGap: '10px' }}>
                                         <WarningRegular style={{ fontSize: '50px' }} />
-                                        <Text
-                                            align='start'
-                                            style={{ color: tokens.colorPaletteCranberryBorderActive }}
-                                        >
+                                        <Text align='start' style={{ color: tokens.colorPaletteCranberryBorderActive }}>
                                             <strong>Warning:</strong> Releasing a device set as managed by the Cloud
                                             will initiate its zeroization. This process can take 15-20 minutes to
                                             complete, during which all existing configurations will be irreversibly
@@ -529,10 +514,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
         return (
             <TreeItemLayout
                 iconAfter={
-                    <Tooltip
-                        content='Right Click to show Menu'
-                        relationship='description'
-                    >
+                    <Tooltip content='Right Click to show Menu' relationship='description'>
                         <CursorClickFilled style={{ fontSize: '14px', color: tokens.colorBrandForegroundInverted }} />
                     </Tooltip>
                 }
@@ -582,11 +564,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                             size={24}
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', rowGap: 0 }}>
-                            <Text
-                                size={100}
-                                font='numeric'
-                                weight={device.name === 'Unnamed' ? 'normal' : 'semibold'}
-                            >
+                            <Text size={100} font='numeric' weight={device.name === 'Unnamed' ? 'normal' : 'semibold'}>
                                 {device.name}
                             </Text>
 
@@ -599,24 +577,15 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                         marginLeft: '0px',
                                     }}
                                 >
-                                    <Text
-                                        size={100}
-                                        font='monospace'
-                                    >
+                                    <Text size={100} font='monospace'>
                                         {device.serial}
                                     </Text>
 
-                                    <Text
-                                        size={100}
-                                        font='numeric'
-                                    >
+                                    <Text size={100} font='numeric'>
                                         {formatMacAddress(device.mac)}
                                     </Text>
 
-                                    <Text
-                                        size={100}
-                                        font='monospace'
-                                    >
+                                    <Text size={100} font='monospace'>
                                         {device.jsi ? ' JSI' : ''}
                                     </Text>
                                 </div>
@@ -637,10 +606,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
 
         return (
             <>
-                <RenderDevice
-                    device={device}
-                    vc={true}
-                />
+                <RenderDevice device={device} vc={true} />
 
                 <Tree>
                     {nodes.map((node, index) => (
@@ -659,32 +625,19 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                         marginLeft: '10px',
                                     }}
                                 >
-                                    <Text
-                                        size={100}
-                                        font='numeric'
-                                        weight='normal'
-                                    >
+                                    <Text size={100} font='numeric' weight='normal'>
                                         {node.model}
                                     </Text>
 
-                                    <Text
-                                        size={100}
-                                        font='monospace'
-                                    >
+                                    <Text size={100} font='monospace'>
                                         {node.serial}
                                     </Text>
-                                    <Text
-                                        size={100}
-                                        font='numeric'
-                                    >
+                                    <Text size={100} font='numeric'>
                                         {formatMacAddress(node.mac)}
                                     </Text>
 
                                     {device.vc && (
-                                        <Text
-                                            size={100}
-                                            font='numeric'
-                                        >
+                                        <Text size={100} font='numeric'>
                                             {node.vc_role}
                                         </Text>
                                     )}
@@ -717,10 +670,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                 key={`${pathPrefix}/${deviceName}`}
                                 value={`${pathPrefix}/${deviceName}`}
                             >
-                                <RenderVC
-                                    device={device}
-                                    pathPrefix={`${pathPrefix}/${deviceName}`}
-                                />
+                                <RenderVC device={device} pathPrefix={`${pathPrefix}/${deviceName}`} />
                             </TreeItem>
                         )
                     )}
@@ -733,17 +683,9 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
             {Object.entries(roles)
                 .filter(([key]) => !key.startsWith('__'))
                 .map(([modelName, modelValue]) => (
-                    <TreeItem
-                        itemType='branch'
-                        key={`${pathPrefix}/${modelName}`}
-                        value={`${pathPrefix}/${modelName}`}
-                    >
+                    <TreeItem itemType='branch' key={`${pathPrefix}/${modelName}`} value={`${pathPrefix}/${modelName}`}>
                         <TreeItemLayout aside={<RenderCounterBadge counterValue={modelValue.__count} />}>
-                            <Text
-                                size={100}
-                                font='numeric'
-                                weight='normal'
-                            >
+                            <Text size={100} font='numeric' weight='normal'>
                                 {modelName}
                             </Text>
                         </TreeItemLayout>
@@ -758,20 +700,12 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
             {Object.entries(sites)
                 .filter(([key]) => !key.startsWith('__'))
                 .map(([roleName, roleValue]) => (
-                    <TreeItem
-                        itemType='branch'
-                        key={`${pathPrefix}/${roleName}`}
-                        value={`${pathPrefix}/${roleName}`}
-                    >
+                    <TreeItem itemType='branch' key={`${pathPrefix}/${roleName}`} value={`${pathPrefix}/${roleName}`}>
                         <TreeItemLayout
                             aside={<RenderCounterBadge counterValue={roleValue.__count} />}
                             iconBefore={<GroupRegular style={{ fontSize: '14px' }} />}
                         >
-                            <Text
-                                size={100}
-                                font='numeric'
-                                weight='normal'
-                            >
+                            <Text size={100} font='numeric' weight='normal'>
                                 {roleName}
                             </Text>
                         </TreeItemLayout>
@@ -785,20 +719,12 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
             {Object.entries(orgs)
                 .filter(([key]) => !key.startsWith('__'))
                 .map(([siteName, siteValue]) => (
-                    <TreeItem
-                        itemType='branch'
-                        key={`${pathPrefix}/${siteName}`}
-                        value={`${pathPrefix}/${siteName}`}
-                    >
+                    <TreeItem itemType='branch' key={`${pathPrefix}/${siteName}`} value={`${pathPrefix}/${siteName}`}>
                         <TreeItemLayout
                             aside={<RenderCounterBadge counterValue={siteValue.__count} />}
                             iconBefore={<SquareMultipleRegular style={{ fontSize: '14px' }} />}
                         >
-                            <Text
-                                size={100}
-                                font='numeric'
-                                weight='normal'
-                            >
+                            <Text size={100} font='numeric' weight='normal'>
                                 {siteName}
                             </Text>
                         </TreeItemLayout>
@@ -813,11 +739,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
             {Object.entries(regions)
                 .filter(([key]) => !key.startsWith('__'))
                 .map(([orgName, orgValue]) => (
-                    <TreeItem
-                        itemType='branch'
-                        key={`${pathPrefix}/${orgName}`}
-                        value={`${pathPrefix}/${orgName}`}
-                    >
+                    <TreeItem itemType='branch' key={`${pathPrefix}/${orgName}`} value={`${pathPrefix}/${orgName}`}>
                         <TreeItemLayout
                             onContextMenu={(event) => onNodeRightClick(event, orgValue)}
                             aside={<RenderCounterBadge counterValue={orgValue.__count} />}
@@ -827,10 +749,7 @@ const RenderCloudInventoryTree = ({ nodes, openItems, onOpenChange }) => {
                                 />
                             }
                             iconAfter={
-                                <Tooltip
-                                    content='Right Click to show Menu'
-                                    relationship='description'
-                                >
+                                <Tooltip content='Right Click to show Menu' relationship='description'>
                                     <CursorClickFilled
                                         style={{ fontSize: '14px', color: tokens.colorBrandForegroundInverted }}
                                     />

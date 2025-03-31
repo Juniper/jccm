@@ -104,6 +104,7 @@ export const acLookupRegions = async (cloudId, email) => {
                 const response = await fetch(envFile);
                 const env = await response.json();
                 if (!env.name) env.name = 'default';
+                console.log('env', env);
                 return env;
             });
             return await Promise.all(regionsPromises);

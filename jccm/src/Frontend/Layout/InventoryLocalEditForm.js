@@ -52,6 +52,7 @@ import * as Constants from '../Common/CommonVariables';
 import useStore from '../Common/StateStore';
 import { useNotify } from '../Common/NotificationContext';
 import eventBus from '../Common/eventBus';
+import { EmptySiteName } from '../Common/CommonVariables';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
 const AddCircle = bundleIcon(AddCircleFilled, AddCircleRegular);
@@ -140,9 +141,19 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
         );
     };
 
+    // const onDataChange = (params) => {
+    //     const validateRowData = (data) => {
+    //         const requiredFields = ['organization', 'site', 'address', 'port', 'password'];
+    //         return data.every((row) => requiredFields.every((field) => row[field] !== '' && row[field] !== null));
+    //     };
+
+    //     const allFieldsValid = validateRowData(rowData);
+    //     setIsDataModified(allFieldsValid);
+    // };
+
     const onDataChange = (params) => {
         const validateRowData = (data) => {
-            const requiredFields = ['organization', 'site', 'address', 'port', 'password'];
+            const requiredFields = ['organization', 'address', 'port', 'password'];
             return data.every((row) => requiredFields.every((field) => row[field] !== '' && row[field] !== null));
         };
 
@@ -203,15 +214,56 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
     };
 
     const onSave = async () => {
-        setInventory(rowData);
-        await electronAPI.saSetLocalInventory({ inventory: rowData });
+        // First, update each row (e.g., normalize the site value)
+        let updatedRows = rowData.map((row) => {
+            const updatedRow = { ...row };
+
+            // Normalize the 'site' field: if empty or whitespace, set to an empty string.
+            if (!updatedRow.site || updatedRow.site.toString().trim() === '') {
+                updatedRow.site = '';
+            }
+            return updatedRow;
+        });
+
+        // Create a map to hold the last occurrence of each address.
+        const addressMap = new Map();
+        updatedRows.forEach((row, index) => {
+            // For each row, overwrite any previous entry with the same address.
+            // This ensures the last occurrence is stored.
+            addressMap.set(row.address, { row, index });
+        });
+
+        // If duplicate addresses exist, the map size will be smaller than the total rows.
+        if (addressMap.size < updatedRows.length) {
+            // Notify the user that duplicates were found and removed.
+            notify(
+                <Toast>
+                    <ToastTitle>Warning</ToastTitle>
+                    <ToastBody subtitle='Duplicate Addresses'>
+                        <Text>
+                            Duplicate addresses were found. Only the last occurrence for each address has been retained.
+                        </Text>
+                    </ToastBody>
+                </Toast>,
+                { intent: 'warning' }
+            );
+
+            // Rebuild the updatedRows array from the map, preserving the original order.
+            updatedRows = Array.from(addressMap.values())
+                .sort((a, b) => a.index - b.index)
+                .map((entry) => entry.row);
+        }
+
+        // Update state and persist the inventory
+        setInventory(updatedRows);
+        await electronAPI.saSetLocalInventory({ inventory: updatedRows });
         setTimeout(async () => {
             await eventBus.emit('device-facts-cleanup', { notification: false });
             await eventBus.emit('device-network-access-check-refresh');
             onClose();
         }, 1000);
     };
-
+    
     const getRowStyle = (params) => {
         if (params.node.data.isModified) {
             return { backgroundColor: '#ffcccb' }; // Light red background for changed rows
@@ -239,6 +291,12 @@ const InventoryLocalEditForm = ({ isOpen, onClose, title, importedInventory }) =
             editable: true,
             sortable: true,
             filter: 'agTextColumnFilter',
+            cellRenderer: (props) => {
+                const value = props.value;
+                const isEmpty = !value || value.toString().trim() === '';
+
+                return isEmpty ? <span style={{ color: '#999' }}>-</span> : <>{value}</>;
+            },
         },
         {
             field: 'address',

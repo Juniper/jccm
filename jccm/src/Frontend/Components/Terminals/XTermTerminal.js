@@ -4,6 +4,7 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { v4 as uuidv4 } from 'uuid';
+import ip from 'ip';
 
 import {
     Menu,
@@ -59,12 +60,182 @@ const EditShortcutIcon = bundleIcon(CircleEditFilled, CircleEditRegular);
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const XTermTerminal = ({ device, fontSize=12 }) => {
+const applyStyle = (text, color) => {
+    return `\x1b[38;5;${color}m${text}\x1b[0m`;
+};
+
+const countDoubleQuotes = (data) => {
+    const matches = data.match(/"/g);
+    return matches ? matches.length : 0;
+};
+
+const colorDateAddress = (data, color = 0) => {
+    const pattern = /\b[0-9]{4}-[0-9]{2}-[0-9]{2}\b/gm;
+
+    return data?.replace(pattern, (match) => {
+        return match
+            .split(':')
+            .map((byte, index, array) => {
+                return applyStyle(byte, color) + (index < array.length - 1 ? applyStyle(':', 250) : '');
+            })
+            .join('');
+    });
+};
+
+const colorTimeAddress = (data, color = 0) => {
+    const pattern = /\b([0-9]{2}:){1,2}[0-9]{2}\b/gm;
+
+    return data?.replace(pattern, (match) => {
+        return match
+            .split(':')
+            .map((byte, index, array) => {
+                return applyStyle(byte, color) + (index < array.length - 1 ? applyStyle(':', color) : '');
+            })
+            .join('');
+    });
+};
+
+const colorMacAddress = (data, color = 0) => {
+    const pattern = /\b([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}\b/gm;
+
+    return data?.replace(pattern, (match) => {
+        return match
+            .split(':')
+            .map((byte, index, array) => {
+                return applyStyle(byte, color) + (index < array.length - 1 ? applyStyle(':', color) : '');
+            })
+            .join('');
+    });
+};
+
+const colorIpv4Network = (data, color = 0) => {
+    const pattern = /\b([0-9]{1,3}\.){3}[0-9]{1,3}(\/[0-9]{1,2})?\b/gm;
+
+    return data?.replace(pattern, (match) => {
+        if (match.includes('/')) {
+            const [network, mask] = match.split('/');
+            return applyStyle(network, color) + applyStyle('/', 250) + applyStyle(mask, color);
+        } else {
+            return applyStyle(match, color);
+        }
+    });
+};
+
+const colorIpv6Network = (data, color = 0) => {
+    const pattern = /\b(:?[a-fA-F0-9]{1,4}::?[a-fA-F0-9]{0,4}){1,7}(:[a-fA-F0-9]{1,4})?(\/[0-9]{1,3})?\b/gm;
+
+    return data?.replace(pattern, (match) => {
+        return applyStyle(match, color);
+    });
+};
+
+const colorString = (data, color = 0) => {
+    const pattern = /"[^"]*"/gm;
+
+    return data?.replace(pattern, (match) => {
+        return applyStyle(match, color);
+    });
+};
+
+const colorNumber = (data, color = 0) => {
+    const pattern = /\s[\s\d]+[\s;,]|\([\s\d]+[\s]|>\d+<|0x\d+/gm;
+
+    return data?.replace(pattern, (match) => {
+        if (match.startsWith('(')) {
+            return '(' + applyStyle(match.slice(1, match.length), color);
+        } else if (match.endsWith(';') || match.endsWith(',')) {
+            return applyStyle(match.slice(0, match.length - 1), color) + match.at(-1);
+        } else if (match.startsWith('>') || match.endsWith('<')) {
+            return '>' + applyStyle(match.slice(1, match.length - 1), color) + '<';
+        } else {
+            return applyStyle(match, color);
+        }
+    });
+};
+
+const colorFirstHalfIncompleteString = (data, color = 0) => {
+    // Find the index of the last occurrence of `"`
+    const lastQuoteIndex = data.lastIndexOf('"');
+
+    // If no `"` is found or it's at the very end, return the data as is
+    if (lastQuoteIndex === -1 || lastQuoteIndex === data.length - 1) {
+        return data;
+    }
+
+    // Color the part of the string starting from the last `"`
+    const beforeQuote = data.slice(0, lastQuoteIndex);
+    const afterQuote = data.slice(lastQuoteIndex);
+
+    return beforeQuote + applyStyle(afterQuote, color);
+};
+
+const colorAndRemoveSecondHalfIncompleteString = (terminal, data, color = 0) => {
+    const startIndex = data.indexOf('"');
+
+    if (startIndex !== -1) {
+        // Extract and process the second half starting from the quote
+        const secondHalf = data.slice(0, startIndex + 1);
+        // Color the second half and write it to the terminal immediately
+        const coloredSecondHalf = applyStyle(secondHalf, 178);
+        terminal.write(coloredSecondHalf);
+
+        // Remove the processed part from `renderedData`
+        return data.slice(startIndex + 1);
+    }
+};
+
+const colorInterface = (data, color = 0, color2 = 0, color3 = 0) => {
+    const interfacePatterns = [
+        /\b[a-z]+-\d+\/\d+\/\d+(?:[:]\d+)?([.]\d+)?\b/g,
+        /\b(?:cbp\d+|demux0|dsc|em\d+|esi|fti\d+|vme|fxp\d+|gre|ipip|jsrv|cbp0|bme(?:\d+)?)(?:[.]\d+)?\b/g,
+        /\b(?:irb(?:\d+)?|lo0|lsi|mif|mtun|pimd|pime|pip0|pp0|ps\d+|rbeb|tap(?!-)|vtep)(?:[.]\d+)?\b/g,
+    ];
+
+    let renderedData = data;
+    for (const pattern of interfacePatterns) {
+        renderedData = renderedData.replace(pattern, (match) => {
+            if (match.includes(':') && match.includes('.')) {
+                const [port, channel, unit] = match.split(/[:.]/);
+
+                const renderedData =
+                    applyStyle(port, color) +
+                    applyStyle(':', 250) +
+                    applyStyle(channel, color2) +
+                    applyStyle('.', 250) +
+                    applyStyle(unit, color3);
+
+                return renderedData;
+                return data;
+            } else if (match.includes(':')) {
+                const [port, channel] = match.split(':');
+                const renderedData = applyStyle(port, color) + applyStyle(':', 250) + applyStyle(channel, color2);
+
+                return renderedData;
+            } else if (match.includes('.')) {
+                const [port, unit] = match.split('.');
+                const renderedData = applyStyle(port, color) + applyStyle('.', 250) + applyStyle(unit, color3);
+                return renderedData;
+            } else {
+                const renderedData = applyStyle(match, color);
+                return renderedData;
+            }
+        });
+    }
+    return renderedData;
+};
+
+const XTermTerminal = ({
+    device,
+    onReady,
+    defaultFontSize = 12,
+    isConfigTrackingViewOpen = false,
+    formatting = true,
+}) => {
     const { showContextMenu } = useContextMenu(); // Use the context menu
     const { adoptConfig, setAdoptConfig } = useStore();
     const { isPasteDisabled, setIsPasteDisabled } = useStore();
     const { cliShortcutMapping } = useStore();
-    const { setTab, settings } = useStore();
+    const { setTabProperties, settings } = useStore();
     const [isEditCLIShortcutsCardVisible, setIsEditCLIShortcutsCardVisible] = useState(false);
     const [deviceAddress, setDeviceAddress] = useState('');
 
@@ -83,6 +254,7 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
     const containerRef = useRef(null);
     const terminalRef = useRef(null);
     const fitAddonRef = useRef(null);
+    const formattingRef = useRef(formatting);
 
     const deleteOutboundSSHTerm = settings?.deleteOutboundSSHTerm ?? false;
 
@@ -98,11 +270,8 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
     );
 
     useEffect(() => {
-        if (terminalRef.current && fontSize) {
-            terminalRef.current.options.fontSize = fontSize;
-            fitAddonRef.current?.fit(); // Call fit to adjust the terminal size
-        }
-    }, [fontSize]);
+        formattingRef.current = formatting;
+    }, [formatting]);
 
     useEffect(() => {
         if (terminalRef.current && selectedTabValue === deviceKey) {
@@ -124,7 +293,7 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
 
     useEffect(() => {
         if (containerRef.current && !terminalRef.current && !fitAddonRef.current) {
-            const terminal = new Terminal({ fontSize: 14 });
+            const terminal = new Terminal({ fontSize: defaultFontSize });
             const fitAddon = new FitAddon();
 
             terminalRef.current = terminal;
@@ -135,6 +304,18 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
 
             fitAddonRef.current.fit();
             terminal.focus();
+
+            if (onReady) {
+                onReady({
+                    setFontSize: (newFontSize) => {
+                        terminal.options.fontSize = newFontSize;
+                        fitAddonRef.current?.fit();
+                    },
+                    getFontSize: () => {
+                        return terminal.options.fontSize;
+                    },
+                });
+            }
 
             terminal.attachCustomKeyEventHandler((event) => {
                 if (event.key === 'Tab') {
@@ -153,6 +334,7 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
             electronAPI.startSSHConnection({ id: deviceKey, cols, rows });
 
             let checkForOSVersion = true;
+            let inCompleteStringDetected = false;
 
             electronAPI.sshSessionOpened(({ id, address }) => {
                 if (id === deviceKey) {
@@ -169,22 +351,56 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
 
             electronAPI.onSSHDataReceived(({ id, data }) => {
                 if (id === deviceKey) {
-                    terminalRef.current.write(data);
+                    if (formattingRef.current) {
+                        let renderedData = data;
+
+                        // Check if the data contains the second half of an incomplete string
+                        if (inCompleteStringDetected) {
+                            renderedData = colorAndRemoveSecondHalfIncompleteString(
+                                terminalRef.current,
+                                renderedData,
+                                178
+                            );
+                            inCompleteStringDetected = false; // Reset the flag
+                        }
+
+                        // Process the remaining data
+                        renderedData = colorInterface(renderedData, 117, 124, 34);
+                        renderedData = colorMacAddress(renderedData, 170);
+                        renderedData = colorTimeAddress(renderedData, 250);
+                        renderedData = colorDateAddress(renderedData, 250);
+                        renderedData = colorIpv4Network(renderedData, 34);
+                        renderedData = colorIpv6Network(renderedData, 34);
+                        renderedData = colorString(renderedData, 178);
+                        renderedData = colorNumber(renderedData, 160);
+
+                        // Check for the first half of an incomplete string
+                        if (!inCompleteStringDetected && countDoubleQuotes(renderedData) % 2 !== 0) {
+                            // Process the first half of the incomplete string
+                            renderedData = colorFirstHalfIncompleteString(renderedData, 178);
+                            inCompleteStringDetected = true;
+                        }
+
+                        // Write the remaining highlighted data to the terminal
+                        terminalRef.current.write(renderedData);
+                    } else {
+                        terminalRef.current.write(data);
+                    }
 
                     // Check for the OS version pattern but only within 1 second of connection
                     if (checkForOSVersion && data.includes('--- JUNOS ')) {
                         console.log('Detected Junos OS version in response.');
                         setIsJunos(true);
-                        setTab(deviceKey, { isJunos: true });
+                        setTabProperties(deviceKey, { isJunos: true });
                     }
                     if (data.includes('Entering configuration mode')) {
                         console.log('Detected Junos OS entering configuration mode.');
                         setIsConfigurationMode(true);
-                        setTab(deviceKey, { isJunosConfigMode: true });
+                        setTabProperties(deviceKey, { isJunosConfigMode: true });
                     } else if (data.includes('Exiting configuration mode')) {
                         console.log('Detected Junos OS exiting configuration mode.');
                         setIsConfigurationMode(false);
-                        setTab(deviceKey, { isJunosConfigMode: false });
+                        setTabProperties(deviceKey, { isJunosConfigMode: false });
                     }
 
                     if (
@@ -341,7 +557,7 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
         const parts = host.split('.');
         const domain = parts.slice(1).join('.'); // Remove the first part and join the rest
 
-        return domain;
+        return [domain, host];
     };
 
     const menuContent = (event, terminal) => (
@@ -475,16 +691,26 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
 
                                     const defaultDelay = 500;
 
-                                    let domain = await getAPIUrlDomain();
-                                    let ocTermHost = 'not-available-yet';
+                                    let [domain, host] = await getAPIUrlDomain();
+                                    const hostNameResolveErrorMessage = '<Host not available>';
+                                    let outboundSshHostname = hostNameResolveErrorMessage;
+                                    let ocTermHostname = hostNameResolveErrorMessage;
+                                    let jsiTermHostname = hostNameResolveErrorMessage;
 
                                     console.log('domain', domain);
 
                                     if (domain.length > 0) {
                                         if (domain === 'mist.com') {
-                                            ocTermHost = 'oc-term.mistsys.net';
+                                            outboundSshHostname = 'oc-term.mistsys.net';
+                                            ocTermHostname = 'oc-term.mistsys.net';
+                                        } else if (host?.toLowerCase().includes('jsi')) {
+                                            console.log('>>>> JSI Domain detected');
+                                            outboundSshHostname = `jsi-term.${domain}`;
+                                            jsiTermHostname = `jsi-term.${domain}`;
                                         } else {
-                                            ocTermHost = `oc-term.${domain}`;
+                                            outboundSshHostname = `oc-term.${domain}`;
+                                            ocTermHostname = `oc-term.${domain}`;
+                                            jsiTermHostname = `jsi-term.${domain}`;
                                         }
                                     }
 
@@ -516,20 +742,40 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
                                         } else {
                                             const placeholders = {
                                                 '${device-address}': deviceAddress,
-                                                '${oc-term-hostname}': ocTermHost,
-                                                '${jsi-term-hostname}': 'jsi-term.ai.juniper.net',
+                                                '${oc-term-hostname}': ocTermHostname,
+                                                '${jsi-term-hostname}': jsiTermHostname,
+                                                '${outbound-ssh-hostname}': outboundSshHostname,
                                             };
 
                                             const renderedCommand = Object.keys(placeholders).reduce(
                                                 (commandText, placeholder) =>
-                                                    commandText.replace(placeholder, placeholders[placeholder]),
+                                                    commandText?.replace(placeholder, placeholders[placeholder]),
                                                 command
                                             );
 
-                                            if (isConfigurationMode) {
-                                                terminal.paste(`run ${renderedCommand}\n`);
+                                            if (!renderedCommand.includes(hostNameResolveErrorMessage)) {
+                                                if (isConfigurationMode) {
+                                                    terminal.paste(`run ${renderedCommand}\n`);
+                                                } else {
+                                                    terminal.paste(`${renderedCommand}\n`);
+                                                }
                                             } else {
-                                                terminal.paste(`${renderedCommand}\n`);
+                                                const highlightedCommand = command?.replace(
+                                                    /\$\{.*?\}/g,
+                                                    (match) => `\x1b[93m${match}\x1b[0m`
+                                                );
+
+                                                const warningMessage = `${highlightedCommand}
+                                                #
+                                                # \x1b[91mWarning:\x1b[0m Command "${highlightedCommand}" aborted.
+                                                # \x1b[91mVariable could not be resolved.\x1b[0m Log in to access built-in variables.
+                                                #
+                                                `
+                                                    .replace(/^\s+#/gm, '#')
+                                                    .replace(/\n/g, '\r\n');
+
+                                                terminal.write(warningMessage);
+                                                terminal.paste('\n');
                                             }
 
                                             // Add default delay unless the next command is a sleep or it's the last command
@@ -571,8 +817,8 @@ const XTermTerminal = ({ device, fontSize=12 }) => {
                     overflow: 'hidden',
                     resize: 'none',
                     width: 'calc(100% - 8px)',
-                    height: 'calc(100% - 8px)',
-                    border: `4px solid ${tokens.colorBrandBackgroundPressed}`,
+                    height: `calc(100% - ${isConfigTrackingViewOpen ? '0px' : '8px'})`,
+                    border: '4px solid black',
                     backgroundColor: 'black',
                 }}
             />

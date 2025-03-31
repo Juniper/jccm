@@ -5,9 +5,6 @@ import { defaultCliShortcutData } from './CommonVariables';
 import yaml from 'js-yaml';
 
 const useStore = create((set, get) => ({
-    showConfigViewer: false,
-    setShowConfigViewer: (showConfigViewer) => set(() => ({ showConfigViewer })),
-
     consoleWindowButtonShow: false,
     setConsoleWindowButtonShow: (consoleWindowButtonShow) => set(() => ({ consoleWindowButtonShow })),
 
@@ -336,7 +333,7 @@ const useStore = create((set, get) => ({
             return { tabs: newTabs, selectedTabValue: newSelectedTabValue };
         }),
 
-    setTab: (path, value) =>
+    setTabProperties: (path, value) =>
         set((state) => {
             // Find the index of the tab to be updated
             const tabIndex = state.tabs.findIndex((tab) => tab.path === path);
@@ -371,6 +368,11 @@ const useStore = create((set, get) => ({
         return get().tabs.find((tab) => tab.path === path);
     },
 
+    getTabProperties: (path) => {
+        const tab = get().tabs.find((tab) => tab.path === path);
+        return tab?.properties ?? {};
+    },
+
     getIsJunos: (path) => {
         const tab = get().tabs.find((tab) => tab.path === path);
         return tab?.properties?.isJunos ?? false;
@@ -379,6 +381,7 @@ const useStore = create((set, get) => ({
         const tab = get().tabs.find((tab) => tab.path === path);
         return tab?.properties?.isJunosConfigMode ?? false;
     },
+
 
     isChecking: {},
     setIsChecking: (path, value) =>

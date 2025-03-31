@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import 'ag-grid-community/styles/ag-theme-balham.css';
-import _ from 'lodash';
+import _, { set } from 'lodash';
 
 import {
     Dialog,
@@ -17,9 +17,30 @@ import {
     ToastBody,
     Tooltip,
     Divider,
+    Checkbox,
+    CounterBadge,
+    Input,
     tokens,
 } from '@fluentui/react-components';
-import { DismissFilled, DismissRegular, bundleIcon } from '@fluentui/react-icons';
+import {
+    ArrowCircleDownFilled,
+    ArrowCircleDownRegular,
+    ArrowCircleUpFilled,
+    ArrowCircleUpLeftFilled,
+    ArrowCircleUpLeftRegular,
+    ArrowCircleUpRegular,
+    ArrowCollapseAllFilled,
+    ArrowCollapseAllRegular,
+    ArrowCurveDownLeftFilled,
+    ArrowCurveDownLeftRegular,
+    ArrowCurveUpRightFilled,
+    ArrowCurveUpRightRegular,
+    DismissFilled,
+    DismissRegular,
+    FilterFilled,
+    FilterRegular,
+    bundleIcon,
+} from '@fluentui/react-icons';
 
 const { electronAPI } = window;
 
@@ -31,11 +52,19 @@ import { SubnetResult } from './SubnetResult';
 import { cleanupSubnet } from './InventorySearchUtils';
 
 const Dismiss = bundleIcon(DismissFilled, DismissRegular);
+const FilterIcon = bundleIcon(FilterFilled, FilterRegular);
+const CollapseFilterIcon = bundleIcon(ArrowCurveDownLeftFilled, ArrowCurveDownLeftRegular);
+const CloseFilterIcon = bundleIcon(ArrowCurveUpRightFilled, ArrowCurveUpRightRegular);
 
 const InventorySearchCard = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     const [isSearchRun, setIsSearchRun] = useState(false);
+    const [isOpenFilter, setIsOpenFilter] = useState(false);
+    const [checkedModelTypes, setCheckedModelTypes] = useState([]);
+    const deviceTypes = ['EX', 'ACX', 'PTX', 'SRX', 'QFX', 'MX'];
+    const [customModelName, setCustomModelName] = useState('');
+    const customInputRef = useRef(null);
 
     const Title = () => <Text size={500}>Network Search</Text>;
     const { notify } = useNotify();
@@ -78,9 +107,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const [subnets, setSubnets] = useState([
-        // { subnet: '192.168.1.0/24', port: 22, username: 'poc', password: 'lab123' },
-    ]);
+    const [subnets, setSubnets] = useState([]);
 
     const subnetColumns = [
         { label: 'Subnet', name: 'subnet', width: 30 },
@@ -90,6 +117,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
     ];
 
     const [facts, setFacts] = useState([]);
+    const [filteredFacts, setFilteredFacts] = useState([]);
     const [undiscoveredList, setUndiscoveredList] = useState([]);
 
     const factsColumns = [
@@ -135,6 +163,24 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
 
         loadSubnets();
     }, []); // Empty dependency array ensures this runs once on mount
+
+    useEffect(() => {
+        const updatedFacts = facts.filter((fact) => {
+            const hardwareModelLower = fact.hardwareModel.toLowerCase();
+            const customModelLower = customModelName.trim().toLowerCase();
+
+            const matchesModelType =
+                checkedModelTypes.length > 0 &&
+                checkedModelTypes.some((type) => hardwareModelLower.includes(type.toLowerCase()));
+
+            const matchesCustomModelName = customModelLower && hardwareModelLower.includes(customModelLower);
+
+            // ✅ Exclude if it matches either → keep only if it matches neither
+            return !matchesModelType && !matchesCustomModelName;
+        });
+
+        setFilteredFacts(updatedFacts);
+    }, [customModelName, checkedModelTypes, facts]);
 
     const handleLeftMouseMove = (e) => {
         if (!containerRef.current) return;
@@ -255,6 +301,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
     const startCallback = async (flag) => {
         setIsSearchRun(flag);
         setFacts([]);
+        setFilteredFacts([]);
     };
 
     const endCallback = async (flag) => {
@@ -271,6 +318,20 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
         setUndiscoveredList((prevUndiscoveredList) => {
             return [...prevUndiscoveredList, undiscoveredList];
         });
+    };
+
+    const handleCheckModelToogle = (label) => {
+        let updatedTypes;
+        if (checkedModelTypes.includes(label)) {
+            updatedTypes = checkedModelTypes.filter((l) => l !== label);
+        } else {
+            updatedTypes = [...checkedModelTypes, label];
+        }
+        setCheckedModelTypes(updatedTypes);
+    };
+
+    const handleCustomModelFilter = (value) => {
+        setCustomModelName(value);
     };
 
     return (
@@ -293,6 +354,7 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                         display: 'flex',
                         flexDirection: 'column',
                         width: '100%',
+                        height: '100%',
                         flex: 1,
                         padding: '15px 15px 5px 15px',
                         boxSizing: 'border-box',
@@ -318,7 +380,14 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                     </div>
 
                     {/* Center - Main content panel */}
-                    <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            height: '100%',
+                            overflow: 'hidden',
+                        }}
+                    >
                         {/* Subnet input/output */}
                         <div
                             ref={containerRef}
@@ -352,7 +421,13 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
 
                                 {/* Subnet Table Display */}
                                 <div
-                                    style={{ width: '100%', height: '100%', margin: 0, padding: 0, overflow: 'hidden' }}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        margin: 0,
+                                        padding: 0,
+                                        overflow: 'hidden',
+                                    }}
                                 >
                                     <SubnetResult
                                         disabled={isSearchRun}
@@ -406,15 +481,139 @@ const InventorySearchCard = ({ isOpen, onClose }) => {
                                 onAddUndiscoveredList={onAddUndiscoveredList}
                             />
 
-                            <div style={{ width: '100%', marginTop: '5px', marginBottom: '5px', padding: 0 }}>
-                                <Divider appearance='strong'>Facts</Divider>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    width: '100%',
+                                    alignItems: 'center',
+                                    marginTop: '5px',
+                                    marginBottom: '5px',
+                                    padding: 0,
+                                }}
+                            >
+                                <Divider appearance='strong'>
+                                    <Text size={200}>Facts</Text>
+                                </Divider>
+                                <Button
+                                    disabled={isSearchRun}
+                                    size='small'
+                                    appearance='transparent'
+                                    onClick={() => {
+                                        setIsOpenFilter(!isOpenFilter);
+                                    }}
+                                    iconPosition='after'
+                                    icon={
+                                        isOpenFilter ? (
+                                            <CloseFilterIcon style={{ fontSize: '16px' }} />
+                                        ) : (
+                                            <CollapseFilterIcon style={{ fontSize: '16px' }} />
+                                        )
+                                    }
+                                >
+                                    <Text size={100} wrap={false} style={{ width: '150px' }}>
+                                        {isOpenFilter ? 'Hide Device Model Filter' : 'Show Device Model Filter'}
+                                    </Text>
+                                </Button>
+                                <CounterBadge
+                                    count={checkedModelTypes.length + (customModelName.trim() ? 1 : 0)}
+                                    size='small'
+                                    shape='circular'
+                                    color={
+                                        checkedModelTypes.length > 0 || customModelName.trim().length > 0
+                                            ? 'brand'
+                                            : 'informative'
+                                    }
+                                    showZero
+                                />
                             </div>
 
+                            {isOpenFilter && (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        width: '100%',
+                                        height: '50px',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            width: '100%',
+                                            gap: '10px',
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: '12px', paddingRight: '5px' }}>
+                                            Please check for model filter:
+                                        </Text>
+                                        {deviceTypes.sort().map((label) => (
+                                            <span key={label}>
+                                                <Checkbox
+                                                    size='medium'
+                                                    key={label}
+                                                    checked={checkedModelTypes.includes(label)}
+                                                    onChange={() => handleCheckModelToogle(label)}
+                                                    style={{
+                                                        transform: 'scale(0.8)', // Zoom out effect
+                                                        transformOrigin: 'center right',
+                                                    }}
+                                                />
+                                                <Text style={{ fontSize: '11px' }}>{label}</Text>
+                                            </span>
+                                        ))}
+                                        <span style={{ paddingLeft: '20px' }}>
+                                            <Tooltip
+                                                content={
+                                                    <Text size={100} align='center'>
+                                                        Custom model name (case insensitive) used to filter facts.
+                                                    </Text>
+                                                }
+                                                positioning='above'
+                                            >
+                                                <Text style={{ fontSize: '10px', paddingRight: '10px' }}>
+                                                    Custom Model Name:
+                                                </Text>
+                                            </Tooltip>
+                                            <Input
+                                                ref={customInputRef}
+                                                size='small'
+                                                placeholder='Enter model name'
+                                                value={customModelName}
+                                                onClick={() => {
+                                                    setTimeout(() => {
+                                                        customInputRef.current?.focus();
+                                                    }, 100);
+                                                }}
+                                                onChange={(_, data) => handleCustomModelFilter(data.value)}
+                                                style={{
+                                                    transform: 'scale(0.8)', // Zoom out effect
+                                                    transformOrigin: 'center left',
+                                                }}
+                                            />
+                                        </span>
+                                    </div>
+
+                                    <div style={{ width: '100%', marginTop: '10px', marginBottom: '10px', padding: 0 }}>
+                                        <Divider appearance='strong' />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Facts Display */}
-                            <div style={{ width: '100%', height: '100%', margin: 0, padding: 0 }}>
+                            <div
+                                style={{
+                                    width: '100%',
+                                    height: isOpenFilter ? 'calc(100% - 146px)' : '100%',
+                                    margin: 0,
+                                    padding: 0,
+                                }}
+                            >
                                 <InventorySearchResult
                                     columns={factsColumns}
-                                    items={facts}
+                                    items={filteredFacts}
                                     rowHeight={30}
                                     disabled={isSearchRun}
                                     undiscoveredList={undiscoveredList}

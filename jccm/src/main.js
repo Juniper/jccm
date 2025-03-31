@@ -4,6 +4,7 @@ import os from 'os';
 
 import { setupApiHandlers } from './Services/ApiServer'; // Import the API handlers
 import { setupAutoUpdate } from './Services/AutoUpdate'; // Import the auto-update setup function
+import { setupApiConfigTrackingHandlers } from './Services/ApiConfigTracking'; // Import the API config tracking handlers
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -43,7 +44,7 @@ const createWindow = () => {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     mainWindow = new BrowserWindow({
         width: Math.floor(width * 0.95),
-        height: Math.floor(height * 0.85),
+        height: Math.floor(height * 0.95),
         webPreferences: {
             preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
             nodeIntegration: false,
@@ -66,6 +67,8 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
     setupApiHandlers(); // Set up IPC handlers
+    setupApiConfigTrackingHandlers(); // Set up API config tracking handlers
+
     createWindow();
 
     setupAutoUpdate(); // Set up auto-update
