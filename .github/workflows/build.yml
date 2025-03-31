@@ -198,7 +198,7 @@ jobs:
               working-directory: ./jccm
 
             - name: Upload macOS artifacts
-              uses: actions/upload-artifact@v3.1.0
+              uses: actions/upload-artifact@v4
               with:
                   name: macos-installers
                   path: |
@@ -300,7 +300,7 @@ jobs:
                   }
 
             - name: Upload windows artifacts
-              uses: actions/upload-artifact@v3.1.0
+              uses: actions/upload-artifact@v4
               with:
                   name: windows-installers
                   path: ./jccm/out/make/squirrel.windows/x64/*
@@ -337,7 +337,7 @@ jobs:
                   ls -alR out/make
 
             - name: Archive .deb artifact
-              uses: actions/upload-artifact@v3.1.0
+              uses: actions/upload-artifact@v4
               with:
                   name: deb-package
                   path: ./jccm/out/make/deb/x64/*.deb
@@ -376,7 +376,7 @@ jobs:
                   ls -alR out/make
 
             - name: Archive .rpm artifact
-              uses: actions/upload-artifact@v3.1.0
+              uses: actions/upload-artifact@v4
               with:
                   name: rpm-package
                   path: ./jccm/out/make/rpm/x64/*.rpm
