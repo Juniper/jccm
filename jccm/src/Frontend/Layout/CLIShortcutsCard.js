@@ -9,6 +9,7 @@ import {
     DialogSurface,
     Button,
     Label,
+    Link,
     Text,
     Field,
     SpinButton,
@@ -40,14 +41,15 @@ import {
 } from '@fluentui/react-icons';
 
 import yaml from 'js-yaml';
-import Ajv from 'ajv';
 
 const { electronAPI } = window;
 
 import { useNotify } from '../Common/NotificationContext';
 import useStore from '../Common/StateStore';
-import { cliShortcutDataSchema, defaultCliShortcutData } from '../Common/CommonVariables';
-import { MonacoEditor } from '../Components/Editor/MonacoEditor';
+
+import { buildCliShortcutSchema, defaultCliShortcutData } from '../Common/SchemaForTools';
+import { MonacoEditorForTools } from '../Components/Editor/MonacoEditorForTools';
+
 
 const DismissIcon = bundleIcon(DismissFilled, DismissRegular);
 const ResetIcon = bundleIcon(ArrowResetFilled, ArrowResetRegular);
@@ -61,25 +63,6 @@ const tooltipStyles = makeStyles({
     },
 });
 
-const validateYamlSchema = (yamlData, schema) => {
-    const ajv = new Ajv();
-    const validate = ajv.compile(schema);
-
-    let parsedData;
-    try {
-        parsedData = yaml.load(yamlData);
-    } catch (err) {
-        throw new Error(`Invalid YAML:\n${err.message}`);
-    }
-
-    const valid = validate(parsedData);
-    if (!valid) {
-        console.log('CLI Shortcut mapping data schema error:', validate?.errors);
-        throw new Error(`Schema validation error:\n${validate.errors?.[0]?.message}`);
-    }
-
-    return parsedData;
-};
 
 function ensureDefaultComments(text) {
     // Split the input text into lines.
@@ -187,19 +170,23 @@ export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
         }
     };
 
+
+    const handleOnDidChangeMarkers = (markers) => {
+
+        if (markers.length > 0) {
+            setIsValidSchema(false);
+            setSchemaError(markers);
+        } else {
+            setIsValidSchema(true);
+            setSchemaError(null);
+        }
+    }
+
     const handleOnDidChangeModelContent = (newValue) => {
         setCurrentText(newValue);
         setIsChanged(newValue !== text);
-
-        try {
-            const cliShortcutMapping = validateYamlSchema(newValue, cliShortcutDataSchema);
-            setIsValidSchema(true);
-            setSchemaError(null);
-        } catch (error) {
-            setIsValidSchema(false);
-            setSchemaError(error.message);
-        }
     };
+
 
     const handleOnBackToDefault = () => {
         console.log('Back to Default CLI Mapping');
@@ -319,24 +306,30 @@ export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
         setColumn(newColumn);
     };
 
-    useEffect(() => {
-        const enableTabKeyEventCapture = async () => {
-            await electronAPI.saAddKeyDownEvent(['Escape']);
-        };
-        const disableTabKeyEventCapture = async () => {
-            await electronAPI.saDeleteKeyDownEvent();
-        };
+    // useEffect(() => {
+    //     const enableTabKeyEventCapture = async () => {
+    //         await electronAPI.saAddKeyDownEvent(['Escape']);
+    //     };
+    //     const disableTabKeyEventCapture = async () => {
+    //         await electronAPI.saDeleteKeyDownEvent();
+    //     };
 
-        enableTabKeyEventCapture();
+    //     enableTabKeyEventCapture();
 
-        return () => {
-            disableTabKeyEventCapture();
-        };
-    }, []);
+    //     return () => {
+    //         disableTabKeyEventCapture();
+    //     };
+    // }, []);
 
-    electronAPI.onEscKeyDown(() => {
-        onClose();
-    });
+    // electronAPI.onEscKeyDown(() => {
+    //     onClose();
+    // });
+
+    const goToMarker = (m) => {
+        if (!editorMethodsRef.current) return;
+        editorMethodsRef.current.setPosition2(m.startLineNumber, m.startColumn);
+        editorMethodsRef.current.focus();
+    };
 
     return (
         <Dialog
@@ -498,13 +491,17 @@ export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
                     </div>
 
                     <div style={{ width: '100%', height: '100%' }}>
-                        <MonacoEditor
+                        <MonacoEditorForTools
+                            id='ccsm'
                             text={text}
                             onDidChangeCursorPosition={handlePositionUpdate}
                             onEditorReady={handleEditorReady}
                             onDidChangeModelContent={handleOnDidChangeModelContent}
+                            onDidChangeMarkers={handleOnDidChangeMarkers}
                             tabSize={tabSize}
+                            dataSchema={buildCliShortcutSchema()}
                         />
+
                     </div>
                     <div
                         style={{
@@ -536,10 +533,13 @@ export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
                                                     flexDirection: 'column',
                                                 }}
                                             >
-                                                {schemaError?.split('\n').map((message, index) => (
-                                                    <Text key={index} size={100}>
-                                                        {message}
-                                                    </Text>
+                                                {schemaError?.map((marker, index) => (
+                                                    <Link key={index} onClick={() => { goToMarker(marker) }}>
+                                                        <Text key={index} size={100}>
+                                                            {`${marker.startLineNumber}:${marker.startColumn}`}&nbsp;&nbsp;&nbsp;
+                                                            {marker.message}
+                                                        </Text>
+                                                    </Link>
                                                 ))}
                                             </div>
                                         ),
@@ -549,8 +549,10 @@ export const EditCLIShortcutsCard = ({ isOpen, onClose }) => {
                                     positioning='above-end'
                                 >
                                     <Text size={100}>
-                                        <span style={{ color: tokens.colorPaletteRedForeground3 }}>Invalid Input</span>{' '}
-                                        (Check for syntax, grammar, or schema errors)
+                                        <span style={{ color: tokens.colorPaletteRedForeground3 }}>
+                                            {`${schemaError?.length || 0} ${schemaError?.length === 1 ? 'validation error' : 'validation errors'}`}
+                                        </span>
+                                        {' • Please review the errors'}
                                     </Text>
                                 </Tooltip>
                             )}

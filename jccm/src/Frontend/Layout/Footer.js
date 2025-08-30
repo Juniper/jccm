@@ -21,7 +21,9 @@ import {
     CheckmarkCircleFilled,
     FireFilled,
     CircleHalfFillRegular,
+    CircleOffRegular,
     bundleIcon,
+    CircleOffFilled,
 } from '@fluentui/react-icons';
 
 import useStore from '../Common/StateStore';
@@ -34,6 +36,7 @@ import { delay } from 'lodash';
 const { electronAPI } = window;
 const ConsoleWindowIcon = bundleIcon(WrenchRegular, WrenchFilled);
 const ResetNetworkAccessIcon = bundleIcon(CircleHalfFillRegular, CircleHalfFillRegular);
+const ResetConfigShortcutIcon = bundleIcon(CircleHalfFillRegular, CircleHalfFillRegular);
 
 const tooltipStyles = makeStyles({
     tooltipMaxWidthClass: {
@@ -56,8 +59,9 @@ export default () => {
         consoleWindowOpen,
         setConsoleWindowOpen,
         deviceNetworkCondition,
-        resetDeviceNetworkConditionAll,
         supportedDeviceModels,
+        isConfiguring,
+        configShortcutCommitResult,
     } = useStore();
 
     const [isBastionHostEmpty, setIsBastionHostEmpty] = useState(false);
@@ -170,6 +174,12 @@ export default () => {
         setConsoleWindowOpen(!consoleWindowOpen);
     };
 
+
+    const totalConfigShortcutErrors = Object.values(isConfiguring || {}).filter(item => item?.status === false && !item?.skip).length;
+    const totalConfigShortcutSkips = Object.values(isConfiguring || {}).filter(item => item?.status === false && item?.skip).length;
+    const totalConfigShortcutSuccess = Object.values(configShortcutCommitResult || {}).length;
+    const totalConfigShortcutTargets = totalConfigShortcutErrors + totalConfigShortcutSkips + totalConfigShortcutSuccess;
+
     return (
         <div
             style={{
@@ -243,9 +253,8 @@ export default () => {
                             )}
                             {cloudInventory.length > 0 && countOfOrgOrSiteUnmatched > 0 && (
                                 <Label size='small' style={{ color: tokens.colorNeutralForeground4 }}>
-                                    {`Device${
-                                        countOfOrgOrSiteUnmatched !== 1 ? 's' : ''
-                                    } with unmatched organization or site: ${countOfOrgOrSiteUnmatched}`}
+                                    {`Device${countOfOrgOrSiteUnmatched !== 1 ? 's' : ''
+                                        } with unmatched organization or site: ${countOfOrgOrSiteUnmatched}`}
                                 </Label>
                             )}
                         </>
@@ -464,6 +473,179 @@ export default () => {
                         </div>
                     </div>
                 )}
+
+
+
+
+
+                {totalConfigShortcutTargets > 0 && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingLeft: '5px',
+                        }}
+                    >
+                        <ToolbarDivider />
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: '20px',
+                                paddingLeft: '5px',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Tooltip
+                                content={{
+                                    className: styles.tooltipMaxWidthClass,
+                                    children: (
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                            }}
+                                        >
+                                            {totalConfigShortcutSuccess > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <CheckmarkCircleFilled
+                                                        style={{
+                                                            color: tokens.colorPaletteLightGreenForeground3,
+                                                            fontSize: '11px',
+                                                        }}
+                                                    />
+
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`Applied: ${totalConfigShortcutSuccess}`}
+                                                    </Text>
+                                                </div>
+                                            )}
+
+                                            {totalConfigShortcutSkips > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <CircleOffFilled
+                                                        style={{
+                                                            fontSize: '11px',
+                                                            color: tokens.colorNeutralForeground3,
+                                                        }}
+                                                    />
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`Skipped: ${totalConfigShortcutSkips}`}
+                                                    </Text>
+                                                </div>
+                                            )}
+
+                                            {totalConfigShortcutErrors > 0 && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-start',
+                                                        gap: '5px',
+                                                    }}
+                                                >
+                                                    <FireFilled
+                                                        style={{
+                                                            fontSize: '12px',
+                                                            color: tokens.colorPaletteRedForeground3,
+                                                        }}
+                                                    />
+
+                                                    <Text
+                                                        style={{
+                                                            color: tokens.colorNeutralForeground4,
+                                                            fontSize: '10px',
+                                                        }}
+                                                    >
+                                                        {`Errors: ${totalConfigShortcutErrors}`}
+                                                    </Text>
+                                                </div>
+                                            )}
+
+                                            <div
+                                                style={{
+                                                    width: '100%',
+                                                    paddingTop: '5px',
+                                                    paddingBottom: '5px',
+                                                }}
+                                            />
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'flex-start',
+                                                    gap: '5px',
+                                                }}
+                                            >
+                                                <ResetConfigShortcutIcon
+                                                    style={{
+                                                        fontSize: '12px',
+                                                        color: tokens.colorNeutralForeground4,
+                                                    }}
+                                                />
+                                                <Link
+                                                    style={{
+                                                        fontSize: '10px',
+                                                        color: tokens.colorNeutralForeground4,
+                                                    }}
+                                                    onClick={() => eventBus.emit('device-config-shortcut-status-reset')}
+                                                >
+                                                    Reset Status
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ),
+                                }}
+                                relationship='description'
+                                withArrow
+                                positioning='above'
+                                appearance='normal'
+                            >
+                                <Text
+                                    style={{
+                                        fontSize: '12px',
+                                        color: tokens.colorNeutralForeground4,
+                                    }}
+                                >
+                                    {`Config Shortcuts on ${totalConfigShortcutTargets} devices`}
+                                </Text>
+                            </Tooltip>
+                        </div>
+                    </div>
+                )}
+
+
+
             </div>
             <div
                 style={{

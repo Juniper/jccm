@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 const { electronAPI } = window;
-import { MonacoEditor } from './MonacoEditor';
+import { MonacoEditorForConfigTracking } from './MonacoEditorForConfigTracking';
 import { use } from 'react';
 
 import { Text, tokens } from '@fluentui/react-components';
@@ -583,7 +583,7 @@ export const ConfigTrackingViewer = (props) => {
                         </div>
                     </div>
                 )}
-                <MonacoEditor
+                <MonacoEditorForConfigTracking
                     {...props}
                     contextmenu={false}
                     navigationMap={configNavigationMap}

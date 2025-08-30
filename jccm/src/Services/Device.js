@@ -50,8 +50,12 @@ const processCommands = async (
     commands,
     sshConfig,
     bastionHost = {},
-    commandInactivityTimeout = 3000,
-    commitInactivityTimeout = 60000
+    {
+        displayXml = true,
+        commandInactivityTimeout = 3000,
+        commitInactivityTimeout = 60000,
+        sshConnectTimeout = 5000
+    } = {}
 ) => {
     try {
         if (bastionHost.active) {
@@ -61,7 +65,9 @@ const processCommands = async (
                 sshConfig,
                 bastionHost,
                 commandInactivityTimeout * 2,
-                commitInactivityTimeout
+                commitInactivityTimeout,
+                sshConnectTimeout,
+                displayXml
             );
         } else {
             // console.log('run processCommands standalone');
@@ -69,7 +75,8 @@ const processCommands = async (
                 commands,
                 sshConfig,
                 commandInactivityTimeout,
-                commitInactivityTimeout
+                commitInactivityTimeout,
+                displayXml
             );
         }
     } catch (error) {
@@ -81,7 +88,8 @@ function processCommandsStandalone(
     commands,
     sshConfig,
     commandInactivityTimeout = 5000,
-    commitInactivityTimeout = 60000
+    commitInactivityTimeout = 60000,
+    displayXml = true
 ) {
     return new Promise((resolve, reject) => {
         const conn = new Client();
@@ -151,7 +159,13 @@ function processCommandsStandalone(
                             continue;
                         } else {
                             if (cmd.startsWith('show') || cmd.startsWith('commit')) {
-                                currentCommand = `${cmd} | display xml | no-more\n`;
+                                if (displayXml) {
+                                    currentCommand = `${cmd} | display xml | no-more\n`;
+                                }
+                                else {
+                                    currentCommand = `${cmd} | no-more\n`;
+
+                                }
                             } else {
                                 currentCommand = `${cmd}\n`;
                             }
@@ -188,16 +202,26 @@ function processCommandsStandalone(
                 stream.on('data', (data) => onDataReceived(data));
                 stream.stderr.on('data', (data) => onDataReceived(data, true));
                 stream.on('close', () => {
-                    // const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
-                    const regex = /^<rpc-reply[\s\S]*?<\/rpc-reply>$/gim;
-                    let match;
-                    while ((match = regex.exec(allCommandsOutput)) !== null) {
-                        results.push(match[0]);
+                    if (displayXml) {
+
+                        const regex = /^<rpc-reply[\s\S]*?<\/rpc-reply>$/gim;
+                        let match;
+                        while ((match = regex.exec(allCommandsOutput)) !== null) {
+                            results.push(match[0]);
+                        }
+                        resolve({
+                            ...StatusErrorMessages.SUCCESS,
+                            data: results,
+                        });
+
+                    } else {
+                        resolve({
+                            ...StatusErrorMessages.SUCCESS,
+                            data: allCommandsOutput,
+                        });
+
                     }
-                    resolve({
-                        ...StatusErrorMessages.SUCCESS,
-                        data: results,
-                    });
+
                     conn.end();
                     clearTimeout(timeoutHandle);
                 });
@@ -231,7 +255,8 @@ function processCommandsProxy(
     bastionHost,
     commandInactivityTimeout = 5000,
     commitInactivityTimeout = 60000,
-    sshConnectTimeout = 5000
+    sshConnectTimeout = 5000,
+    displayXml = true
 ) {
     const commands = [..._commands];
 
@@ -395,12 +420,19 @@ function processCommandsProxy(
                             commitInactivityTimeout = number * 1000;
                             break;
                         default:
-                            currentCommand =
-                                cmd.startsWith('show') || cmd.startsWith('commit')
-                                    ? `${cmd} | display xml | no-more\n`
-                                    : `${cmd}\n`;
+                            if (cmd.startsWith('show') || cmd.startsWith('commit')) {
+                                if (displayXml) {
+                                    currentCommand = `${cmd} | display xml | no-more\n`;
+                                }
+                                else {
+                                    currentCommand = `${cmd} | no-more\n`;
+
+                                }
+                            } else {
+                                currentCommand = `${cmd}\n`;
+                            }
+
                             stream.write(currentCommand);
-                            // console.log('>>> currentCommand:', currentCommand);
                             return;
                     }
                 }
@@ -430,19 +462,24 @@ function processCommandsProxy(
 
                 stream.on('close', () => {
                     if (!sshClientError) {
-                        // console.log('>>> all commands output:', allCommandsOutput);
 
-                        // const regex = /<rpc-reply[\s\S]*?<\/rpc-reply>/gi;
-                        const regex = /^<rpc-reply[\s\S]*?<\/rpc-reply>$/gim;
+                        if (displayXml) {
+                            const regex = /^<rpc-reply[\s\S]*?<\/rpc-reply>$/gim;
 
-                        let match;
-                        while ((match = regex.exec(allCommandsOutput)) !== null) {
-                            results.push(match[0]);
+                            let match;
+                            while ((match = regex.exec(allCommandsOutput)) !== null) {
+                                results.push(match[0]);
+                            }
+                            resolve({
+                                ...StatusErrorMessages.SUCCESS,
+                                data: results,
+                            });
+                        } else {
+                            resolve({
+                                ...StatusErrorMessages.SUCCESS,
+                                data: allCommandsOutput,
+                            });
                         }
-                        resolve({
-                            ...StatusErrorMessages.SUCCESS,
-                            data: results,
-                        });
                     }
                     conn.end();
                     clearTimeout(timeoutHandle);
@@ -683,14 +720,24 @@ export const commitJunosSetConfig = async (
     password,
     config,
     bastionHost = {},
+    rollback = false,
     readyTimeout = 10000
 ) => {
     const configs = config
         .trim()
         .split(/\n/)
+        .filter((line) => /\S/.test(line))
         .map((line) => line.trim());
 
-    const commands = ['edit exclusive private', ...configs, 'commit', 'exit'];
+
+    const commands = [
+        'edit exclusive private',
+        ...configs,
+        'commit',
+        ...(rollback ? ['rollback'] : []),
+        'exit'
+    ];
+
 
     if (username === 'root') commands.unshift('cli');
     else if (username === 'regress') commands.unshift('cli');
@@ -714,13 +761,11 @@ export const commitJunosSetConfig = async (
                 rpcReply = getRpcReply('commit-results', result);
 
                 if (rpcReply !== null) {
-                    // console.log(`rpc commit-results reply: ${rpcReply}`);
                     commitReply = rpcReply;
                 }
             }
 
             if (commitReply && commitReply.includes('<commit-success/>')) {
-                // console.log('>>>>>commit success');
                 return {
                     status: 'success',
                     message: 'Configuration committed successfully',
@@ -728,7 +773,79 @@ export const commitJunosSetConfig = async (
                 };
             }
 
-            throw StatusErrorMessages.COMMIT_ERROR;
+            return {
+                status: 'error',
+                message: 'Config commit failed',
+                data: commitReply,
+            };
+        } else {
+            console.error(
+                `commitJunosSetConfig Error(${address}:${port}) type 1: status: ${results.status} message: ${results.message}`
+            );
+            throw results;
+        }
+    } catch (error) {
+        console.error(`commitJunosSetConfig Error(${address}:${port}): ${JSON.stringify(error)}`);
+        throw error;
+    }
+};
+
+export const applyConfigShortcut = async (
+    address,
+    port,
+    username,
+    password,
+    config,
+    bastionHost = {},
+    rollback = false,
+    readyTimeout = 10000
+) => {
+    const configs = config
+        .trim()
+        .split(/\n/)
+        .filter((line) => /\S/.test(line))
+        .map((line) => line.trim());
+
+
+    const commands = [
+        'edit exclusive private',
+        ...configs,
+        'commit',
+        ...(rollback ? ['rollback'] : []),
+        'exit'
+    ];
+
+
+    if (username === 'root') commands.unshift('cli');
+    else if (username === 'regress') commands.unshift('cli');
+
+    const sshConfig = {
+        host: address,
+        port,
+        username,
+        password,
+        readyTimeout,
+    };
+
+    try {
+        const results = await processCommands(commands, sshConfig, bastionHost, { displayXml: false });
+
+        if (results.status === 'success') {
+            const data = results.data;
+
+            if (data.includes('commit complete')) {
+                return {
+                    status: 'success',
+                    message: 'Config Shortcut applied',
+                    data,
+                };
+            }
+
+            return {
+                status: 'error',
+                message: 'Config Shortcut failed',
+                data,
+            };
         } else {
             console.error(
                 `commitJunosSetConfig Error(${address}:${port}) type 1: status: ${results.status} message: ${results.message}`
@@ -768,7 +885,7 @@ export const getDeviceNetworkCondition = async (
     };
 
     try {
-        const results = await processCommands(commands, sshConfig, bastionHost, 5000);
+        const results = await processCommands(commands, sshConfig, bastionHost, { displayXml: true, commandInactivityTimeout: 5000 });
 
         if (results.status === 'success') {
             const parser = new xml2js.Parser({ explicitArray: false }); // Consider setting explicitArray to false to simplify the structure

@@ -73,6 +73,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     saGetDeviceNetworkCondition: (args) => ipcRenderer.invoke('get-device-network-condition', args),
 
+    saApplyConfig: (args) => ipcRenderer.invoke('apply-config', args),
+
     checkForAutoUpdateSupport: () => ipcRenderer.invoke('check-for-auto-update-support'), // renderer -> main -> renderer
 
     checkForUpdates: () => ipcRenderer.invoke('check-for-updates'), // renderer -> main -> renderer

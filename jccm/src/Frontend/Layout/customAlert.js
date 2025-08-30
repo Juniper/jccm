@@ -20,6 +20,8 @@ const AlertMessage = {
         'Before moving forward, please take a moment to ensure that none of the devices you’re about to onboard are already connected to another cloud service. Onboarding a device that’s already linked elsewhere can create a multi-homed setup, which isn’t supported. Verifying this helps ensure a smooth and successful onboarding experience!',
     'Network Search':
         'This operation performs a network search and does not make any changes to device configurations. However, as network searches can sometimes be considered intrusive, we encourage you to seek approval from your security department before proceeding. Taking this step helps ensure compliance with your organization’s security policies.',
+    'Configuration Shortcut':
+        'Configuration shortcuts apply pre-defined Junos configuration commands directly to the device. Please review the commands carefully before applying them, as changes take effect immediately and may impact network behavior.',
 };
 
 export const customAlert = (title, onConfirm, theme, onDisable) => {

@@ -1,0 +1,596 @@
+import React, { useState, useRef, useEffect } from 'react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import 'ag-grid-community/styles/ag-theme-balham.css';
+import _, { method, set } from 'lodash';
+
+import {
+    Dialog,
+    DialogSurface,
+    Button,
+    Label,
+    Link,
+    Text,
+    Field,
+    SpinButton,
+    Toast,
+    ToastTitle,
+    ToastBody,
+    Tooltip,
+    Divider,
+    ToolbarDivider,
+    makeStyles,
+    tokens,
+} from '@fluentui/react-components';
+import {
+    DismissFilled,
+    DismissRegular,
+    ArrowResetFilled,
+    ArrowResetRegular,
+    SaveRegular,
+    SaveFilled,
+    FolderOpenRegular,
+    FolderOpenFilled,
+    ArrowExportRegular,
+    ArrowExportFilled,
+    EqualCircleFilled,
+    EqualCircleRegular,
+    CircleShadowRegular,
+    CircleRegular,
+    bundleIcon,
+} from '@fluentui/react-icons';
+
+import yaml from 'js-yaml';
+
+const { electronAPI } = window;
+
+import { useNotify } from '../Common/NotificationContext';
+import useStore from '../Common/StateStore';
+import { buildConfigShortcutSchema, defaultConfigShortcutData } from '../Common/SchemaForTools';
+import { MonacoEditorForTools } from '../Components/Editor/MonacoEditorForTools';
+
+
+const DismissIcon = bundleIcon(DismissFilled, DismissRegular);
+const ResetIcon = bundleIcon(ArrowResetFilled, ArrowResetRegular);
+const SaveIcon = bundleIcon(SaveFilled, SaveRegular);
+const LoadIcon = bundleIcon(FolderOpenFilled, FolderOpenRegular);
+const ExportIcon = bundleIcon(ArrowExportFilled, ArrowExportRegular);
+const BackToDefaultIcon = bundleIcon(CircleShadowRegular, CircleRegular);
+const tooltipStyles = makeStyles({
+    tooltipMaxWidthClass: {
+        maxWidth: '400px',
+    },
+});
+
+
+
+function ensureDefaultComments(text) {
+    // Split the input text into lines.
+    const lines = text.split('\n');
+
+    // Identify the header block: consecutive comment lines at the top.
+    let headerEndIndex = 0;
+    while (headerEndIndex < lines.length && lines[headerEndIndex].trim().startsWith('#')) {
+        headerEndIndex++;
+    }
+
+    // Get the header block.
+    const headerBlock = lines.slice(0, headerEndIndex);
+
+    // Get the default header block from defaultConfigShortcutData.
+    const defaultLines = defaultConfigShortcutData.split('\n');
+    let defaultHeaderEndIndex = 0;
+    while (defaultHeaderEndIndex < defaultLines.length && defaultLines[defaultHeaderEndIndex].trim().startsWith('#')) {
+        defaultHeaderEndIndex++;
+    }
+    const defaultHeaderBlock = defaultLines.slice(0, defaultHeaderEndIndex);
+
+    // Replace the original header with the default header.
+    const newLines = [...defaultHeaderBlock, ...lines.slice(headerEndIndex)];
+    return newLines.join('\n');
+}
+
+export const EditConfigShortcutsCard = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+    const { notify } = useNotify();
+    const { settings, setSettings, exportSettings, setConfigShortcutMapping } = useStore();
+    const { deviceFacts } = useStore();
+
+    const [line, setLine] = useState(0);
+    const [column, setColumn] = useState(0);
+
+    const editorMethodsRef = useRef(null);
+
+    const _text = settings?.configShortcuts?.length > 0 ? settings.configShortcuts : defaultConfigShortcutData;
+
+    const text = ensureDefaultComments(_text);
+
+    const [currentText, setCurrentText] = useState(text);
+    const [isChanged, setIsChanged] = useState(false);
+
+    const [isValidSchema, setIsValidSchema] = useState(true);
+    const [schemaError, setSchemaError] = useState(null);
+
+    const fileInputRef = useRef(null);
+    const tabSize = 2;
+
+    const styles = tooltipStyles();
+
+    const handleOnLoad = () => {
+        console.log('Loading Configuration Shortcuts');
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileImport = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = e.target.result;
+
+                setCurrentText(data);
+
+                if (editorMethodsRef.current) {
+                    editorMethodsRef.current.setValue(data);
+                    editorMethodsRef.current.setPosition(1, 1);
+                    editorMethodsRef.current.focus();
+                    setIsChanged(data !== text);
+                }
+
+                notify(
+                    <Toast>
+                        <ToastTitle>The Configuration shortcut mapping file has been successfully imported into the editor.</ToastTitle>
+                    </Toast>,
+                    { intent: 'success' }
+                );
+            };
+
+            // Read the file as text to directly load it into the editor
+            reader.readAsText(file);
+        }
+
+        // Reset the file input so the same file can be reselected if needed
+        fileInputRef.current.value = '';
+    };
+
+    const handleEditorReady = (methods) => {
+        editorMethodsRef.current = methods;
+        // Focus the editor after it's ready
+        setTimeout(() => {
+            editorMethodsRef.current.focus();
+        }, 100);
+    };
+
+    const handleOnReset = () => {
+        console.log('Resetting Configuration Shortcut Mapping');
+        if (editorMethodsRef.current) {
+            editorMethodsRef.current.setValue(text);
+            editorMethodsRef.current.focus();
+        }
+    };
+
+    const handleOnDidChangeMarkers = (markers) => {
+
+        if (markers.length > 0) {
+            setIsValidSchema(false);
+            setSchemaError(markers);
+        } else {
+            setIsValidSchema(true);
+            setSchemaError(null);
+        }
+    }
+
+    const handleOnDidChangeModelContent = (newValue) => {
+        setCurrentText(newValue);
+        setIsChanged(newValue !== text);
+    };
+
+    const handleOnBackToDefault = () => {
+        console.log('Back to Default Configuration Shortcut Mapping');
+        if (editorMethodsRef.current) {
+            editorMethodsRef.current.setValue(defaultConfigShortcutData);
+            editorMethodsRef.current.focus();
+        }
+    };
+
+    const handleOnSave = () => {
+        console.log('Saving Configuration Shortcut Mapping');
+
+        if (editorMethodsRef.current) {
+            const saveFunction = async (value) => {
+                const newSettings = {
+                    ...settings,
+                    configShortcuts: value,
+                };
+                setSettings(newSettings);
+                exportSettings(newSettings);
+            };
+
+            const value = editorMethodsRef.current.getValue();
+            saveFunction(value);
+            setIsChanged(false);
+
+            try {
+                const mapping = yaml.load(value);
+                setConfigShortcutMapping(mapping);
+                console.log('Configuration Shortcut Mapping saved:', mapping);
+            } catch (error) {
+                console.log('Error saving Configuration Shortcut mapping:', error);
+                notify(
+                    <Toast>
+                        <ToastTitle>Configuration Shortcut Mapping Update</ToastTitle>
+                        <ToastBody subtitle='Update Failed'>
+                            <div>
+                                <Text>The Configuration shortcut mapping entries have failed to be updated.</Text>
+                                <Text size={300}>{error.message}</Text>
+                            </div>
+                        </ToastBody>
+                    </Toast>,
+                    { intent: 'error' }
+                );
+                return;
+            }
+
+            notify(
+                <Toast>
+                    <ToastTitle>Configuration Shortcut Mapping Update</ToastTitle>
+                    <ToastBody subtitle='Update Successful'>
+                        <Text>The Configuration shortcut mapping entries have been successfully updated.</Text>
+                    </ToastBody>
+                </Toast>,
+                { intent: 'success' }
+            );
+        }
+    };
+
+    const handleOnExport = async () => {
+        console.log('Exporting Configuration Shortcut Mapping');
+        if (editorMethodsRef.current) {
+            const value = editorMethodsRef.current.getValue();
+
+            // Generate a date string (e.g., "2023-10-14")
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const fileName = `config-shortcut-mapping-${dateStr}.yaml`;
+
+            try {
+                // Prompt the user for where to save the file
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [
+                        {
+                            description: 'YAML files',
+                            accept: { 'text/yaml': ['.yaml', '.yml'] },
+                        },
+                    ],
+                });
+
+                // Create a writable stream and write the file
+                const writable = await fileHandle.createWritable();
+                await writable.write(value);
+                await writable.close();
+
+                notify(
+                    <Toast>
+                        <ToastTitle>Export Successful</ToastTitle>
+                        <ToastBody>
+                            <Text>Your Configuration shortcut mapping has been successfully exported to {fileName}.</Text>
+                        </ToastBody>
+                    </Toast>,
+                    { intent: 'success' }
+                );
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error exporting file:', error);
+                    notify(
+                        <Toast>
+                            <ToastTitle>Export Failed</ToastTitle>
+                            <ToastBody>
+                                <Text>There was an error exporting the Configuration shortcut mapping file.</Text>
+                            </ToastBody>
+                        </Toast>,
+                        { intent: 'error' }
+                    );
+                } else {
+                    // User canceled the save dialog
+                    console.log('Save was canceled');
+                }
+            }
+        }
+    };
+
+    const handlePositionUpdate = (newLine, newColumn) => {
+        setLine(newLine);
+        setColumn(newColumn);
+    };
+
+    // useEffect(() => {
+    //     const enableTabKeyEventCapture = async () => {
+    //         await electronAPI.saAddKeyDownEvent(['Escape']);
+    //     };
+    //     const disableTabKeyEventCapture = async () => {
+    //         await electronAPI.saDeleteKeyDownEvent();
+    //     };
+
+    //     enableTabKeyEventCapture();
+
+    //     return () => {
+    //         disableTabKeyEventCapture();
+    //     };
+    // }, []);
+
+    // electronAPI.onEscKeyDown(() => {
+    //     onClose();
+    // });
+
+
+    const goToMarker = (m) => {
+        if (!editorMethodsRef.current) return;
+        editorMethodsRef.current.setPosition2(m.startLineNumber, m.startColumn);
+        editorMethodsRef.current.focus();
+    };
+
+    const getInventoryModels = () => {
+        const models = Object.values(deviceFacts)
+            .map(fact => fact?.systemInformation?.hardwareModel?.toLowerCase())
+            .filter(Boolean);
+        return [...new Set(models)].sort();
+    };
+
+
+    const inventoryModels = getInventoryModels();
+
+    return (
+        <Dialog
+            open={isOpen}
+            onDismiss={onClose}
+            modalProps={{
+                isBlocking: false,
+                trapFocus: false,
+                focusTrapZoneProps: {
+                    handleTabKey: 'none',
+                    disableFirstFocus: true,
+                    forceFocusInsideTrap: false,
+                },
+            }}
+        >
+            <DialogSurface
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-start',
+                    minWidth: '90%',
+                    height: '90%',
+                    overflow: 'hidden',
+                    padding: 0,
+                    border: 0,
+                    background: tokens.colorNeutralBackground1,
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '100%',
+                        height: '100%',
+                        flex: 1,
+                        padding: '15px 0px 5px 0px',
+                        boxSizing: 'border-box',
+                    }}
+                >
+                    {/* Header - Dismiss */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            marginBottom: '10px',
+                            marginLeft: '15px',
+                            marginRight: '15px',
+                        }}
+                    >
+                        <Text size={400}>Configuration Shortcuts Mapping</Text>
+                        <Button
+                            tabIndex={-1}
+                            onClick={onClose}
+                            shape='circular'
+                            appearance='subtle'
+                            icon={<DismissIcon />}
+                            size='small'
+                        />
+                    </div>
+
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '10px',
+                            marginLeft: '15px',
+                            marginRight: '15px',
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'flex-start',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Button
+                                tabIndex={-1}
+                                disabled={currentText === defaultConfigShortcutData}
+                                onClick={() => {
+                                    handleOnBackToDefault();
+                                }}
+                                shape='circular'
+                                appearance='subtle'
+                                icon={<BackToDefaultIcon fontSize='16px' />}
+                                size='small'
+                            >
+                                Back to Default Mapping
+                            </Button>
+                        </div>
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Button
+                                tabIndex={-1}
+                                disabled={!isChanged}
+                                onClick={() => {
+                                    handleOnReset();
+                                }}
+                                shape='circular'
+                                appearance='subtle'
+                                icon={<ResetIcon fontSize='16px' />}
+                                size='small'
+                            >
+                                Reset Changes
+                            </Button>
+
+                            <Button
+                                tabIndex={-1}
+                                disabled={!isChanged || !isValidSchema}
+                                onClick={() => {
+                                    handleOnSave();
+                                }}
+                                shape='circular'
+                                appearance='subtle'
+                                icon={<SaveIcon fontSize='16px' />}
+                                size='small'
+                            >
+                                Save Changes
+                            </Button>
+
+                            <ToolbarDivider />
+
+                            <Button
+                                tabIndex={-1}
+                                onClick={() => {
+                                    handleOnLoad();
+                                }}
+                                shape='circular'
+                                appearance='subtle'
+                                icon={<LoadIcon fontSize='16px' />}
+                                size='small'
+                            >
+                                Import Mappings
+                            </Button>
+                            <Button
+                                tabIndex={-1}
+                                onClick={() => {
+                                    handleOnExport();
+                                }}
+                                shape='circular'
+                                appearance='subtle'
+                                icon={<ExportIcon fontSize='16px' />}
+                                size='small'
+                            >
+                                Export Mappings
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div style={{ width: '100%', height: '100%' }}>
+                        <MonacoEditorForTools
+                            id='csm'
+                            text={text}
+                            onDidChangeCursorPosition={handlePositionUpdate}
+                            onEditorReady={handleEditorReady}
+                            onDidChangeModelContent={handleOnDidChangeModelContent}
+                            onDidChangeMarkers={handleOnDidChangeMarkers}
+                            tabSize={tabSize}
+                            dataSchema={buildConfigShortcutSchema(inventoryModels)}
+                        />
+                    </div>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginTop: '5px',
+                            marginLeft: '15px',
+                            marginRight: '15px',
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'flex-start',
+                                alignItems: 'center',
+                            }}
+                        >
+                            {!isValidSchema && (
+                                <Tooltip
+                                    content={{
+                                        className: styles.tooltipMaxWidthClass,
+                                        children: (
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                }}
+                                            >
+                                                {schemaError?.map((marker, index) => (
+                                                    <Link key={index} onClick={() => { goToMarker(marker) }}>
+                                                        <Text key={index} size={100}>
+                                                            {`${marker.startLineNumber}:${marker.startColumn}`}&nbsp;&nbsp;&nbsp;
+                                                            {marker.message}
+                                                        </Text>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        ),
+                                    }}
+                                    relationship='description'
+                                    withArrow
+                                    positioning='above-end'
+                                >
+                                    <Text size={100}>
+                                        <span style={{ color: tokens.colorPaletteRedForeground3 }}>
+                                            {`${schemaError?.length || 0} ${schemaError?.length === 1 ? 'validation error' : 'validation errors'}`}
+                                        </span>
+                                        {' • Please review the errors'}
+                                    </Text>
+                                </Tooltip>
+                            )}
+                        </div>
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                                gap: '10px',
+                            }}
+                        >
+                            <Text size={100}>
+                                Ln {line}, Col {column}
+                            </Text>
+                            <Text size={100}>Tab Spaces: {tabSize}</Text>
+                        </div>
+                    </div>
+                    <input
+                        type='file'
+                        ref={fileInputRef}
+                        onChange={handleFileImport}
+                        style={{ display: 'none' }}
+                        accept='.yaml, .yml'
+                    />
+                </div>
+            </DialogSurface>
+        </Dialog>
+    );
+};

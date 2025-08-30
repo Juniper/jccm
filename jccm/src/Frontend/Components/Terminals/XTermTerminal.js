@@ -697,14 +697,13 @@ const XTermTerminal = ({
                                     let ocTermHostname = hostNameResolveErrorMessage;
                                     let jsiTermHostname = hostNameResolveErrorMessage;
 
-                                    console.log('domain', domain);
 
-                                    if (domain.length > 0) {
+                                    if (domain?.length > 0) {
                                         if (domain === 'mist.com') {
                                             outboundSshHostname = 'oc-term.mistsys.net';
                                             ocTermHostname = 'oc-term.mistsys.net';
                                         } else if (host?.toLowerCase().includes('jsi')) {
-                                            console.log('>>>> JSI Domain detected');
+                                            // console.log('>>>> JSI Domain detected');
                                             outboundSshHostname = `jsi-term.${domain}`;
                                             jsiTermHostname = `jsi-term.${domain}`;
                                         } else {

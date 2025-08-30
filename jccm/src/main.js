@@ -32,6 +32,7 @@ export const sendLogMessage = (type, ...args) => {
 };
 
 export const sendTabKeyDownEvent = () => {
+    console.log('Send Tab Key event.');
     mainWindow.webContents.send('onTabKeyDown');
 };
 

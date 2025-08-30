@@ -64,6 +64,18 @@ export const MessageFilterCard = () => {
         saveFunction();
     };
 
+    const saveWarningShowForConfigShortcut = (newWarningShowForConfigShortcut) => {
+        const saveFunction = async () => {
+            const newSettings = {
+                ...settings,
+                warningShowForConfigShortcut: newWarningShowForConfigShortcut,
+            };
+            setSettings(newSettings);
+            exportSettings(newSettings);
+        };
+        saveFunction();
+    };
+
     const onChangWarningShowForAdoption = async (event) => {
         const checked = event.currentTarget.checked;
         saveWarningShowForAdoption(checked);
@@ -72,6 +84,11 @@ export const MessageFilterCard = () => {
     const onChangeWarningShowForNetworkSearch = async (event) => {
         const checked = event.currentTarget.checked;
         saveWarningShowForNetworkSearch(checked);
+    };
+
+    const onChangeWarningShowForConfigShortcut = async (event) => {
+        const checked = event.currentTarget.checked;
+        saveWarningShowForConfigShortcut(checked);
     };
 
     return (
@@ -96,7 +113,7 @@ export const MessageFilterCard = () => {
                     marginLeft: '10px',
                 }}
             >
-                <Text>Display message for cloud multi-homed device adoption:</Text>
+                <Text>Show warning message for cloud multi-homed device adoption:</Text>
                 <div
                     style={{
                         transform: 'scale(0.6)',
@@ -122,7 +139,7 @@ export const MessageFilterCard = () => {
                     marginLeft: '10px',
                 }}
             >
-                <Text>Display message for network search action:</Text>
+                <Text>Show warning message for network search action:</Text>
                 <div
                     style={{
                         transform: 'scale(0.6)',
@@ -136,6 +153,34 @@ export const MessageFilterCard = () => {
                 </div>
                 <Text size={200}>{settings?.warningShowForNetworkSearch ? 'Enabled' : 'Disabled'}</Text>
             </div>
+
+
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    gap: '0px',
+                    width: '100%',
+                    marginLeft: '10px',
+                }}
+            >
+                <Text>Show warning message for config shortcut action:</Text>
+                <div
+                    style={{
+                        transform: 'scale(0.6)',
+                        transformOrigin: 'right',
+                    }}
+                >
+                    <Switch
+                        checked={settings?.warningShowForConfigShortcut ? true : false}
+                        onChange={onChangeWarningShowForConfigShortcut}
+                    />
+                </div>
+                <Text size={200}>{settings?.warningShowForConfigShortcut ? 'Enabled' : 'Disabled'}</Text>
+            </div>
+
         </div>
     );
 };

@@ -22,6 +22,7 @@ export const MainEventProcessor = () => {
     const { deviceModels, supportedDeviceModels, setDeviceModels } = useStore();
     const { cleanUpIsTesting, cleanUpDeviceNetworkCondition } = useStore();
     const { resetDeviceNetworkConditionAll, resetIsTestingAll } = useStore();
+    const { resetIsConfiguringAll, resetConfigShortcutCommitResultAll } = useStore();
     const { checkingForUpdate, setCheckingForUpdate, updateDownloaded, setUpdateDownloaded } = useStore();
     const { isAutoUpdateSupport, setIsAutoUpdateSupport } = useStore();
 
@@ -158,7 +159,7 @@ export const MainEventProcessor = () => {
                         // console.log('userRef.current:', userRef.current);
                         // console.log('data.user:', data.user);
                         // console.log('User session will be updated:', data.user);
-                        
+
                         setUser(data.user);
                         setIsUserLoggedIn(true);
                         await handleCloudInventoryRefresh({ force: true });
@@ -298,6 +299,13 @@ export const MainEventProcessor = () => {
             resetDeviceNetworkConditionAll();
         };
 
+
+        const handleDeviceConfigShortcutStatusReset = async () => {
+            console.log('Event: "device-config-shortcut-status-reset"');
+            resetIsConfiguringAll();
+            resetConfigShortcutCommitResultAll();
+        }
+
         const handleCheckForUpdates = async () => {
             console.log('Event: "check-for-updates"');
 
@@ -378,6 +386,7 @@ export const MainEventProcessor = () => {
         eventBus.on('device-models-refresh', handleDeviceModelsRefresh);
         eventBus.on('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
         eventBus.on('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
+        eventBus.on('device-config-shortcut-status-reset', handleDeviceConfigShortcutStatusReset)
         eventBus.on('check-for-updates', handleCheckForUpdates);
         eventBus.on('check-for-auto-update-support', handleCheckForAutoUpdateSupport);
         eventBus.on('quit-and-install', handleQuitAndInstall);
@@ -398,6 +407,7 @@ export const MainEventProcessor = () => {
             eventBus.off('device-models-refresh', handleDeviceModelsRefresh);
             eventBus.off('device-network-access-check-refresh', handleDeviceNetworkConditionCheckRefresh);
             eventBus.off('device-network-access-check-reset', handleDeviceNetworkConditionCheckReset);
+            eventBus.off('device-config-shortcut-status-reset', handleDeviceConfigShortcutStatusReset)
             eventBus.off('check-for-updates', handleCheckForUpdates);
             eventBus.off('check-for-auto-update-support', handleCheckForAutoUpdateSupport);
             eventBus.off('quit-and-install', handleQuitAndInstall);

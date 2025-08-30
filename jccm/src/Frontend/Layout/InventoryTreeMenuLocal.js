@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { makeStyles, shorthands } from '@fluentui/react-components';
+import { makeStyles, MenuItemCheckbox, shorthands } from '@fluentui/react-components';
 import {
     FlatTree,
     Tree,
@@ -73,6 +73,7 @@ import {
     tokens,
 } from '@fluentui/react-components';
 import {
+    ZoomFitFilled,
     AddSquare16Regular,
     CubeLinkRegular,
     LayerDiagonalFilled,
@@ -206,6 +207,39 @@ import {
     bundleIcon,
     SquareHintRegular,
     SquareHintFilled,
+    ClipboardTextLtrRegular,
+    ClipboardTextEditRegular,
+    ClipboardRegular,
+    ClipboardSettingsRegular,
+    PlayCircleRegular,
+    CircleSmallRegular,
+    DocumentCheckmarkRegular,
+    DocumentRegular,
+    DocumentLightningRegular,
+    CircleRegular,
+    CircleSmallFilled,
+    CircleMultipleSubtractCheckmark20Regular,
+    CircleShadowRegular,
+    StreamRegular,
+    AlertBadgeRegular,
+    AlertRegular,
+    LineFlowDiagonalUpRightRegular,
+    ReplayRegular,
+    ArrowReplyDownRegular,
+    ArrowRotateClockwiseRegular,
+    ReOrderRegular,
+    CubeRegular,
+    CubeCheckmarkRegular,
+    SkipForwardTabRegular,
+    SkipForwardTabFilled,
+    CircleHintRegular,
+    CircleOffRegular,
+    CircleOffFilled,
+    ArrowExpandRegular,
+    ArrowUpRightRegular,
+    ChevronUpDownRegular,
+    CircleLineFilled,
+    CircleFilled,
 } from '@fluentui/react-icons';
 import _, { set } from 'lodash';
 const { electronAPI } = window;
@@ -220,6 +254,7 @@ import {
     getDeviceFacts,
     getDeviceNetworkCondition,
     releaseDevices,
+    applyConfigShortcut,
 } from './Devices';
 import { RotatingIcon, CircleIcon } from './ChangeIcon';
 import eventBus from '../Common/eventBus';
@@ -243,6 +278,12 @@ const GetFactsIcon = bundleIcon(SearchInfoRegular, SearchRegular);
 const CloudAdd = bundleIcon(CloudAddFilled, CloudAddRegular);
 const ReleaseDeviceIcon = bundleIcon(BoxDismissRegular, BoxRegular);
 const DeviceNetworkConditionIcon = bundleIcon(PulseSquareRegular, PulseRegular);
+const ProductModelIcon = bundleIcon(CircleShadowRegular, CircleSmallRegular);
+const RunConfigShortcutErrorIcon = bundleIcon(DocumentLightningRegular, DocumentRegular);
+const ConfigIcon = bundleIcon(PlayCircleRegular, CircleSmallRegular);
+const ConfigShortcutErrorIcon = bundleIcon(CircleLineFilled, CircleLineRegular);
+const ConfigShortcutSuccessIcon = bundleIcon(CircleFilled, CircleRegular);
+const ConfigShortcutSkipIcon = bundleIcon(CircleOffFilled, CircleOffRegular);
 
 const tooltipStyles = makeStyles({
     tooltipMaxWidthClass: {
@@ -436,6 +477,11 @@ const InventoryTreeMenuLocal = () => {
     const { isTesting, setIsTesting, resetIsTesting } = useStore();
     const { deviceNetworkCondition, setDeviceNetworkCondition, deleteDeviceNetworkCondition } = useStore();
 
+    const { configShortcutMapping } = useStore();
+    const { isConfiguring, setIsConfiguring, resetIsConfiguring } = useStore();
+    const { configShortcutCommitResult, setConfigShortcutCommitResult, deleteConfigShortcutCommitResult } = useStore();
+
+
     const [flatTreeItems, setFlatTreeItems] = useState([]);
     const [expandedItems, setExpandedItems] = useState(() => {
         return new Set(flatTreeItems.map((item) => item.value));
@@ -446,6 +492,7 @@ const InventoryTreeMenuLocal = () => {
     const ignoreCaseInName = settings?.ignoreCase ?? false;
     const deviceModelsValidation = settings?.deviceModelsValidation ?? false;
     const settingWarningShowForAdoption = settings?.warningShowForAdoption ?? true;
+    const settingWarningShowForConfigShortcut = settings?.warningShowForConfigShortcut ?? true;
 
     const deviceFactsRef = useRef(deviceFacts);
 
@@ -1112,6 +1159,47 @@ const InventoryTreeMenuLocal = () => {
             );
         };
 
+
+        const trimData = (raw) => {
+            // Split into lines
+            const lines = raw.split(/\r?\n/);
+
+            // Find the first "[edit]" line
+            let firstEditIndex = lines.findIndex(line => line.trim().startsWith('[edit]'));
+
+            // Fallback: look for "edit" if "[edit]" not found
+            if (firstEditIndex === -1) {
+                firstEditIndex = lines.findIndex(line =>
+                    line.toLowerCase().includes('edit')
+                );
+            }
+
+            // If neither found, fallback to line index 1
+            if (firstEditIndex === -1) {
+                firstEditIndex = 1;
+            }
+
+            // Extract from there until the end
+            const relevant = lines.slice(firstEditIndex);
+
+            // Join back for display
+            return relevant.join('\n');
+        };
+
+        const handlerOnConfigShortcut = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const data = trimData(isConfiguring[path]?.data || 'Oops Empty');
+            console.log(data);
+        }
+
+        const handlerOnConfigShortcut2 = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const data = trimData(configShortcutCommitResult[path]?.data || 'Oops Empty');
+            console.log(data);
+        }
+
         return (
             <div
                 style={{
@@ -1465,6 +1553,229 @@ const InventoryTreeMenuLocal = () => {
                         </div>
                     )
                 )}
+
+
+                {isConfiguring[path]?.status ? (
+                    // Status = show rotating icon
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        gap: '5px',
+                    }}>
+                        <RotatingIcon
+                            Icon={CircleShadowRegular}
+                            size="12px"
+                            rotationDuration="500ms"
+                            color={tokens.colorCompoundBrandBackground}
+                        />
+                    </div>
+                ) : isConfiguring[path]?.skip ? (
+                    // Skip = show skip state (independent of error)
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        gap: '0px',
+                    }}>
+
+                        <Popover withArrow>
+                            <PopoverTrigger disableButtonEnhancement>
+                                <Button
+                                    icon={<ConfigShortcutSkipIcon
+                                        style={{ fontSize: '12px', color: tokens.colorNeutralForeground3 }}
+                                    />}
+                                    shape="circular" appearance="transparent" size="small"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }}
+                                />
+
+                            </PopoverTrigger>
+
+                            <PopoverSurface
+                                tabIndex={-1}
+                                style={{
+                                    margin: 0,
+                                    padding: '5px',
+                                    overflow: 'auto',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'flex-start',
+                                        gap: '3px'
+                                    }}
+                                >
+                                    <Text size={100} font="numeric" weight="medium">
+                                        Hardware model mismatch
+                                    </Text>
+                                    <Text size={100} font="numeric" weight="medium">
+                                        {`• ${isConfiguring[path]?.factModel} is not in [${isConfiguring[path]?.shortcut?.model}]`}
+                                    </Text>
+                                </div>
+                            </PopoverSurface>
+                        </Popover>
+
+
+                        <Text
+                            style={{ fontSize: '10px', color: tokens.colorNeutralForeground3, cursor: 'default', }}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }}
+                        >
+                            Config Shortcut skipped
+                        </Text>
+                    </div>
+                ) : isConfiguring[path]?.error ? (
+                    // Error = show error state (only when skip is false)
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        gap: '0px',
+                    }}>
+                        <Popover withArrow>
+                            <PopoverTrigger disableButtonEnhancement>
+
+                                <Button
+                                    icon={<ConfigShortcutErrorIcon
+                                        style={{ fontSize: '12px', color: tokens.colorPaletteRedForeground3 }}
+                                    />}
+                                    shape="circular" appearance="subtle" size="small"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }}
+                                />
+
+                            </PopoverTrigger>
+
+                            <PopoverSurface
+                                tabIndex={-1}
+                                style={{
+                                    margin: 0,
+                                    padding: '5px',
+                                    overflow: 'auto',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'flex-start',
+                                    }}
+                                >
+                                    {trimData(isConfiguring[path]?.data || 'Oops Empty')
+                                        .split('\n')
+                                        .map((line, idx) => (
+                                            <Text
+                                                key={idx}
+                                                size={100}
+                                                font="numeric"
+                                                weight='medium'
+                                                style={{ whiteSpace: 'pre-wrap' }}
+                                            >
+                                                {line}
+                                            </Text>
+                                        ))}
+                                </div>
+                            </PopoverSurface>
+                        </Popover>
+
+                        <Text
+                            style={{ fontSize: '10px', color: tokens.colorPaletteRedForeground3, cursor: 'default', }}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }}
+                        >
+                            {isConfiguring[path].error}
+                        </Text>
+                    </div>
+                ) : null}
+
+                {configShortcutCommitResult[path]?.data && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            gap: '0px',
+                        }}
+                    >
+                        <Popover withArrow trapFocus={false}>
+                            <PopoverTrigger disableButtonEnhancement>
+                                <Button
+                                    shape="circular"
+                                    appearance="subtle"
+                                    size="small"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }}
+                                    icon={
+                                        <ConfigShortcutSuccessIcon
+                                            style={{ fontSize: '12px', color: tokens.colorCompoundBrandBackground }}
+                                        />
+                                    }
+                                />
+                            </PopoverTrigger>
+
+                            <PopoverSurface
+                                tabIndex={-1}
+                                style={{
+                                    margin: 0,
+                                    padding: '5px',
+                                    overflow: 'auto',
+
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'flex-start',
+                                    }}
+                                >
+                                    {(trimData(configShortcutCommitResult[path]?.data || 'Oops Empty'))
+                                        .split('\n')
+                                        .map((line, idx) => (
+                                            <Text
+                                                key={idx}
+                                                size={100}
+                                                font="numeric"
+                                                weight="medium"
+                                                style={{
+                                                    whiteSpace: 'pre-wrap',
+                                                }}
+                                            >
+                                                {line}
+                                            </Text>
+                                        ))}
+                                </div>
+                            </PopoverSurface>
+                        </Popover>
+
+                        <Text
+                            style={{ fontSize: '10px', color: tokens.colorCompoundBrandBackground, cursor: 'default', }}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }}
+                        >
+                            Config Shortcut applied
+                        </Text>
+                    </div>
+                )}
             </div>
         );
     };
@@ -1501,14 +1812,19 @@ const InventoryTreeMenuLocal = () => {
                         error: response.result?.message,
                     });
                     return;
-                } else if (response.result?.status?.toLowerCase().includes('ssh client error')) {
-                    deleteDeviceFacts(device._path);
-                    setIsChecking(device._path, {
-                        status: false,
-                        retry: -1,
-                        error: response.result?.message,
-                    });
-                    return;
+                } else {
+                    const status = response.result?.status?.toLowerCase() || '';
+                    const message = response.result?.message?.toLowerCase() || '';
+
+                    if (status.includes('ssh client error') && !message.includes('connection reset by peer')) {
+                        deleteDeviceFacts(device._path);
+                        setIsChecking(device._path, {
+                            status: false,
+                            retry: -1,
+                            error: response.result?.message,
+                        });
+                        return;
+                    }
                 }
 
                 setIsChecking(device._path, {
@@ -1934,11 +2250,11 @@ const InventoryTreeMenuLocal = () => {
 
         const orgs = isUserLoggedIn
             ? user?.privileges
-                  ?.filter((item) => item.scope === 'org')
-                  .reduce((acc, item) => {
-                      acc[item.name] = { id: item.org_id };
-                      return acc;
-                  }, {})
+                ?.filter((item) => item.scope === 'org')
+                .reduce((acc, item) => {
+                    acc[item.name] = { id: item.org_id };
+                    return acc;
+                }, {})
             : {};
 
         let defaultTermServer = 'oc-term.mistsys.net'; // default oc term service host
@@ -2008,6 +2324,179 @@ const InventoryTreeMenuLocal = () => {
 
         await fetchDeviceNetworkConditionWithRateLimit();
     };
+
+
+    const commitConfig = async (device, shortcut) => {
+        console.log(
+            `Preparing to apply Junos configuration update shortcut "${shortcut.name}" to ` +
+            `${device.address}:${device.port} (User: ${device.username})`
+        );
+
+        deleteConfigShortcutCommitResult(device._path);
+
+        const shortcutModels = shortcut?.model || [];
+        const factModel = device['hardware model'] || '';
+
+        const isMatch = shortcutModels.some(model => {
+            if (model.toLowerCase() === 'any') return true;             // wildcard
+            return factModel.toLowerCase().startsWith(model.toLowerCase());
+        });
+
+        if (!isMatch) {
+            console.log('Not matched', shortcutModels, factModel);
+            deleteConfigShortcutCommitResult(device._path);
+            setIsConfiguring(device._path, {
+                status: false,
+                skip: true,
+                factModel,
+                shortcut,
+                retry: -1,
+                error: false,
+            });
+            return;
+        }
+
+        const maxRetries = 2;
+        const retryInterval = 10000; // 10 seconds in milliseconds
+        let response;
+
+        setIsConfiguring(device._path, { status: true, retry: 0 });
+
+        const bastionHost = settings?.bastionHost || {};
+
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            response = await applyConfigShortcut(
+                { ...device, timeout: 10000 },
+                shortcut,
+                bastionHost,
+            );
+
+            if (response.status) {
+                setConfigShortcutCommitResult(device._path, response.result);
+                resetIsConfiguring(device._path);
+                return;
+            } else {
+
+                if (response?.commitError) {
+                    deleteConfigShortcutCommitResult(device._path);
+                    setIsConfiguring(device._path, {
+                        status: false,
+                        retry: -1,
+                        error: response?.result?.message,
+                        data: response?.result?.data
+                    });
+
+                    return;
+                }
+
+
+                console.log(
+                    `${device.address}:${device.port} - Error applying Junos config shortcut "${shortcut.name}"` +
+                    ` on attempt ${attempt}:`,
+                    response
+                );
+
+
+
+                if (response.result?.status?.toLowerCase().includes('authentication failed')) {
+                    deleteConfigShortcutCommitResult(device._path);
+                    setIsConfiguring(device._path, {
+                        status: false,
+                        retry: -1,
+                        error: response?.result?.message,
+                    });
+                    return;
+                } else {
+                    const status = response.result?.status?.toLowerCase() || '';
+                    const message = response.result?.message?.toLowerCase() || '';
+
+                    if (status.includes('ssh client error') && !message.includes('connection reset by peer')) {
+                        deleteConfigShortcutCommitResult(device._path);
+                        setIsConfiguring(device._path, {
+                            status: false,
+                            retry: -1,
+                            error: response?.result?.message,
+                        });
+                        return;
+                    }
+                }
+
+                setIsConfiguring(device._path, {
+                    status: true,
+                    retry: attempt,
+                    error: response?.result?.message,
+                });
+
+                await new Promise((resolve) => setTimeout(resolve, retryInterval));
+            }
+        }
+
+        deleteConfigShortcutCommitResult(device._path);
+        setIsConfiguring(device._path, {
+            status: false,
+            retry: -1,
+            error: response?.result?.message,
+        });
+
+        notify(
+            <Toast>
+                <ToastTitle>Junos Config Update Failed</ToastTitle>
+                <ToastBody subtitle='Error Details'>
+                    <Text>
+                        An error occurred while applying Junos configuration shortcut "{shortcut.name}" to the device.
+                    </Text>
+                    <Text>Error Message: {response?.result?.message}</Text>
+                </ToastBody>
+            </Toast>,
+            { intent: 'error' }
+        );
+    };
+
+
+
+
+
+    const runConfigShortcut = async (node, shortcut, rate = 10) => {
+        const targetDevices = inventory.filter((device) => {
+            // Normalize node value if site name is missing or incomplete
+            const nodeValue = node.value.endsWith('/') ? node.value + '/' : node.value;
+            return device._path.startsWith(nodeValue);
+        });
+
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const rateLimit = 1000 / rate; // Rate in calls per second
+        const maxConcurrentCalls = 100; // Maximum number of concurrent async calls
+
+        const commitConfigWithRateLimit = async () => {
+            const promises = [];
+            let runningCalls = 0;
+
+            const executeCall = async (device) => {
+                const promise = commitConfig(device, shortcut).then(() => {
+                    runningCalls--;
+                    promises.splice(promises.indexOf(promise), 1); // Remove the resolved promise
+                });
+                promises.push(promise);
+                runningCalls++;
+
+                if (runningCalls >= maxConcurrentCalls) {
+                    await Promise.race(promises);
+                }
+
+                await delay(rateLimit);
+            };
+
+            for (const device of targetDevices) {
+                await executeCall(device);
+            }
+
+            await Promise.all(promises);
+        };
+
+        await commitConfigWithRateLimit();
+    };
+
 
     const ContextMenuContent = (event, node) => {
         const devices = inventory.filter((device) => {
@@ -2118,7 +2607,6 @@ const InventoryTreeMenuLocal = () => {
                             </Text>
                         </MenuItem>
 
-                        <MenuDivider />
                         <MenuItem
                             disabled={
                                 !isUserLoggedIn ||
@@ -2136,6 +2624,73 @@ const InventoryTreeMenuLocal = () => {
                                 Check Network Access
                             </Text>
                         </MenuItem>
+
+                        <MenuDivider />
+
+                        {!isTargetDeviceAvailable() && (
+                            <MenuGroup>
+                                <MenuGroupHeader>
+                                    <Text size={100}>Retrieve device facts to enable configuration shortcut actions</Text>
+                                </MenuGroupHeader>
+                            </MenuGroup>
+                        )}
+
+                        <MenuGroup>
+                            <Menu>
+                                <MenuTrigger disableButtonEnhancement>
+                                    <MenuItem icon={<RunConfigShortcutErrorIcon style={{ fontSize: '14px' }} />}
+                                        disabled={!isTargetDeviceAvailable()}>
+                                        <Text size={200} font="numeric">Configuration Shortcuts</Text>
+                                    </MenuItem>
+                                </MenuTrigger>
+
+                                <MenuPopover>
+                                    <MenuList>
+                                        {configShortcutMapping?.mappings?.length ? (
+                                            configShortcutMapping.mappings.map((shortcut, index) => (
+                                                <MenuItem
+                                                    disabled={!isTargetDeviceAvailable()}
+                                                    key={shortcut?.name ?? index}
+                                                    icon={{ children: <ConfigIcon fontSize="16px" /> }}
+                                                    // onClick={() => runConfigShortcut?.(node, shortcut)}
+                                                    onClick={async () => {
+                                                        if (settingWarningShowForConfigShortcut) {
+                                                            customAlert(
+                                                                'Configuration Shortcut',
+                                                                () => {
+                                                                    runConfigShortcut?.(node, shortcut);
+                                                                },
+                                                                theme,
+                                                                (newWarningShowForConfigShortcut) => {
+                                                                    const saveFunction = async () => {
+                                                                        const newSettings = {
+                                                                            ...settings,
+                                                                            warningShowForConfigShortcut: newWarningShowForConfigShortcut,
+                                                                        };
+                                                                        setSettings(newSettings);
+                                                                        exportSettings(newSettings);
+                                                                    };
+                                                                    saveFunction();
+                                                                }
+                                                            );
+                                                        } else {
+                                                            runConfigShortcut?.(node, shortcut);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Text size={200} font="numeric">{shortcut.name}</Text>
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem disabled>
+                                                <Text size={200} font="numeric">No shortcuts available</Text>
+                                            </MenuItem>
+                                        )}
+                                    </MenuList>
+                                </MenuPopover>
+                            </Menu>
+                        </MenuGroup>
+
                     </MenuGroup>
                 </MenuList>
             </div>
@@ -2249,8 +2804,8 @@ const InventoryTreeMenuLocal = () => {
                                         style={
                                             cloudInventory.length > 0
                                                 ? {
-                                                      color: tokens.colorStatusDangerForeground3,
-                                                  }
+                                                    color: tokens.colorStatusDangerForeground3,
+                                                }
                                                 : null
                                         }
                                     >

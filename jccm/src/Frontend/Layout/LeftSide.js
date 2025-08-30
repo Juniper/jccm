@@ -330,6 +330,7 @@ const LeftSide = () => {
                                     onClick={async () => {
                                         await eventBus.emit('reset-device-facts', { notification: true });
                                         await eventBus.emit('device-network-access-check-reset');
+                                        await eventBus.emit('device-config-shortcut-status-reset');
                                     }}
                                 />
                             </Tooltip>

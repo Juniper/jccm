@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import _, { update } from 'lodash';
 const { electronAPI } = window;
 import { defaultCliShortcutData } from './CommonVariables';
+import { defaultConfigShortcutData } from './SchemaForTools';
+
 import yaml from 'js-yaml';
 
 const useStore = create((set, get) => ({
@@ -44,6 +46,17 @@ const useStore = create((set, get) => ({
             return state;
         }),
 
+
+    configShortcutMapping: {},
+    setConfigShortcutMapping: (configShortcutMapping) =>
+        set((state) => {
+            if (!_.isEqual(state.configShortcutMapping, configShortcutMapping)) {
+                return { configShortcutMapping };
+            }
+            return state;
+        }),
+
+
     settings: {},
     setSettings: (settings) =>
         set((state) => {
@@ -58,6 +71,7 @@ const useStore = create((set, get) => ({
             try {
                 const response = await electronAPI.saLoadSettings();
                 if (response.status) {
+                    // Command shortcuts
                     const cliShortcutData = response.settings?.cliShortcuts ?? defaultCliShortcutData;
                     let cliShortcutMapping = {};
                     try {
@@ -65,7 +79,21 @@ const useStore = create((set, get) => ({
                     } catch (error) {
                         console.log('Failed to load cliShortcutData:', error);
                     }
-                    set({ settings: response.settings, cliShortcutMapping });
+
+                    // Config shortcuts
+                    const configShortcutData = response.settings?.configShortcuts ?? defaultConfigShortcutData;
+                    let configShortcutMapping = {};
+                    try {
+                        configShortcutMapping = yaml.load(configShortcutData);
+                    } catch (error) {
+                        console.log('Failed to load configShortcutData:', error);
+                    }
+
+                    set({
+                        settings: response.settings,
+                        cliShortcutMapping,
+                        configShortcutMapping,
+                    });
                 }
             } catch (error) {
                 console.error('Failed to import settings:', error);
@@ -206,9 +234,9 @@ const useStore = create((set, get) => ({
 
                 const updatedInventory = Array.isArray(newInventory)
                     ? newInventory.map((device) => ({
-                          ...device,
-                          _path: `/Inventory/${device.organization}/${device.site}/${device.address}/${device.port}`,
-                      }))
+                        ...device,
+                        _path: `/Inventory/${device.organization}/${device.site}/${device.address}/${device.port}`,
+                    }))
                     : [];
 
                 updatedInventory.forEach((device) => {
@@ -557,6 +585,85 @@ const useStore = create((set, get) => ({
             isTesting: cleanedIsTesting,
         }));
     },
+
+
+    isConfiguring: {},
+    setIsConfiguring: (path, value) =>
+        set((state) => ({
+            isConfiguring: { ...state.isConfiguring, [path]: value },
+        })),
+
+    resetIsConfiguringAll: () =>
+        set(() => ({
+            isConfiguring: {},
+        })),
+
+    resetIsConfiguring: (path) =>
+        set((state) => {
+            const { [path]: _, ...rest } = state.isConfiguring;
+            return { isConfiguring: rest };
+        }),
+
+    cleanUpIsConfiguring: async () => {
+        const state = get();
+        const inventoryPaths = new Set(state.inventory.map((item) => item._path));
+
+        // Filter `isConfiguring` by keys that exist in `inventoryPaths`
+        const cleanedIsConfiguring = Object.fromEntries(
+            Object.entries(state.isConfiguring).filter(([key]) => inventoryPaths.has(key))
+        );
+
+        // Update the state with the cleaned `isConfiguring` object
+        set(() => ({
+            isConfiguring: cleanedIsConfiguring,
+        }));
+    },
+
+
+    configShortcutCommitResult: {},
+
+    
+    setConfigShortcutCommitResultAll: (configShortcutCommitResult) =>
+        set(() => ({
+            configShortcutCommitResult: configShortcutCommitResult,
+        })),
+
+    setConfigShortcutCommitResult: (path, value) =>
+        set((state) => ({
+            configShortcutCommitResult: {
+                ...state.configShortcutCommitResult,
+                [path]: value,
+            },
+        })),
+
+    resetConfigShortcutCommitResultAll: () =>
+        set(() => ({
+            configShortcutCommitResult: {},
+        })),
+
+    deleteConfigShortcutCommitResult: (path) =>
+        set((state) => {
+            const { [path]: _, ...rest } = state.configShortcutCommitResult;
+            return { configShortcutCommitResult: rest };
+        }),
+
+    cleanUpConfigShortcutCommitResult: () => {
+        const state = get();
+        const inventoryPaths = new Set(state.inventory.map((item) => item._path));
+
+        // Filter `configShortcutCommitResult` by keys that exist in `inventoryPaths`
+        const cleanedConfigShortcutCommitResult = Object.fromEntries(
+            Object.entries(state.configShortcutCommitResult).filter(([key]) => inventoryPaths.has(key))
+        );
+
+        // Update the state with the cleaned `configShortcutCommitResult` object
+        set(() => ({
+            configShortcutCommitResult: cleanedConfigShortcutCommitResult,
+        }));
+    },
+
+
+
 
     isAutoUpdateSupport: false,
     setIsAutoUpdateSupport: (isAutoUpdateSupport) => set(() => ({ isAutoUpdateSupport })),

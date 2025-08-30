@@ -1,7 +1,7 @@
 const { electronAPI } = window;
 
 import useStore from '../Common/StateStore';
-const { getPasswordFromVault } = useStore.getState(); 
+const { getPasswordFromVault } = useStore.getState();
 
 const isVaultFormat = (password) => {
     if (typeof password !== 'string') {
@@ -21,7 +21,7 @@ export const getPassword = (password) => {
     return password; // Return plain password if not in vault format
 };
 
-export const getDeviceFacts = async (device, upperSerialNumber=false, bastionHost = {}) => {
+export const getDeviceFacts = async (device, upperSerialNumber = false, bastionHost = {}) => {
     let { address, port, username, password, timeout } = device;
     password = getPassword(password);
 
@@ -30,11 +30,11 @@ export const getDeviceFacts = async (device, upperSerialNumber=false, bastionHos
     if (response.facts) {
         return { status: true, result: response.reply };
     } else {
-        return { status: false, result: response.reply  };
+        return { status: false, result: response.reply };
     }
 };
 
-export const adoptDevices = async (device, jsiTerm=false, deleteOutboundSSHTerm=false, bastionHost = {}, ignoreCaseInName = false) => {
+export const adoptDevices = async (device, jsiTerm = false, deleteOutboundSSHTerm = false, bastionHost = {}, ignoreCaseInName = false) => {
     let { address, port, username, password, organization, site } = device;
     password = getPassword(password);
 
@@ -49,7 +49,7 @@ export const adoptDevices = async (device, jsiTerm=false, deleteOutboundSSHTerm=
 };
 
 export const releaseDevices = async (deviceInfo) => {
-    const { organization, serialNumber, ignoreCaseInName = false} = deviceInfo;
+    const { organization, serialNumber, ignoreCaseInName = false } = deviceInfo;
     const response = await electronAPI.saReleaseDevice({ organization, serial: serialNumber, ignoreCaseInName });
 
     if (response.release) {
@@ -71,11 +71,11 @@ export const executeJunosCommand = async (device, command) => {
         return { status: true, result: response.reply };
     } else {
         console.log('executeJunosCommand has failed', response);
-        return { status: false, result: response.reply  };
+        return { status: false, result: response.reply };
     }
 };
 
-export const getDeviceNetworkCondition = async (device, bastionHost = {}, termServer='oc-term.mistsys.net', termPort=2200) => {
+export const getDeviceNetworkCondition = async (device, bastionHost = {}, termServer = 'oc-term.mistsys.net', termPort = 2200) => {
     let { address, port, username, password, timeout } = device;
     password = getPassword(password);
 
@@ -84,7 +84,31 @@ export const getDeviceNetworkCondition = async (device, bastionHost = {}, termSe
     if (response.networkConditionCollect) {
         return { status: true, result: response.reply };
     } else {
-        return { status: false, result: response.reply  };
+        return { status: false, result: response.reply };
+    }
+};
+
+
+export const applyConfigShortcut = async (device, shortcut, bastionHost = {}) => {
+    let { address, port, username, password, timeout } = device;
+    let { name, config } = shortcut;
+
+    console.log(`Applying Junos configuration shortcut "${name}" to device ${address}:${port}`);
+
+    password = getPassword(password);
+
+    const response = await electronAPI.saApplyConfig({ address, port, username, password, timeout, config, bastionHost });
+
+    if (response?.apply) {
+        console.log(
+            `Junos configuration shortcut "${name}" applied successfully to ${address}:${port}`
+        );
+
+        return { status: true, result: response.reply };
+    } else {
+        console.log(`Failed to apply Junos configuration shortcut "${name}" to ${address}:${port}`, response);
+
+        return { status: false, commitError: response?.commitError, result: response.reply };
     }
 };
 

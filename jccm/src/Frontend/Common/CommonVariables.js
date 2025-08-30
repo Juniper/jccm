@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 
 import {
-    webLightTheme,
-    teamsDarkTheme,
-    teamsLightTheme,
-    webDarkTheme,
-    teamsHighContrastTheme,
+  webLightTheme,
+  teamsDarkTheme,
+  teamsLightTheme,
+  webDarkTheme,
+  teamsHighContrastTheme,
 } from '@fluentui/react-components';
 
 export const AppTitle = 'Juniper Cloud Connection Manager';
@@ -25,73 +25,73 @@ export const InventorySearchWindowHeight = 700;
 export const EmptySiteName = '~~ Site Not Assigned ~~';
 
 export const Themes = {
-    webLightTheme: { theme: webLightTheme, description: 'Web Light' },
-    webDarkTheme: { theme: webDarkTheme, description: 'Web Dark' },
-    teamsLightTheme: { theme: teamsLightTheme, description: 'Teams Light' },
-    teamsDarkTheme: { theme: teamsDarkTheme, description: 'Teams Dark' },
-    teamsHighContrastTheme: { theme: teamsHighContrastTheme, description: 'Teams High Contrast' },
+  webLightTheme: { theme: webLightTheme, description: 'Web Light' },
+  webDarkTheme: { theme: webDarkTheme, description: 'Web Dark' },
+  teamsLightTheme: { theme: teamsLightTheme, description: 'Teams Light' },
+  teamsDarkTheme: { theme: teamsDarkTheme, description: 'Teams Dark' },
+  teamsHighContrastTheme: { theme: teamsHighContrastTheme, description: 'Teams High Contrast' },
 };
 
 export const xtermDefaultOptions = {
-    minFontSize: 5,
-    maxFontSize: 32,
-    defaultFontSize: 12,
+  minFontSize: 5,
+  maxFontSize: 32,
+  defaultFontSize: 12,
 };
 
 export const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export const sleep = delay;
 
 export const getActiveTheme = (themeName) => {
-    return Themes[themeName] || Themes.webLightTheme;
+  return Themes[themeName] || Themes.webLightTheme;
 };
 
 export const getActiveThemeName = (themeName) => {
-    return Themes[themeName] ? themeName : 'webLightTheme';
+  return Themes[themeName] ? themeName : 'webLightTheme';
 };
 
 export const copyToClipboard = async (text) => {
-    try {
-        await navigator.clipboard.writeText(text);
-        console.log('Text copied to clipboard');
-    } catch (err) {
-        console.error('Failed to copy text to clipboard', err);
-    }
+  try {
+    await navigator.clipboard.writeText(text);
+    console.log('Text copied to clipboard');
+  } catch (err) {
+    console.error('Failed to copy text to clipboard', err);
+  }
 };
 
 export const capitalizeFirstChar = (str) => {
-    if (!str) return str; // return the original string if it's empty
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  if (!str) return str; // return the original string if it's empty
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
 export const cliShortcutDataSchema = {
-    type: 'object',
-    properties: {
-        mappings: {
+  type: 'object',
+  properties: {
+    mappings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'The name of the command mapping',
+          },
+          commands: {
             type: 'array',
             items: {
-                type: 'object',
-                properties: {
-                    name: {
-                        type: 'string',
-                        description: 'The name of the command mapping',
-                    },
-                    commands: {
-                        type: 'array',
-                        items: {
-                            type: 'string',
-                            description: 'A CLI command string',
-                        },
-                        minItems: 1,
-                        description: 'List of CLI commands for the mapping',
-                    },
-                },
-                required: ['name', 'commands'],
-                additionalProperties: false,
+              type: 'string',
+              description: 'A CLI command string',
             },
+            minItems: 1,
+            description: 'List of CLI commands for the mapping',
+          },
         },
+        required: ['name', 'commands'],
+        additionalProperties: false,
+      },
     },
-    required: ['mappings'],
-    additionalProperties: false,
+  },
+  required: ['mappings'],
+  additionalProperties: false,
 };
 
 export const defaultCliShortcutData = `#

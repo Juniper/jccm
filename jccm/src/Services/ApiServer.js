@@ -48,7 +48,7 @@ import {
 } from './ApiCalls';
 
 import { CloudInfo } from '../config';
-import { commitJunosSetConfig, executeJunosCommand, getDeviceFacts, getDeviceNetworkCondition } from './Device';
+import { commitJunosSetConfig, applyConfigShortcut, executeJunosCommand, getDeviceFacts, getDeviceNetworkCondition } from './Device';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -61,10 +61,10 @@ const onKeyDown = (event, input) => {
 
         if (input.key === 'Tab') {
             // sendTabKeyDownEvent();
-            mainWindow.webContents.send('onTabKeyDown');
+            mainWindow.webContents.send('onTabKeyDown', input);
         } else if (input.key === 'Escape') {
             // sendEscKeyDownEvent();
-            mainWindow.webContents.send('onEscKeyDown');
+            mainWindow.webContents.send('onEscKeyDown', input);
         }
     }
 };
@@ -1196,6 +1196,28 @@ export const setupApiHandlers = () => {
             console.error('Network condition error:', error);
             return { networkConditionCollect: false, reply: error };
         }
+    });
+
+
+    ipcMain.handle('apply-config', async (event, args) => {
+        console.log('main: saApplyConfig', `${args?.address}:${args?.port}`);
+
+        const { address, port, username, password, timeout, config, bastionHost } = args;
+        const rollback = true;
+
+        try {
+            const reply = await applyConfigShortcut(address, port, username, password, config, bastionHost, rollback);
+
+            if (reply.status === 'success') {
+                return { apply: true, commitError: false, reply };
+            } else {
+                return { apply: false, commitError: true, reply };
+            }
+        } catch (error) {
+            console.error('Configuration failed!', error);
+            return { apply: false, reply: error };
+        }
+
     });
 
     ipcMain.on('restart-app', () => {

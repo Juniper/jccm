@@ -79,6 +79,8 @@ import {
     TableDismissRegular,
     TableDeleteRowFilled,
     TableDeleteRowRegular,
+    BracesRegular,
+    ClipboardCheckmarkRegular,
 } from '@fluentui/react-icons';
 
 import Login from '../Components/Login';
@@ -93,6 +95,7 @@ import InventorySearchCard from './InventorySearch/InventorySearch';
 import { GlobalSettings } from './GlobalSettings/GlobalSettings';
 import { Vault } from './Vault';
 import { EditCLIShortcutsCard } from './CLIShortcutsCard';
+import { EditConfigShortcutsCard } from './ConfigShortcutsCard';
 import { ConfirmWindow } from '../ConfirmWindow';
 import eventBus from '../Common/eventBus';
 
@@ -104,6 +107,7 @@ const ArrowUpload = bundleIcon(ArrowUploadFilled, ArrowUploadRegular);
 const ArrowDownload = bundleIcon(ArrowDownloadFilled, ArrowDownloadRegular);
 const DiscoverInventoryIcon = bundleIcon(BoxMultipleSearchRegular, BoxMultipleRegular);
 const EditCommandShortcutsIcon = bundleIcon(ClipboardCodeRegular, ClipboardRegular);
+const EditConfigShortcutsIcon = bundleIcon(ClipboardCheckmarkRegular, BracesRegular);
 const ImportInventoryIcon = bundleIcon(AppsAddInFilled, AppsAddInRegular);
 // const ImportInventoryIcon = bundleIcon(TableMoveAboveFilled, TableMoveAboveRegular);
 const ExportInventoryIcon = bundleIcon(TableMoveBelowFilled, TableMoveBelowRegular);
@@ -149,6 +153,7 @@ export default () => {
     const [isInventoryResetCardVisible, setIsInventoryResetCardVisible] = useState(false);
     const [isDeviceSearchCardVisible, setIsDeviceSearchCardVisible] = useState(false);
     const [isEditCLIShortcutsCardVisible, setIsEditCLIShortcutsCardVisible] = useState(false);
+    const [isEditConfigShortcutsCardVisible, setIsEditConfigShortcutsCardVisible] = useState(false);
     const [isSettingsCardVisible, setIsSettingsCardVisible] = useState(false);
 
     const [importedInventory, setImportedInventory] = useState([]);
@@ -456,6 +461,14 @@ export default () => {
                             >
                                 <Text size={200}>Edit CLI Shortcuts</Text>
                             </MenuItem>
+                            <MenuItem
+                                onClick={() => {
+                                    setIsEditConfigShortcutsCardVisible(true);
+                                }}
+                                icon={<EditConfigShortcutsIcon style={{ fontSize: '16px' }} />}
+                            >
+                                <Text size={200}>Edit Configuration Shortcuts</Text>
+                            </MenuItem>
                         </MenuList>
                     </MenuPopover>
                 </Menu>
@@ -600,6 +613,14 @@ export default () => {
                         isOpen={isEditCLIShortcutsCardVisible}
                         onClose={async () => {
                             setIsEditCLIShortcutsCardVisible(false);
+                        }}
+                    />
+                )}
+                {isEditConfigShortcutsCardVisible && (
+                    <EditConfigShortcutsCard
+                        isOpen={isEditConfigShortcutsCardVisible}
+                        onClose={async () => {
+                            setIsEditConfigShortcutsCardVisible(false);
                         }}
                     />
                 )}
