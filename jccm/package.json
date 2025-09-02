@@ -2,7 +2,7 @@
     "name": "jccm",
     "productName": "Juniper Cloud Connection Manager",
     "description": "Juniper Cloud Connection Manager",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "main": ".webpack/main",
     "scripts": {
         "start": "pkill -9 node; nodemon --watch ./src --ext js,json --ignore ./src/Frontend/ --exec 'electron-forge start'",

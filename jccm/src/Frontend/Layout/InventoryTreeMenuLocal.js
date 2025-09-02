@@ -1624,7 +1624,7 @@ const InventoryTreeMenuLocal = () => {
                                         Hardware model mismatch
                                     </Text>
                                     <Text size={100} font="numeric" weight="medium">
-                                        {`• ${isConfiguring[path]?.factModel} is not in [${isConfiguring[path]?.shortcut?.model}]`}
+                                        {`• ${isConfiguring[path]?.factModel} is not starting with any of [${isConfiguring[path]?.shortcut?.model}]`}
                                     </Text>
                                 </div>
                             </PopoverSurface>
@@ -2350,6 +2350,7 @@ const InventoryTreeMenuLocal = () => {
     };
 
 
+
     const commitConfig = async (device, shortcut) => {
         console.log(
             `Preparing to apply Junos configuration update shortcut "${shortcut.name}" to ` +
@@ -2360,14 +2361,25 @@ const InventoryTreeMenuLocal = () => {
 
         const shortcutModels = shortcut?.model || [];
         const factModel = device['hardware model'] || '';
-
         const isMatch = shortcutModels.some(model => {
             if (model.toLowerCase() === 'any') return true;             // wildcard
             return factModel.toLowerCase().startsWith(model.toLowerCase());
         });
 
+        const delay = (ms) => {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        const maxRetries = 2;
+        const retryInterval = 10000; // 10 seconds in milliseconds
+        let response;
+
+        setIsConfiguring(device._path, { status: true, retry: 0 });
+
         if (!isMatch) {
             console.log('Not matched', shortcutModels, factModel);
+            await delay(1500);
+
             deleteConfigShortcutCommitResult(device._path);
             setIsConfiguring(device._path, {
                 status: false,
@@ -2379,12 +2391,6 @@ const InventoryTreeMenuLocal = () => {
             });
             return;
         }
-
-        const maxRetries = 2;
-        const retryInterval = 10000; // 10 seconds in milliseconds
-        let response;
-
-        setIsConfiguring(device._path, { status: true, retry: 0 });
 
         const bastionHost = settings?.bastionHost || {};
 

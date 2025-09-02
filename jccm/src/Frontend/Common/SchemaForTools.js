@@ -1,43 +1,43 @@
 // buildCliShortcutSchema.js
 export function buildCliShortcutSchema() {
-    return {
-        title: 'Junos CLI Shortcuts',
-        type: 'object',
-        required: ['mappings'],
-        additionalProperties: false,
-        properties: {
-            mappings: {
-                type: 'array',
-                title: 'Shortcuts',
-                minItems: 1,
-                items: {
-                    type: 'object',
-                    additionalProperties: false,
-                    required: ['name', 'commands'],
-                    properties: {
-                        name: {
-                            type: 'string',
-                            title: 'Name',
-                            description: 'Display name of this shortcut.',
-                            $comment: 'markdownDescription: "Display name of this shortcut."',
-                            minLength: 1,
-                        },
-                        commands: {
-                            type: 'array',
-                            title: 'Commands',
-                            description: 'Ordered list of CLI commands to execute.',
-                            $comment: 'markdownDescription: "Ordered list of CLI commands. You may include `sleep <ms>` lines (e.g., `sleep 500` pauses for 500 ms). Placeholders like `${device-address}`, `${oc-term-hostname}`, `${jsi-term-hostname}`, and `${outbound-ssh-hostname}` are supported."',
-                            minItems: 1,
-                            items: {
-                                type: 'string',
-                                minLength: 1,
-                            },
-                        },
-                    },
-                },
+  return {
+    title: 'Junos CLI Shortcuts',
+    type: 'object',
+    required: ['mappings'],
+    additionalProperties: false,
+    properties: {
+      mappings: {
+        type: 'array',
+        title: 'Shortcuts',
+        minItems: 1,
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['name', 'commands'],
+          properties: {
+            name: {
+              type: 'string',
+              title: 'Name',
+              description: 'Display name of this shortcut.',
+              $comment: 'markdownDescription: "Display name of this shortcut."',
+              minLength: 1,
             },
+            commands: {
+              type: 'array',
+              title: 'Commands',
+              description: 'Ordered list of CLI commands to execute.',
+              $comment: 'markdownDescription: "Ordered list of CLI commands. You may include `sleep <ms>` lines (e.g., `sleep 500` pauses for 500 ms). Placeholders like `${device-address}`, `${oc-term-hostname}`, `${jsi-term-hostname}`, and `${outbound-ssh-hostname}` are supported."',
+              minItems: 1,
+              items: {
+                type: 'string',
+                minLength: 1,
+              },
+            },
+          },
         },
-    };
+      },
+    },
+  };
 }
 
 export const defaultCliShortcutData = `#
@@ -110,75 +110,75 @@ mappings:
 
 
 export function buildConfigShortcutSchema(models = []) {
-    const modelEnum =
-        Array
-            .from(new Set(['any', 'acx', 'mx', 'qfx', 'ptx', 'ex', 'srx', ...models]))
-            .sort((a, b) => a.localeCompare(b));
+  const modelEnum =
+    Array
+      .from(new Set(['any', 'acx', 'mx', 'qfx', 'ptx', 'ex', 'srx', ...models]))
+      .sort((a, b) => a.localeCompare(b));
 
-    return {
-        title: 'Junos Config Shortcuts',
-        type: 'object',
-        required: ['mappings'],
-        additionalProperties: false,
-        properties: {
-            mappings: {
-                type: 'array',
-                minItems: 1,
-                title: 'Shortcuts',
-                items: {
-                    type: 'object',
-                    additionalProperties: false,
-                    required: ['name', 'config', 'model'],
+  return {
+    title: 'Junos Config Shortcuts',
+    type: 'object',
+    required: ['mappings'],
+    additionalProperties: false,
+    properties: {
+      mappings: {
+        type: 'array',
+        minItems: 1,
+        title: 'Shortcuts',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['name', 'config', 'model'],
 
-                    // 👇 This drives what gets inserted when you choose the array item completion
-                    defaultSnippets: [
-                        {
-                            label: 'New shortcut',
-                            description: 'Prefill with model: any and empty config block',
-                            bodyText:
-                                '- name: ${1:Shortcut name...}\n' +
-                                '  model:\n' +
-                                '    - any\n' +
-                                '  config: |\n' +
-                                '    set ...'
-                        }
-                    ],
-
-                    properties: {
-                        name: {
-                            type: 'string',
-                            title: 'Name',
-                            description: 'Display name of this shortcut.',
-                            $comment: 'markdownDescription: "Display name of this shortcut."',
-                            minLength: 1,
-                        },
-                        model: {
-                            type: 'array',
-                            title: 'Model',
-                            description: 'Applicable device model(s).',
-                            $comment: 'markdownDescription: "Applicable device model(s). Supports Markdown in Monaco tooltips."',
-                            uniqueItems: true,
-                            minItems: 1,
-                            items: {
-                                anyOf: [
-                                    {
-                                        enum: modelEnum,
-                                    },
-                                    { type: 'string', minLength: 1 }
-                                ]
-                            }
-                        },
-                        config: {
-                            type: 'string',
-                            title: 'Config',
-                            description: 'Multiline Junos configuration (set/delete lines). Use YAML block scalar (|).',
-                            $comment: 'markdownDescription: "Multiline Junos configuration (set/delete lines). Use YAML block scalar (`|`)."',
-                        }
-                    },
-                }
+          // 👇 This drives what gets inserted when you choose the array item completion
+          defaultSnippets: [
+            {
+              label: 'New shortcut',
+              description: 'Prefill with model: any and empty config block',
+              bodyText:
+                '- name: ${1:Shortcut name...}\n' +
+                '  model:\n' +
+                '    - any\n' +
+                '  config: |\n' +
+                '    set ...'
             }
+          ],
+
+          properties: {
+            name: {
+              type: 'string',
+              title: 'Name',
+              description: 'Display name of this shortcut.',
+              $comment: 'markdownDescription: "Display name of this shortcut."',
+              minLength: 1,
+            },
+            model: {
+              type: 'array',
+              title: 'Model',
+              description: 'Applicable device model(s).',
+              $comment: 'markdownDescription: "Applicable device model(s). Supports Markdown in Monaco tooltips."',
+              uniqueItems: true,
+              minItems: 1,
+              items: {
+                anyOf: [
+                  {
+                    enum: modelEnum,
+                  },
+                  { type: 'string', minLength: 1 }
+                ]
+              }
+            },
+            config: {
+              type: 'string',
+              title: 'Config',
+              description: 'Multiline Junos configuration (set/delete lines). Use YAML block scalar (|).',
+              $comment: 'markdownDescription: "Multiline Junos configuration (set/delete lines). Use YAML block scalar (`|`)."',
+            }
+          },
         }
-    };
+      }
+    }
+  };
 }
 
 export const defaultConfigShortcutData = `#
@@ -188,7 +188,12 @@ export const defaultConfigShortcutData = `#
 # Each shortcut maps a display 'name' to a block of configuration commands.
 #
 # Notes:
+#   • 'model' uses PREFIX MATCH, not exact match.
+#       - Example: 'qfx' matches 'qfx5120', 'qfx5130', etc.
+#       - Example: 'ex' matches 'ex2300', 'ex4300', 'ex4400', etc.
 #   • Use 'any' in 'model' if the shortcut applies to all platforms.
+#   • Provide multiple prefixes to target multiple families, e.g. ['ex', 'qfx'].
+#   • Be specific: prefer 'qfx51' over 'qfx' if you mean only the 51xx family.
 #   • The 'config' field must use a YAML block scalar (|) containing
 #     Junos "set" or "delete" style configuration lines.
 #
@@ -196,9 +201,8 @@ export const defaultConfigShortcutData = `#
 #   mappings:
 #     - name: <shortcut name>
 #       model:
-#         - ex
-#         - qfx
-#         - srx
+#         - ex         # prefix: applies to all EX models
+#         - qfx        # prefix: applies to all QFX models
 #       config: |
 #         set ...
 #         delete ...
@@ -208,7 +212,10 @@ mappings:
     model:
       - any
     config: |
-      set groups jccm-example firewall family inet filter filter1 term any then accept
+      set groups jccm-example firewall family inet filter jccm-example-filter term t1 from protocol udp
+      set groups jccm-example firewall family inet filter jccm-example-filter term t1 from destination-port 12345
+      set groups jccm-example firewall family inet filter jccm-example-filter term t1 then discard
+      set groups jccm-example firewall family inet filter jccm-example-filter term t2 then accept
 
   - name: Delete Filter Example
     model:
