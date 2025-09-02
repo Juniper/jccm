@@ -1603,6 +1603,14 @@ const InventoryTreeMenuLocal = () => {
                                     padding: '5px',
                                     overflow: 'auto',
                                 }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
                             >
                                 <div
                                     style={{
@@ -1664,6 +1672,14 @@ const InventoryTreeMenuLocal = () => {
                                     margin: 0,
                                     padding: '5px',
                                     overflow: 'auto',
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                 }}
                             >
                                 <div
@@ -1737,6 +1753,14 @@ const InventoryTreeMenuLocal = () => {
                                     padding: '5px',
                                     overflow: 'auto',
 
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                 }}
                             >
                                 <div
